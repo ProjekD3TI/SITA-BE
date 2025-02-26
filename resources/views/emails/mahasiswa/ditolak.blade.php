@@ -1,0 +1,1 @@
+<h1>maaf, akun anda tidak tidak kami konfirmasi silahkan mendaftar ulang.</h1>

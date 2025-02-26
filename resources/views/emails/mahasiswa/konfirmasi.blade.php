@@ -1,0 +1,1 @@
+<h1>selamat akun anda telah dikonfirmasi. anda bisa menggunakan akun anda</h1>
