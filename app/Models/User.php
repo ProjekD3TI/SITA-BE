@@ -21,20 +21,12 @@ class User extends Authenticatable
     protected $table = 'mahasiswa';
     protected $primaryKey = 'id';
     protected $fillable = [
-<<<<<<< HEAD
-        'nama',
-=======
         'nim',
         'name',
->>>>>>> main
         'email',
         'no_telp',
         'password',
-<<<<<<< HEAD
-        'role_id'
-=======
         'status',
->>>>>>> main
     ];
 
     /**
