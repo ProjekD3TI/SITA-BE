@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Portal D3TI UNS'),
 
     /*
     |--------------------------------------------------------------------------
@@ -160,6 +160,9 @@ return [
          * Package Service Providers...
          */
 
+         Maatwebsite\Excel\ExcelServiceProvider::class,
+
+
         /*
          * Application Service Providers...
          */
@@ -182,6 +185,7 @@ return [
     */
 
     'aliases' => Facade::defaultAliases()->merge([
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
