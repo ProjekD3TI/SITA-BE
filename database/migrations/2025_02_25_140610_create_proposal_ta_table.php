@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('proposal_ta', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('nim')->constrained('mahasiswa')->onDelete('cascade');
+            $table->foreignId('mahasiswa_id')->constrained('mahasiswa')->onDelete('cascade');
             $table->string('judul_proposal');
             $table->string('file_proposal');
             $table->smallInteger('status_proposal')->default(0);

@@ -10,7 +10,7 @@ class TugasAkhir extends Model
     use HasFactory;
     protected $table = "tugas_akhir";
     protected $fillable = [
-        'nim',
+        'mahasiswa_id',
         'judul_ta',
         'krs',
         'persetujuan_pembimbing',
@@ -20,4 +20,9 @@ class TugasAkhir extends Model
         'naskah_ta',
         'masa_perpanjangan_studi'
     ];
+
+    public function mahasiswa()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -38,10 +38,21 @@ class Dosen extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function jabatans() {
+    public function jabatans()
+    {
         return $this->belongsToMany(Jabatan::class, 'jabatan_dosen', 'dosen_id', 'jabatan_id')
-                    ->withTimestamps()
-                    ->withPivot('is_active');
+            ->withTimestamps()
+            ->withPivot('is_active');
+    }
+
+    public function bimbingan()
+    {
+        return $this->hasMany(Bimbingan::class, 'dosen_id', 'id');
+    }
+
+    public function penilaianProposalTA()
+    {
+        return $this->hasMany(PenilaianProposalTA::class, 'dosen_id', 'id');
     }
 }
 

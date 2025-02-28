@@ -20,12 +20,14 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([
-            RoleSeeder::class,
             TahunAjaranSeeder::class,
             SesiSeeder::class,
+            JabatanSeeder::class,
+            AdminSeeder::class,
+            DosenSeeder::class,
+            UserSeeder::class,
         ]);
 
-        $this->call(JabatanSeeder::class);
 
     }
 }

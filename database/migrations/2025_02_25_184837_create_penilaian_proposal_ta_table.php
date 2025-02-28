@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('penilaian_proposal_ta', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_proposal_ta')->constrained('proposal_ta')->onDelete('cascade');
-            $table->foreignId('nip')->constrained('dosen')->onDelete('cascade');
+            $table->foreignId('proposal_ta_id')->constrained('proposal_ta')->onDelete('cascade');
+            $table->foreignId('dosen_id')->constrained('dosen')->onDelete('cascade');
             $table->unsignedTinyInteger('nilai')->default(0);
             $table->timestamps();
         });

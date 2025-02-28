@@ -9,5 +9,15 @@ class Bimbingan extends Model
 {
     use HasFactory;
     protected $table = 'bimbingan';
-    protected $fillable = ['nim', 'nip', 'catatan', 'tanggal_bimbingan'];
+    protected $fillable = ['mahasiswa_id', 'dosen_id', 'catatan', 'tanggal_bimbingan'];
+
+    public function mahasiswa()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function dosen()
+    {
+        return $this->belongsTo(Dosen::class);
+    }
 }

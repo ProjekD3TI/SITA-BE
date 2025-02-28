@@ -48,4 +48,19 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function tugasAkhir()
+    {
+        return $this->hasOne(TugasAkhir::class, 'mahasiswa_id', 'id');
+    }
+
+    public function proposalTA()
+    {
+        return $this->hasOne(ProposalTA::class, 'mahasiswa_id', 'id');
+    }
+
+    public function bimbingan()
+    {
+        return $this->hasMany(Bimbingan::class, 'mahasiswa_id', 'id');
+    }
 }
