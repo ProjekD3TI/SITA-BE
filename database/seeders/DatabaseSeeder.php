@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             DosenSeeder::class,
             UserSeeder::class,
+            JabatanDosenSeeder::class,
         ]);
 
 

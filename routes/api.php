@@ -4,6 +4,7 @@
 use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 use App\Http\Controllers\Admin\AdminTa\AdminTaController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminController;
+use App\Http\Controllers\Api\PenilaianProposalTAController;
 use App\Http\Controllers\Auth\AuthAdminController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\AuthDosenController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
 use App\Http\Controllers\Mahasiswa\MahasiswaController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\ProposalTAController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +29,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// filepath: /c:/laragon/www/Backend-Port/routes/api.php
+
+
 // route sanctum global
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UserController::class, 'getUser']);
@@ -35,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::post('/register/mahasiswa', [AuthController::class, 'registerUser']);
-Route::post('/login/mahasiswa', [AuthController::class, 'loginUser']);
+Route::post('/login/mahasiswa', [AuthController::class, 'loginUser'])->name('login.mahasiswa');
 
 
 Route::post('/mahasiswa/forgot-password', [UserController::class, 'sendResetLinkMahasiswa']);
@@ -54,7 +59,8 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/dashboard', [MahasiswaController::class, 'dashboard']);
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
-
+    Route::apiResource('mahasiswa/proposal-ta', ProposalTAController::class);
+    Route::get('mahasiswa/penilaian-proposal-ta', [PenilaianProposalTAController::class, 'getPenilaianByMahasiswa']);
     // Route::post('/mahasiswa/logout', [AuthController::class, 'logout']);
     // route yg laen
 });
@@ -64,7 +70,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
 // ---------- || Route Dosen || ---------- \\
 
-Route::post('/login/dosen', [AuthDosenController::class, 'loginDosen']);
+Route::post('/login/dosen', [AuthDosenController::class, 'loginDosen'])->name('login.dosen');
 
 // Route Global Dosen
 Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
@@ -81,6 +87,9 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Route Dosen Biasa
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Dosen'])->group(function () {
         Route::get('/dosen/dashboard', [DosenController::class, 'dashboard']);
+        Route::apiResource('/dosen/penilaian-proposal-ta', PenilaianProposalTAController::class);
+        Route::get('dosen/proposal-ta', [ProposalTAController::class, 'getProposalsByStatus']);
+
     });
 
     // Route Kalab
@@ -97,6 +106,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Petugas'])->group(function () {
         Route::get('/petugas/dashboard', [PetugasController::class, 'dashboard']);
     });
+
 
 });
 
@@ -136,6 +146,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role:admin_ta'])->group(function () {
         //route laennya buat admin ta
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
+        Route::get('/admin_ta/proposal-ta', [ProposalTAController::class, 'getProposalsforAdmin']);
     });
 
     // Route Admin Pengelola (inventaris)
@@ -144,4 +155,3 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_pengelola/dashboard', [AdminPengelolaController::class, 'dashboard']);
     });
 });
-
