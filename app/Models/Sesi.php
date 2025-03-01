@@ -11,4 +11,9 @@ class Sesi extends Model
 
     protected $table = 'sesi';
     protected $fillable = ['waktu_mulai', 'waktu_selesai'];
+
+    public function jadwalUjianTA()
+    {
+        return $this->hasMany(JadwalUjianTA::class, 'sesi_id', 'id');
+    }
 }

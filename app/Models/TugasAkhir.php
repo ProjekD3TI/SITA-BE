@@ -25,4 +25,9 @@ class TugasAkhir extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function UjianTA()
+    {
+        return $this->hasOne(UjianTA::class, 'tugas_akhir_id', 'id');
+    }
 }

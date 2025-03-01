@@ -9,5 +9,6 @@ class DosenPengujiUjian extends Model
 {
     use HasFactory;
     protected $table = 'dosen_penguji_ujian';
-    protected $fillable = ['nim', 'nip', 'id_jadwal_ujian_ta'];
+    protected $fillable = ['mahasiswa_id', 'dosen_id', 'jadwal_ujian_ta_id'];
+
 }

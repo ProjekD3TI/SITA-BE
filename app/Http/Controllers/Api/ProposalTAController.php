@@ -103,12 +103,33 @@ class ProposalTAController extends Controller
         ]);
     }
 
-    public function getProposalsforAdmin(){
+    public function getProposalsforAdmin()
+    {
         $proposals = ProposalTA::all();
         return response()->json([
-           'status' => true,
-           'message' => 'List Data Proposal TA berhasil dimuat',
-           'data' => $proposals
+            'status' => true,
+            'message' => 'List Data Proposal TA berhasil dimuat',
+            'data' => $proposals
+        ]);
+    }
+
+    public function updateProposalStatusByAdmin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'status_proposal' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $status = $request->status_proposal;
+        $proposals = ProposalTA::where('status_proposal', $status)->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'List Data Proposal TA dengan status ' . $status . ' berhasil dimuat',
+            'data' => $proposals
         ]);
     }
 }

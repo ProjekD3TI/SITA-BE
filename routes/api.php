@@ -147,6 +147,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         //route laennya buat admin ta
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
         Route::get('/admin_ta/proposal-ta', [ProposalTAController::class, 'getProposalsforAdmin']);
+        Route::patch('/admin_ta/proposal-ta/{id}', [ProposalTAController::class, 'updateProposalStatusByAdmin']);
     });
 
     // Route Admin Pengelola (inventaris)

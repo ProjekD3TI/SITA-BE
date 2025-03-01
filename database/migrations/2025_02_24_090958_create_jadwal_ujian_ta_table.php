@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('jadwal_ujian_ta', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_ruang')->constrained('ruang');
-            $table->foreignId('id_sesi')->constrained('sesi');
+            $table->foreignId('ruang_id')->constrained('ruang');
+            $table->foreignId('sesi_id')->constrained('sesi');
             $table->date('tanggal');
             $table->timestamps();
         });

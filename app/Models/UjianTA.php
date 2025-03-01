@@ -9,5 +9,20 @@ class UjianTA extends Model
 {
     use HasFactory;
     protected $table = 'ujian_ta';
-    protected $fillable = ['id_tugas_akhir', 'id_jadwal_ujian_ta'];
+    protected $fillable = ['tugas_akhir_id', 'jadwal_ujian_ta_id'];
+
+    public function tugasAkhir()
+    {
+        return $this->belongsTo(TugasAkhir::class);
+    }
+
+    public function nilaiUjianTA()
+    {
+        return $this->hasMany(NilaiUjianTA::class, 'ujian_ta_id', 'id');
+    }
+
+    public function jadwalUjianTA()
+    {
+        return $this->belongsTo(JadwalUjianTA::class);
+    }
 }

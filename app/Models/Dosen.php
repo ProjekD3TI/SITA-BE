@@ -54,5 +54,10 @@ class Dosen extends Authenticatable
     {
         return $this->hasMany(PenilaianProposalTA::class, 'dosen_id', 'id');
     }
+
+    public function nilaiUjianTA()
+    {
+        return $this->hasMany(NilaiUjianTA::class, 'dosen_id', 'id');
+    }
 }
 
