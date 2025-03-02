@@ -62,7 +62,7 @@ class UserController extends Controller
                 ]
             );
 
-            $resetLink = url("/mahasiswa/reset-password/{$token}");
+            $resetLink = env('FRONTEND_URL') . "/mahasiswa/reset-password/{$token}";
 
             Mail::send('emails.mahasiswa.reset-password', ['resetLink' => $resetLink], function($message) use ($request) {
                 $message->to($request->email)
@@ -88,7 +88,20 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'token' => 'required',
-            'password' => 'required|min:8|confirmed'
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                // 'regex:/[@$!%*#?&]/'
+            ],
+        ]
+        , [
+            'password.min' => 'Password minimal harus 8 karakter',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka',
         ]);
 
         if ($validator->fails()) {
@@ -127,8 +140,8 @@ class UserController extends Controller
             $mahasiswa->save();
 
             DB::table('password_reset_tokens')
-                ->where('token', Hash::make($request->token))
-                ->delete();
+            ->where('email', $resetRecord->email)
+            ->delete();
 
             Mail::send('emails.mahasiswa.password', [
                 'password' => $request->password
@@ -189,7 +202,7 @@ class UserController extends Controller
                 ]
             );
 
-            $resetLink = url("/dosen/reset-password/{$token}");
+            $resetLink = env('FRONTEND_URL') . "/dosen/reset-password/{$token}";
 
             Mail::send('emails.dosen.reset-password', ['resetLink' => $resetLink], function($message) use ($request) {
                 $message->to($request->email)
@@ -215,7 +228,20 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'token' => 'required',
-            'password' => 'required|min:8|confirmed'
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                // 'regex:/[@$!%*#?&]/'
+            ],
+        ]
+        , [
+            'password.min' => 'Password minimal harus 8 karakter',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka',
         ]);
 
         if ($validator->fails()) {
@@ -254,8 +280,8 @@ class UserController extends Controller
             $dosen->save();
 
             DB::table('password_reset_tokens')
-                ->where('token', Hash::make($request->token))
-                ->delete();
+            ->where('email', $resetRecord->email)
+            ->delete();
 
             Mail::send('emails.dosen.password', [
                 'password' => $request->password
@@ -316,7 +342,7 @@ class UserController extends Controller
                 ]
             );
 
-            $resetLink = url("/admin/reset-password/{$token}");
+            $resetLink = env('FRONTEND_URL') . "/admin/reset-password/{$token}";
 
             Mail::send('emails.admin.reset-password', ['resetLink' => $resetLink], function($message) use ($request) {
                 $message->to($request->email)
@@ -342,7 +368,20 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'token' => 'required',
-            'password' => 'required|min:8|confirmed'
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                // 'regex:/[@$!%*#?&]/'
+            ],
+        ]
+        , [
+            'password.min' => 'Password minimal harus 8 karakter',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka',
         ]);
 
         if ($validator->fails()) {
@@ -381,8 +420,8 @@ class UserController extends Controller
             $admin->save();
 
             DB::table('password_reset_tokens')
-                ->where('token', Hash::make($request->token))
-                ->delete();
+            ->where('email', $resetRecord->email)
+            ->delete();
 
             Mail::send('emails.admin.password', [
                 'password' => $request->password
