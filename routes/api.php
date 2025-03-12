@@ -8,6 +8,10 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\AuthDosenController;
 use App\Http\Controllers\Dosens\Dosen\DosenController;
 use App\Http\Controllers\Dosens\Kalab\KalabController;
+use App\Http\Controllers\Dosens\Kalab\Pelaporan\CategoryController;
+use App\Http\Controllers\Dosens\Kalab\Pelaporan\LaporanController;
+use App\Http\Controllers\Dosens\Kalab\Pelaporan\LaporanKekerasanController;
+use App\Http\Controllers\Dosens\Kalab\Pelaporan\SliderController;
 use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
 use App\Http\Controllers\Mahasiswa\MahasiswaController;
@@ -31,6 +35,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UserController::class, 'getUser']);
     Route::post('/logout', [UserController::class, 'logoutUser']);
+
+    // laporan
+    Route::get('/laporan', [LaporanController::class, 'showAllLaporan']);
+    Route::post('/laporan/add_laporan', [LaporanController::class, 'createLaporan']);
+    Route::get('/laporan/{id}', [LaporanController::class, 'showDetailLaporan']);
+    Route::put('/laporan/update/{id}', [LaporanController::class, 'editLaporan']);
+    Route::delete('/laporan/{id}', [LaporanController::class, 'deleteLaporan']);
 });
 
 
@@ -46,6 +57,9 @@ Route::post('/dosen/reset-password', [UserController::class, 'resetPasswordDosen
 
 Route::post('/admin/forgot-password', [UserController::class, 'sendResetLinkAdmin']);
 Route::post('/admin/reset-password', [UserController::class, 'resetPasswordAdmin']);
+
+
+Route::post('/laporan_kekerasan/add_laporan', [LaporanKekerasanController::class, 'createLaporanKekerasan']);
 
 // ---------- || Route Mahasiswa || ---------- \\
 
@@ -86,6 +100,28 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Route Kalab
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Kalab'])->group(function () {
         Route::get('/kalab/dashboard', [KalabController::class, 'dashboard']);
+
+        // category
+        Route::get('/category', [CategoryController::class, 'showAllCategory']);
+        Route::post('/category/add_category', [CategoryController::class, 'createCategory']);
+        Route::get('/category/{id}', [CategoryController::class, 'showDetailCategory']);
+        Route::put('/category/update/{id}', [CategoryController::class, 'editCategory']);
+        Route::delete('/category/{id}', [CategoryController::class, 'deleteCategory']);
+        
+        // slider
+        Route::get('/slider', [SliderController::class, 'showAllSlider']);
+        Route::post('/slider/add_slider', [SliderController::class, 'createSlider']);
+        Route::get('/slider/{id}', [SliderController::class, 'showDetailSlider']);
+        Route::put('/slider/update/{id}', [SliderController::class, 'editSlider']);
+        Route::delete('/slider/{id}', [SliderController::class, 'deleteSlider']);
+
+        // laporan
+        Route::put('/laporan/update_status/{id}', [LaporanController::class, 'editStatusLaporan']);
+        
+        // laporan kekerasan
+        Route::get('/laporan_kekerasan', [LaporanKekerasanController::class, 'showAllLaporanKekerasan']);
+        Route::get('/laporan_kekerasan/{id}', [LaporanKekerasanController::class, 'showDetailLaporanKekerasan']);
+        Route::delete('/laporan_kekerasan/{id}', [LaporanKekerasanController::class, 'deleteLaporanKekerasan']);
     });
 
     // Route Kaprodi
@@ -109,16 +145,16 @@ Route::post('/login/admin', [AuthAdminController::class, 'loginAdmin']);
 
 // Route Global Middleware Admin 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-
+    
     // Route::post('/logout', [AuthController::class, 'logoutUser']);
-
+    
     // Route Superadmin
     Route::middleware(['auth:sanctum', 'admin.role:superadmin'])->group(function () {
-
+        
         // cuma superadmin yg boleh buat admin klo localan dipindah dlu ke public
         Route::post('/register/admin', [AuthAdminController::class, 'registerAdmin']);
-
-
+        
+        
         //Superadmin -> dosen
         Route::get('/superadmin/dashboard', [SuperadminController::class, 'dashboard']);
         Route::post('/superadmin/create_dosen', [SuperadminController::class, 'createDosen']);
