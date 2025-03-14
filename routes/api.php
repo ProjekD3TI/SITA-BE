@@ -15,6 +15,7 @@ use App\Http\Controllers\Dosens\Petugas\PetugasController;
 use App\Http\Controllers\Mahasiswa\MahasiswaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\ProposalTAController;
+use App\Models\JabatanDosen;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -115,7 +116,6 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 
 // ---------- || Route Admin || ---------- \\
 
-Route::post('/register/admin', [AuthAdminController::class, 'registerAdmin']);
 Route::post('/login/admin', [AuthAdminController::class, 'loginAdmin']);
 
 // Route Global Middleware Admin
@@ -125,6 +125,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     // Route Superadmin
     Route::middleware(['auth:sanctum', 'admin.role:superadmin'])->group(function () {
+
+        // cuma superadmin yg boleh buat admin klo localan dipindah dlu ke public
+        Route::post('/register/admin', [AuthAdminController::class, 'registerAdmin']);
+
 
         //Superadmin -> dosen
         Route::get('/superadmin/dashboard', [SuperadminController::class, 'dashboard']);

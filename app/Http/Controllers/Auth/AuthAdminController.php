@@ -81,8 +81,11 @@ class AuthAdminController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Berhasil Login',
-                'token' => $token,
-                'role' => $role 
+                'data' => [
+                    'admin' => $admin,
+                    'token' => $token,
+                    'role' => $role
+                ]
             ]);
         }
 

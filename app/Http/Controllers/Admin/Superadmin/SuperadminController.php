@@ -188,7 +188,7 @@ class SuperadminController extends Controller
         }
 
         $dosen = Dosen::find($request->dosen_id);
-        $dosen->jabatan()->attach($request->jabatan_id, ['is_active' => false]);
+        $dosen->jabatans()->attach($request->jabatan_id, ['is_active' => false]);
 
         return response()->json([
             'status' => 'success',
