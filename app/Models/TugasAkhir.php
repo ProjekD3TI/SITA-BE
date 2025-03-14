@@ -12,6 +12,7 @@ class TugasAkhir extends Model
     protected $fillable = [
         'mahasiswa_id',
         'proposal_id',
+        'semester_id',
         'tahun_ajaran_id',
         'judul_tugas_akhir',
         'krs',

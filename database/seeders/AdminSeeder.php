@@ -13,24 +13,11 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         Admin::factory()->create([
-            'name' => 'Budi Santoso',
-            'email' => 'budi@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'superadmin',
-        ]);
-
-        Admin::factory()->create([
-            'name' => 'Siti Aminah',
-            'email' => 'siti@example.com',
-            'password' => bcrypt('password'),
+            'name' => 'Nurlaily Purnama Sari, S.Kom.',
+            'email' => 'sari@staff.uns.ac.id',
+            'password' => bcrypt('123123123'),
             'role' => 'admin_ta',
         ]);
 
-        Admin::factory()->create([
-            'name' => 'Agus Salim',
-            'email' => 'agus@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'admin_pengelola',
-        ]);
     }
 }
