@@ -11,23 +11,22 @@ class TugasAkhir extends Model
     protected $table = "tugas_akhir";
     protected $fillable = [
         'mahasiswa_id',
-        'judul_ta',
+        'proposal_id',
+        'tahun_ajaran_id',
+        'judul_tugas_akhir',
         'krs',
         'persetujuan_pembimbing',
         'sertifikat_kompetensi',
         'toeic',
         'berita_acara_semhas',
         'naskah_ta',
-        'masa_perpanjangan_studi'
+        'masa_perpanjangan_studi',
+        'nilai_proposal',
+        'nilai_bimbingan',
+        'catatan_proposal',
+        'file_transkrip',
+        'status_valid',
+        'status_aktif'
     ];
 
-    public function mahasiswa()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function UjianTA()
-    {
-        return $this->hasOne(UjianTA::class, 'tugas_akhir_id', 'id');
-    }
 }

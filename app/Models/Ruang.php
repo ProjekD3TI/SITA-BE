@@ -11,8 +11,4 @@ class Ruang extends Model
     protected $table = 'ruang';
     protected $fillable = ['nama_ruang'];
 
-    public function jadwalUjianTA()
-    {
-        return $this->hasMany(JadwalUjianTA::class, 'ruang_id', 'id');
-    }
 }

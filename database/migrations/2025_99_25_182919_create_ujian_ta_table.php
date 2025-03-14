@@ -12,8 +12,12 @@ return new class extends Migration {
     {
         Schema::create('ujian_ta', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tugas_akhir_id')->constrained('tugas_akhir')->onDelete('cascade');
-            $table->foreignId('jadwal_ujian_ta_id')->constrained('jadwal_ujian_ta')->onDelete('cascade');
+            $table->date('tanggal_ujian');
+            $table->foreignId('ruang_id')->constrained('ruang')->onDelete('restrict');
+            $table->foreignId('sesi_id')->constrained('sesi')->onDelete('restrict');
+            $table->foreignId('semester_id')->constrained('semester')->onDelete('restrict');
+            $table->foreignId('tahun_ajaran_id')->constrained('tahun_ajaran')->onDelete('restrict');
+            $table->enum('status_ujian', ['non-aktif', 'aktif'])->default('aktif');
             $table->timestamps();
         });
     }

@@ -10,11 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('jadwal_ujian_ta', function (Blueprint $table) {
+        Schema::create('proposal', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ruang_id')->constrained('ruang');
-            $table->foreignId('sesi_id')->constrained('sesi');
-            $table->date('tanggal');
+            $table->string('judul_proposal', 255);
+            $table->string('file_proposal');
+            $table->string('file_transkrip');
+            $table->tinyInteger('status_proposal')->default(0); // 0: Menunggu, 1: Diterima, 2: Ditolak
+            $table->timestamp('tanggal_unggah')->useCurrent();
             $table->timestamps();
         });
     }
@@ -24,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('jadwal_ujian_ta');
+        Schema::dropIfExists('proposal');
     }
 };

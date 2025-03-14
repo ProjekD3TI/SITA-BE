@@ -27,8 +27,8 @@ class DatabaseSeeder extends Seeder
             DosenSeeder::class,
             UserSeeder::class,
             JabatanDosenSeeder::class,
+            SemesterSeeder::class,
+            RuangSeeder::class,
         ]);
-
-
     }
 }

@@ -10,11 +10,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('penilaian_proposal_ta', function (Blueprint $table) {
+        Schema::create('semester', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('proposal_ta_id')->constrained('proposal_ta')->onDelete('cascade');
-            $table->foreignId('dosen_id')->constrained('dosen')->onDelete('cascade');
-            $table->unsignedTinyInteger('nilai')->default(0);
+            $table->char('nama_semester', 1)->unique(); // A untuk ganjil, B untuk genap
             $table->timestamps();
         });
     }
@@ -24,6 +22,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('penilaian_proposal_ta');
+        Schema::dropIfExists('semester');
     }
 };

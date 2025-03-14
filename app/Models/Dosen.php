@@ -45,19 +45,5 @@ class Dosen extends Authenticatable
             ->withPivot('is_active');
     }
 
-    public function bimbingan()
-    {
-        return $this->hasMany(Bimbingan::class, 'dosen_id', 'id');
-    }
-
-    public function penilaianProposalTA()
-    {
-        return $this->hasMany(PenilaianProposalTA::class, 'dosen_id', 'id');
-    }
-
-    public function nilaiUjianTA()
-    {
-        return $this->hasMany(NilaiUjianTA::class, 'dosen_id', 'id');
-    }
 }
 

@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('sesi', function (Blueprint $table) {
             $table->id();
+            $table->string('nama_sesi', 50);
             $table->time('waktu_mulai');
             $table->time('waktu_selesai');
             $table->timestamps();

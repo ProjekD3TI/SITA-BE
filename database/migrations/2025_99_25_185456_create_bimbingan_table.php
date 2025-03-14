@@ -12,10 +12,9 @@ return new class extends Migration {
     {
         Schema::create('bimbingan', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('mahasiswa_id')->constrained('mahasiswa')->onDelete('cascade');
-            $table->foreignId('dosen_id')->constrained('dosen')->onDelete('cascade');
+            $table->foreignId('tugas_akhir_id')->constrained('tugas_akhir')->onDelete('restrict');
             $table->text('catatan')->nullable();
-            $table->timestamp('tanggal_bimbingan');
+            $table->tinyInteger('status_verifikasi')->default(0); // 0: Belum diverifikasi, 1: Diverifikasi, 2: Ditolak
             $table->timestamps();
         });
     }
