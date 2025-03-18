@@ -36,6 +36,7 @@ class SuperadminController extends Controller
             'regex:/[0-9]/',
             ],
             'nik' => 'required|string', //max 16??
+            'no_telp' => 'required|string'
         ],
         [
             'email.unique' => 'Email sudah terdaftar',
@@ -59,6 +60,7 @@ class SuperadminController extends Controller
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'nik' => $request->nik,
+                'no_telp' => $request->no_telp,
                 'status' => 1,
             ]);
 
