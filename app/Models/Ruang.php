@@ -11,4 +11,9 @@ class Ruang extends Model
     protected $table = 'ruang';
     protected $fillable = ['nama_ruang'];
 
+
+    public function ujianTA()
+    {
+        return $this->hasMany(UjianTA::class);
+    }
 }

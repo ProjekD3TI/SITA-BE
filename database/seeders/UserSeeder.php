@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             [
                 'nim' => 'V3423070',
                 'name' => 'Raffael Aldrich Setiawan',
-                'email' => 'raffael@gmail.com',
+                'email' => 'raffael@student.uns.ac.id',
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
             [
                 'nim' => 'V3423072',
                 'name' => 'Raihan Kafi Hufayda',
-                'email' => 'raihan@gmail.com',
+                'email' => 'raihan@student.uns.ac.id',
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
@@ -34,7 +34,7 @@ class UserSeeder extends Seeder
             [
                 'nim' => 'V3423075',
                 'name' => 'Rizqi Andri Wijaya',
-                'email' => 'rizqi@gmail.com',
+                'email' => 'rizqi@student.uns.ac.id',
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
             [
                 'nim' => 'V3423077',
                 'name' => 'Satria Kusuma Mahardika',
-                'email' => 'dika@gmail.com',
+                'email' => 'dika@student.uns.ac.id',
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
@@ -50,7 +50,7 @@ class UserSeeder extends Seeder
             [
                 'nim' => 'V3423085',
                 'name' => 'Veri Tri Ariyanto',
-                'email' => 'veri@gmail.com',
+                'email' => 'veri@student.uns.ac.id',
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,

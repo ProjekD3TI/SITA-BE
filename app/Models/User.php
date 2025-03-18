@@ -49,4 +49,9 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    public function tugasAkhir()
+    {
+        return $this->hasMany(TugasAkhir::class);
+    }
+
 }

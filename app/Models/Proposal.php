@@ -17,4 +17,9 @@ class Proposal extends Model
         'tanggal_unggah'
     ];
 
+    public function tugasAkhir()
+    {
+        return $this->hasOne(TugasAkhir::class);
+    }
+
 }

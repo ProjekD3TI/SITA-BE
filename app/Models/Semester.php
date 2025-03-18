@@ -11,4 +11,14 @@ class Semester extends Model
 
     protected $table = 'semester';
     protected $fillable = ['nama_semester'];
+
+    public function tugasAkhir()
+    {
+        return $this->hasMany(TugasAkhir::class);
+    }
+
+    public function ujianTA()
+    {
+        return $this->hasMany(UjianTA::class);
+    }
 }

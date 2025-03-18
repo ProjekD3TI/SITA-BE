@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('ujian_ta', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tugas_akhir_id')->constrained('tugas_akhir')->onDelete('restrict');
             $table->date('tanggal_ujian');
             $table->foreignId('ruang_id')->constrained('ruang')->onDelete('restrict');
             $table->foreignId('sesi_id')->constrained('sesi')->onDelete('restrict');

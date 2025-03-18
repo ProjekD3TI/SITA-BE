@@ -16,4 +16,14 @@ class RequestPembimbing extends Model
         'tanggal_request',
         'tanggal_respon',
     ];
+
+    public function tugasAkhir()
+    {
+        return $this->belongsTo(TugasAkhir::class, 'tugas_akhir_id', 'id');
+    }
+
+    public function dosen()
+    {
+        return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
+    }
 }

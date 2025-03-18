@@ -45,5 +45,18 @@ class Dosen extends Authenticatable
             ->withPivot('is_active');
     }
 
+    public function tugasAkhir()
+    {
+        return $this->belongsToMany(TugasAkhir::class, 'dosen_penguji', 'dosen_id', 'tugas_akhir_id')
+            ->using(DosenPenguji::class)
+            ->withPivot(['revisi', 'catatan_semhas', 'nilai_ujian_ta'])
+            ->withTimestamps();
+    }
+
+    public function requestPembimbing()
+    {
+        return $this->hasMany(RequestPembimbing::class);
+    }
+
 }
 

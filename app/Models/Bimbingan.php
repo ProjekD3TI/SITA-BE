@@ -14,4 +14,9 @@ class Bimbingan extends Model
         'catatan',
         'status_verifikasi',
     ];
+
+    public function tugasAkhir()
+    {
+        return $this->belongsTo(TugasAkhir::class, 'tugas_akhir_id', 'id');
+    }
 }

@@ -12,4 +12,9 @@ class Sesi extends Model
     protected $table = 'sesi';
     protected $fillable = ['waktu_mulai', 'waktu_selesai'];
 
+    public function ujianTA()
+    {
+        return $this->hasMany(UjianTA::class);
+    }
+
 }

@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class DosenPenguji extends Model
+class DosenPenguji extends Pivot
 {
     use HasFactory;
 
@@ -17,4 +17,7 @@ class DosenPenguji extends Model
         'catatan_semhas',
         'nilai_ujian_ta',
     ];
+
+    public $timestamps = true;
+
 }

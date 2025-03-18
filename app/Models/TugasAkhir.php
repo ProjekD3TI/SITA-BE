@@ -30,4 +30,49 @@ class TugasAkhir extends Model
         'status_aktif'
     ];
 
+    public function mahasiswa()
+    {
+        return $this->belongsTo(User::class, 'mahasiswa_id', 'id');
+    }
+
+    public function proposal()
+    {
+        return $this->belongsTo(Proposal::class, 'proposal_id', 'id');
+    }
+
+    public function bimbingan()
+    {
+        return $this->hasMany(Bimbingan::class);
+    }
+
+    public function semester()
+    {
+        return $this->belongsTo(Semester::class, 'semester_id', 'id');
+    }
+
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'tahun_ajaran_id', ownerKey: 'id');
+    }
+
+    public function ujianTA()
+    {
+        return $this->hasMany(UjianTA::class);
+    }
+
+    public function dosenPenguji()
+    {
+        return $this->belongsToMany(Dosen::class, 'dosen_penguji', 'tugas_akhir_id', 'dosen_id')
+            ->using(DosenPenguji::class)
+            ->withPivot([
+                'revisi',
+                'catatan_semhas',
+                'nilai_ujian_ta'
+            ])->withTimestamps();
+    }
+
+    public function requestPembimbing()
+    {
+        return $this->hasOne(RequestPembimbing::class);
+    }
 }

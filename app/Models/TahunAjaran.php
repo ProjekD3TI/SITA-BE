@@ -11,5 +11,15 @@ class TahunAjaran extends Model
 
     protected $table = 'tahun_ajaran';
     protected $fillable = ['tahun_ajaran'];
+
+    public function tugasAkhir()
+    {
+        return $this->hasMany(TugasAkhir::class);
+    }
+
+    public function ujianTA()
+    {
+        return $this->hasMany(UjianTA::class);
+    }
 }
 
