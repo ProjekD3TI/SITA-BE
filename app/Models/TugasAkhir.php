@@ -13,6 +13,7 @@ class TugasAkhir extends Model
         'mahasiswa_id',
         'proposal_id',
         'semester_id',
+        'dosen_pembimbing_id',
         'tahun_ajaran_id',
         'judul_tugas_akhir',
         'krs',
@@ -24,6 +25,7 @@ class TugasAkhir extends Model
         'masa_perpanjangan_studi',
         'nilai_proposal',
         'nilai_bimbingan',
+        'nilai_akhir',
         'catatan_proposal',
         'file_transkrip',
         'status_valid',
@@ -33,6 +35,11 @@ class TugasAkhir extends Model
     public function mahasiswa()
     {
         return $this->belongsTo(User::class, 'mahasiswa_id', 'id');
+    }
+
+    public function dosenPembimbing()
+    {
+        return $this->belongsTo(Dosen::class, 'dosen_pembimbing_id', 'id');
     }
 
     public function proposal()

@@ -13,6 +13,7 @@ return new class extends Migration {
         Schema::create('tugas_akhir', function (Blueprint $table) {
             $table->id();
             $table->foreignId('mahasiswa_id')->constrained('mahasiswa')->onDelete('restrict');
+            $table->foreignId('dosen_pembimbing_id')->default(null)->nullable()->constrained('dosen')->onDelete('restrict');
             $table->foreignId('proposal_id')->default(null)->nullable()->constrained('proposal')->onDelete('restrict');
             $table->foreignId('semester_id')->default(null)->nullable()->constrained('semester')->onDelete('restrict');
             $table->foreignId('tahun_ajaran_id')->default(null)->nullable()->constrained('tahun_ajaran')->onDelete('restrict');
@@ -26,6 +27,7 @@ return new class extends Migration {
             $table->string('masa_perpanjangan_studi', 150)->default(null)->nullable();
             $table->integer('nilai_proposal')->default(null)->nullable();
             $table->integer('nilai_bimbingan')->default(null)->nullable();
+            $table->integer('nilai_akhir')->default(null)->nullable();
             $table->text('catatan_proposal')->default(null)->nullable();
             $table->string('file_transkrip', 255)->default(null)->nullable();
             $table->tinyInteger('status_valid')->default(null)->nullable(); // null:data belum lengkap, 0:menunggu validasi, 1:valid, 2:tidak valid

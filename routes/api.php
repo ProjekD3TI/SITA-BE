@@ -4,7 +4,6 @@
 use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 use App\Http\Controllers\Admin\AdminTa\AdminTaController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminController;
-use App\Http\Controllers\Api\PenilaianProposalTAController;
 use App\Http\Controllers\Auth\AuthAdminController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\AuthDosenController;
@@ -14,9 +13,6 @@ use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
 use App\Http\Controllers\Mahasiswa\MahasiswaController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\Api\ProposalTAController;
-use App\Models\JabatanDosen;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -60,10 +56,6 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/dashboard', [MahasiswaController::class, 'dashboard']);
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
-    Route::apiResource('mahasiswa/proposal-ta', ProposalTAController::class);
-    Route::get('mahasiswa/penilaian-proposal-ta', [PenilaianProposalTAController::class, 'getPenilaianByMahasiswa']);
-    // Route::post('/mahasiswa/logout', [AuthController::class, 'logout']);
-    // route yg laen
 });
 
 
@@ -88,9 +80,6 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Route Dosen Biasa
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Dosen'])->group(function () {
         Route::get('/dosen/dashboard', [DosenController::class, 'dashboard']);
-        Route::apiResource('/dosen/penilaian-proposal-ta', PenilaianProposalTAController::class);
-        Route::get('dosen/proposal-ta', [ProposalTAController::class, 'getProposalsByStatus']);
-
     });
 
     // Route Kalab
@@ -150,8 +139,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role:admin_ta'])->group(function () {
         //route laennya buat admin ta
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
-        Route::get('/admin_ta/proposal-ta', [ProposalTAController::class, 'getProposalsforAdmin']);
-        Route::patch('/admin_ta/proposal-ta/{id}', [ProposalTAController::class, 'updateProposalStatusByAdmin']);
     });
 
     // Route Admin Pengelola (inventaris)

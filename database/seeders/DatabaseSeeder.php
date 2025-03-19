@@ -29,7 +29,6 @@ class DatabaseSeeder extends Seeder
             JabatanDosenSeeder::class,
             SemesterSeeder::class,
             RuangSeeder::class,
-            ProposalSeeder::class,
         ]);
     }
 }
