@@ -60,6 +60,7 @@ Route::post('/admin/reset-password', [UserController::class, 'resetPasswordAdmin
 
 
 Route::post('/laporan_kekerasan/add_laporan', [LaporanKekerasanController::class, 'createLaporanKekerasan']);
+Route::get('/category', [CategoryController::class, 'showAllCategory']);
 
 // ---------- || Route Mahasiswa || ---------- \\
 
@@ -79,6 +80,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 // ---------- || Route Dosen || ---------- \\
 
 Route::post('/login/dosen', [AuthDosenController::class, 'loginDosen']);
+
 
 // Route Global Dosen
 Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
@@ -102,7 +104,6 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
         Route::get('/kalab/dashboard', [KalabController::class, 'dashboard']);
 
         // category
-        Route::get('/category', [CategoryController::class, 'showAllCategory']);
         Route::post('/category/add_category', [CategoryController::class, 'createCategory']);
         Route::get('/category/{id}', [CategoryController::class, 'showDetailCategory']);
         Route::put('/category/update/{id}', [CategoryController::class, 'editCategory']);
