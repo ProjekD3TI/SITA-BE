@@ -31,7 +31,7 @@ return new class extends Migration {
             $table->text('catatan_proposal')->default(null)->nullable();
             $table->string('file_transkrip', 255)->default(null)->nullable();
             $table->tinyInteger('status_valid')->default(null)->nullable(); // null:data belum lengkap, 0:menunggu validasi, 1:valid, 2:tidak valid
-            $table->enum('status_aktif', ['non-aktif', 'aktif'])->default('aktif');
+            $table->tinyInteger('status_aktif')->default(1); // 0:non-aktif, 1:aktif, 2:selesai
             $table->timestamps();
         });
     }
