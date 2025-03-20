@@ -31,6 +31,16 @@ use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 
 // filepath: /c:/laragon/www/Backend-Port/routes/api.php
 
+//test api routes
+Route::apiResource('tugas-akhir', TugasAkhirController::class);
+Route::put('/admin/tugas-akhir/{id}', [TugasAkhirController::class, 'updateActiveStatus']);
+Route::apiResource('request-pembimbing', RequestPembimbingController::class);
+Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
+Route::post('/admin/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
+Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
+
+
+
 
 // route sanctum global
 Route::middleware('auth:sanctum')->group(function () {
@@ -38,12 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [UserController::class, 'logoutUser']);
 });
 
-//test api routes
-Route::apiResource('tugas-akhir', TugasAkhirController::class);
-Route::apiResource('request-pembimbing', RequestPembimbingController::class);
-Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
-Route::post('/admin/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
-Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
+
 
 
 Route::post('/register/mahasiswa', [AuthController::class, 'registerUser']);

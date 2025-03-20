@@ -35,8 +35,8 @@ class RequestPembimbingController extends Controller
 
             // Lazy eager loading
             $tugasAkhir = TugasAkhir::find($validatedData['tugas_akhir_id']);
-            if ($tugasAkhir && $tugasAkhir->status_aktif == 1) {
-                return ApiResponse::error('Mahasiswa already has an active TugasAkhir', 400);
+            if ($tugasAkhir->dosen_pembimbing_id != null) {
+                return ApiResponse::error('Mahasiswa already has an Pembimbing', 400);
             }
 
             $requestPembimbing = RequestPembimbing::create([

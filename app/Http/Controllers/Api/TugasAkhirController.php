@@ -19,4 +19,25 @@ class TugasAkhirController extends Controller
             return ApiResponse::error($e->getMessage(), 500);
         }
     }
+
+    public function updateActiveStatus(Request $request, $id)
+    {
+        // Validate the request
+        $request->validate([
+            'status_aktif' => 'required|in:0,2',
+        ]);
+
+        // Find the record by ID
+        $tugasAkhir = TugasAkhir::find($id);
+
+        if (!$tugasAkhir) {
+            return response()->json(['message' => 'Record not found'], 404);
+        }
+
+        // Update the status_active
+        $tugasAkhir->status_aktif = $request->input('status_aktif');
+        $tugasAkhir->save();
+
+        return response()->json(['message' => 'Status updated successfully'], 200);
+    }
 }
