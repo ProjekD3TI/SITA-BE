@@ -1,19 +1,22 @@
 <?php
 
 
-use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
-use App\Http\Controllers\Admin\AdminTa\AdminTaController;
-use App\Http\Controllers\Admin\Superadmin\SuperadminController;
-use App\Http\Controllers\Auth\AuthAdminController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Api\TugasAkhirController;
+use App\Http\Controllers\Auth\AuthAdminController;
 use App\Http\Controllers\Auth\AuthDosenController;
 use App\Http\Controllers\Dosens\Dosen\DosenController;
 use App\Http\Controllers\Dosens\Kalab\KalabController;
+use App\Http\Controllers\Mahasiswa\MahasiswaController;
+use App\Http\Controllers\Admin\AdminTa\AdminTaController;
+use App\Http\Controllers\Api\RequestPembimbingController;
 use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
-use App\Http\Controllers\Mahasiswa\MahasiswaController;
-use App\Http\Controllers\UserController;
-use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\Admin\Superadmin\SuperadminController;
+use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +37,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UserController::class, 'getUser']);
     Route::post('/logout', [UserController::class, 'logoutUser']);
 });
+
+//test api routes
+Route::apiResource('tugas-akhir', TugasAkhirController::class);
+Route::apiResource('request-pembimbing', RequestPembimbingController::class);
+Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
+Route::post('/admin/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
+Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
 
 
 Route::post('/register/mahasiswa', [AuthController::class, 'registerUser']);
@@ -56,6 +66,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/dashboard', [MahasiswaController::class, 'dashboard']);
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
+    Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
 });
 
 
