@@ -14,16 +14,16 @@ use App\Http\Resources\RequestPembimbingResource;
 
 class RequestPembimbingController extends Controller
 {
-    public function index()
-    {
-        try {
-            // Eager loading relationships
-            $requests = RequestPembimbing::with(['tugasAkhir', 'dosen'])->get();
-            return ApiResponse::success(RequestPembimbingResource::collection($requests));
-        } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
-        }
-    }
+    // public function index()
+    // {
+    //     try {
+    //         // Eager loading relationships
+    //         $requests = RequestPembimbing::with(['tugasAkhir', 'dosen'])->get();
+    //         return ApiResponse::success(RequestPembimbingResource::collection($requests));
+    //     } catch (Exception $e) {
+    //         return ApiResponse::error($e->getMessage(), 500);
+    //     }
+    // }
 
     public function getByDosen()  {
         $dosenId = Auth::user()->id;
@@ -144,20 +144,20 @@ class RequestPembimbingController extends Controller
         }
     }
 
-    public function destroy($id)
-    {
-        try {
-            $requestPembimbing = RequestPembimbing::find($id);
+    // public function destroy($id)
+    // {
+    //     try {
+    //         $requestPembimbing = RequestPembimbing::find($id);
 
-            if (!$requestPembimbing) {
-                return ApiResponse::error('Request not found', 404);
-            }
+    //         if (!$requestPembimbing) {
+    //             return ApiResponse::error('Request not found', 404);
+    //         }
 
-            $requestPembimbing->delete();
+    //         $requestPembimbing->delete();
 
-            return ApiResponse::success(null, 'Request deleted successfully');
-        } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
-        }
-    }
+    //         return ApiResponse::success(null, 'Request deleted successfully');
+    //     } catch (Exception $e) {
+    //         return ApiResponse::error($e->getMessage(), 500);
+    //     }
+    // }
 }

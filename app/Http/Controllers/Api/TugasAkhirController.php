@@ -22,26 +22,25 @@ class TugasAkhirController extends Controller
 
     public function updateActiveStatus(Request $request, $id)
     {
-        // Validate the request
         $request->validate([
-            'status_aktif' => 'required|in:0,2',
+            'status_aktif' => 'required|in:0,1,2',
         ]);
 
-        if ($request->input('status_aktif') == 1) {
-            return response()->json(['message' => 'Status cannot be set to 1'], 400);
-        }
+        // if ($request->input('status_aktif') == 1) {
+        //     return ApiResponse::error('Status cannot be set to 1', 400);
+        // }
 
         // Find the record by ID
         $tugasAkhir = TugasAkhir::find($id);
 
         if (!$tugasAkhir) {
-            return response()->json(['message' => 'Record not found'], 404);
+            return ApiResponse::error('Record not found', 404);
         }
 
         // Update the status_active
         $tugasAkhir->status_aktif = $request->input('status_aktif');
         $tugasAkhir->save();
 
-        return response()->json(['message' => 'Status updated successfully'], 200);
+        return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Status updated successfully');
     }
 }

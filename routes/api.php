@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\TugasAkhirController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\RuangController;
 use App\Http\Controllers\Api\SesiController;
+use App\Http\Controllers\Api\ProposalController;
 use App\Http\Controllers\Api\TahunAjaranController;
 
 /*
@@ -71,8 +72,14 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/dashboard', [MahasiswaController::class, 'dashboard']);
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
+
+    //request pembimbing
     Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
     Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
+
+    //proposal
+    Route::post('/mahasiswa/proposal/create', [ProposalController::class, 'store']);
+    Route::put('/mahasiswa/proposal/{id}', [ProposalController::class, 'update']);
 });
 
 
@@ -162,8 +169,14 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
         //Tugas-akhir
         Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'index']);
-        Route::post('/admin_ta/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'updateActiveStatus']);
+
+        //Plotting Pembimbing
+        Route::post('/admin_ta/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
+
+        //proposal
+        Route::get('/admin_ta/proposal', [ProposalController::class, 'index']);
+        Route::put('/admin_ta/proposal/{id}', [ProposalController::class, 'updateValidationStatus']);
 
         // Route Sesi
         Route::apiResource('/admin_ta/sesi', SesiController::class);

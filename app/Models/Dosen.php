@@ -12,7 +12,7 @@ class Dosen extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
     protected $table = 'dosen';
     protected $primaryKey = 'id';
-    protected $with = ['requestPembimbing', 'tugasAkhir',];
+    // protected $with = ['requestPembimbing', 'tugasAkhir',];
     protected $fillable = [
         'name',
         'email',

@@ -9,7 +9,7 @@ class TugasAkhir extends Model
 {
     use HasFactory;
     protected $table = "tugas_akhir";
-    protected $with = ['mahasiswa', 'dosenPembimbing', 'proposal', 'semester', 'tahunAjaran', 'ujianTA', 'dosenPenguji', 'requestPembimbing'];
+    // protected $with = ['mahasiswa', 'dosenPembimbing', 'proposal', 'semester', 'tahunAjaran', 'ujianTA', 'dosenPenguji', 'requestPembimbing'];
     protected $fillable = [
         'mahasiswa_id',
         'proposal_id',
