@@ -20,6 +20,7 @@ class User extends Authenticatable
     //Mahasiswa
     protected $table = 'mahasiswa';
     protected $primaryKey = 'id';
+    protected $with = 'tugasAkhir';
     protected $fillable = [
         'nim',
         'name',

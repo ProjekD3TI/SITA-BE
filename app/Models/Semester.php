@@ -10,6 +10,7 @@ class Semester extends Model
     use HasFactory;
 
     protected $table = 'semester';
+    protected $with = ['tugasAkhir', 'ujianTA'];
     protected $fillable = ['nama_semester'];
 
     public function tugasAkhir()

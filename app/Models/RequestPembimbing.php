@@ -9,6 +9,7 @@ class RequestPembimbing extends Model
 {
     use HasFactory;
     protected $table = 'request_pembimbing';
+    protected $with = ['tugaAkhir', 'dosen'];
     protected $fillable = [
         'tugas_akhir_id',
         'dosen_id',

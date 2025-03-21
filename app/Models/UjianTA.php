@@ -9,6 +9,7 @@ class UjianTA extends Model
 {
     use HasFactory;
     protected $table = 'ujian_ta';
+    protected $with = ['tugasAkhir', 'tahunAjaran', 'semester', 'ruang', 'sesi'];
     protected $fillable = [
         'tugas_akhir_id',
         'tanggal_ujian',
