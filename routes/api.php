@@ -31,13 +31,11 @@ use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 
 // filepath: /c:/laragon/www/Backend-Port/routes/api.php
 
-//test api routes
-Route::apiResource('tugas-akhir', TugasAkhirController::class);
-Route::put('/admin/tugas-akhir/{id}', [TugasAkhirController::class, 'updateActiveStatus']);
+//test api routes tugas-akhir
 Route::apiResource('request-pembimbing', RequestPembimbingController::class);
-Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
-Route::post('/admin/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
-Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
+
+
+
 
 
 
@@ -72,6 +70,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
     Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
+    Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
 });
 
 
@@ -91,6 +90,10 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 
     Route::get('/dosen/profil', [DosenController::class, 'getProfileDosen']);
     Route::put('/dosen/profil/edit', [DosenController::class, 'editProfileDosen']);
+
+    //Tugas-akhir
+    Route::get('/dosen/request-pembimbing/',[ RequestPembimbingController::class,'getByDosen']);
+    Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
 
 
     // Route Dosen Biasa
@@ -155,6 +158,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role:admin_ta'])->group(function () {
         //route laennya buat admin ta
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
+
+        //Tugas-akhir
+        Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'index']);
+        Route::post('/admin_ta/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
+        Route::put('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'updateActiveStatus']);
     });
 
     // Route Admin Pengelola (inventaris)

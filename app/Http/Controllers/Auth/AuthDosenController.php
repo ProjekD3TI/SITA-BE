@@ -20,51 +20,51 @@ class AuthDosenController extends Controller
             'email' => 'required|email',
             'password' => 'required',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
                 'message' => $validator->errors()
             ], 401);
         }
-    
+
         $dosen = Dosen::where('email', $request->email)->first();
-    
+
         if (!$dosen || !Hash::check($request->password, $dosen->password)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Email atau password salah'
             ], 401);
         }
-    
+
         if (!$dosen->status) {
             return response()->json([
                 'status' => false,
                 'message' => 'Akun anda tidak aktif'
             ], 401);
         }
-    
+
         // matiinn ke false dlu baru cari dosen dr tabel jabatan trus set ke true
-        JabatanDosen::where('dosen_id', $dosen->id)
-            ->update(['is_active' => false]);
-    
+        // JabatanDosen::where('dosen_id', $dosen->id)
+        //     ->update(['is_active' => false]);
+
         $jabatanDosen = JabatanDosen::with('jabatan')
             ->where('dosen_id', $dosen->id)
             ->whereHas('jabatan', function($query) {
-                $query->where('name', 'Dosen'); 
+                $query->where('name', 'Dosen');
             })
             ->first();
-    
+
         if (!$jabatanDosen) {
             return response()->json([
                 'status' => false,
                 'message' => 'Akun tidak memiliki akses sebagai Dosen'
             ], 401);
         }
-    
+
         $jabatanDosen->update(['is_active' => true]);
         $currentJabatan = $jabatanDosen->jabatan;
-    
+
         $availableJabatan = JabatanDosen::with('jabatan')
             ->where('dosen_id', $dosen->id)
             ->get()
@@ -75,9 +75,9 @@ class AuthDosenController extends Controller
                     'is_active' => $item->is_active
                 ];
             });
-    
+
         $token = $dosen->createToken('auth_token')->plainTextToken;
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Login berhasil',
@@ -111,7 +111,7 @@ class AuthDosenController extends Controller
         }
 
         $dosen = auth()->user();
-        
+
         $jabatanDosen = JabatanDosen::with('jabatan')
             ->where('dosen_id', $dosen->id)
             ->where('jabatan_id', $request->jabatan_id)
@@ -169,7 +169,7 @@ class AuthDosenController extends Controller
 
     public function getCurrentJabatan() {
         $dosen = auth()->user();
-        
+
         $currentJabatan = JabatanDosen::with('jabatan')
             ->where('dosen_id', $dosen->id)
             ->where('is_active', true)
@@ -224,7 +224,7 @@ class AuthDosenController extends Controller
     // public function logout()
     // {
     //     auth()->user()->tokens()->delete();
-        
+
     //     return response()->json([
     //         'status' => true,
     //         'message' => 'Logout berhasil'

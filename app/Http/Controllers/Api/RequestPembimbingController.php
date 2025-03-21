@@ -25,6 +25,19 @@ class RequestPembimbingController extends Controller
         }
     }
 
+    public function getByDosen()  {
+        $dosenId = Auth::user()->id;
+        try {
+            // Eager loading relationships
+            $requests = RequestPembimbing::with(['tugasAkhir', 'dosen'])
+                ->where('dosen_id', $dosenId)
+                ->get();
+            return ApiResponse::success(RequestPembimbingResource::collection($requests));
+        } catch (Exception $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        }
+    }
+
     public function storeByAdmin(Request $request)
     {
         try {

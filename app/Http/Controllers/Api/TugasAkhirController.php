@@ -27,6 +27,10 @@ class TugasAkhirController extends Controller
             'status_aktif' => 'required|in:0,2',
         ]);
 
+        if ($request->input('status_aktif') == 1) {
+            return response()->json(['message' => 'Status cannot be set to 1'], 400);
+        }
+
         // Find the record by ID
         $tugasAkhir = TugasAkhir::find($id);
 
