@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('semester', function (Blueprint $table) {
             $table->id();
-            $table->char('nama_semester', 1)->unique(); // A untuk ganjil, B untuk genap
+            $table->string('nama_semester', 30)->unique(); // A untuk ganjil, B untuk genap
             $table->timestamps();
         });
     }

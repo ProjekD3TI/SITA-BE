@@ -1,22 +1,24 @@
 <?php
 
-
+use App\Http\Controllers\Api\SemesterController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Api\TugasAkhirController;
+use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
+use App\Http\Controllers\Admin\AdminTa\AdminTaController;
+use App\Http\Controllers\Admin\Superadmin\SuperadminController;
 use App\Http\Controllers\Auth\AuthAdminController;
 use App\Http\Controllers\Auth\AuthDosenController;
 use App\Http\Controllers\Dosens\Dosen\DosenController;
 use App\Http\Controllers\Dosens\Kalab\KalabController;
 use App\Http\Controllers\Mahasiswa\MahasiswaController;
-use App\Http\Controllers\Admin\AdminTa\AdminTaController;
 use App\Http\Controllers\Api\RequestPembimbingController;
 use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
-
-use App\Http\Controllers\Admin\Superadmin\SuperadminController;
-use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
+use App\Http\Controllers\Api\TugasAkhirController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\RuangController;
+use App\Http\Controllers\Api\SesiController;
+use App\Http\Controllers\Api\TahunAjaranController;
 
 /*
 |--------------------------------------------------------------------------
@@ -156,13 +158,26 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     // Route Admin TA
     Route::middleware(['auth:sanctum', 'admin.role:admin_ta'])->group(function () {
-        //route laennya buat admin ta
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
 
         //Tugas-akhir
         Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'index']);
         Route::post('/admin_ta/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'updateActiveStatus']);
+
+        // Route Sesi
+        Route::apiResource('/admin_ta/sesi', SesiController::class);
+
+        // Route Ruang
+        Route::apiResource('/admin_ta/ruang', RuangController::class);
+
+        // Route Semester
+        Route::get('/admin_ta/semester', [SemesterController::class, 'index']);
+        Route::get('/admin_ta/semester/{id}', [SemesterController::class, 'show']);
+        Route::put('/admin_ta/semester/{id}', [SemesterController::class, 'update']);
+
+        // Route Tahun Ajaran
+        Route::apiResource('/admin_ta/tahun-ajaran', TahunAjaranController::class);
     });
 
     // Route Admin Pengelola (inventaris)

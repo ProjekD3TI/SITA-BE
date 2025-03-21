@@ -1,0 +1,94 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\TahunAjaranResource;
+use Illuminate\Http\Request;
+use App\Http\Responses\ApiResponse;
+use App\Models\TahunAjaran;
+use Illuminate\Validation\ValidationException;
+
+class TahunAjaranController extends Controller
+{
+    public function index()
+    {
+        try {
+            $tahunAjaran = TahunAjaran::all();
+            $data = TahunAjaranResource::collection($tahunAjaran);
+
+            return ApiResponse::success($data, 'Data tahun ajaran berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Gagal mengambil data ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function show($id)
+    {
+        try {
+            $tahunAjaran = TahunAjaran::findOrFail($id);
+            return ApiResponse::success(
+                new TahunAjaranResource($tahunAjaran),
+                "Detail tahun ajaran berhasil diambil"
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error("Data tahun ajaran tidak ditemukan " . $e->getMessage(), 404);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'tahun_ajaran' => 'required|string|max:10'
+            ]);
+
+            $tahunAjaran = TahunAjaran::create($validated);
+            return ApiResponse::success(
+                new TahunAjaran($tahunAjaran),
+                'Tahun ajaran berhasil ditambahkan',
+                201
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data tahun ajaran gagal ditambahkan ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $tahunAjaran = TahunAjaran::findOrFail($id);
+            $validated = $request->validate(rules: [
+                'tahun_ajaran' => 'required|string|max:10'
+            ]);
+
+            $tahunAjaran->update($validated);
+            return ApiResponse::success(
+                new TahunAjaranResource($tahunAjaran),
+                'Data tahun ajaran berhasil diubah',
+                201
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data tahun ajaran gagal diubah ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $tahunAjaran = TahunAjaran::findOrFail($id);
+            $tahunAjaran->delete();
+
+            return ApiResponse::success(
+                null,
+                'Data tahun ajaran berhasil dihapus'
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data tahun ajaran gagal dihapus ' . $e->getMessage(), 500);
+        }
+    }
+}

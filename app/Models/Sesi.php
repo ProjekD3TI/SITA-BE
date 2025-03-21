@@ -10,7 +10,7 @@ class Sesi extends Model
     use HasFactory;
 
     protected $table = 'sesi';
-    protected $fillable = ['waktu_mulai', 'waktu_selesai'];
+    protected $fillable = ['nama_sesi', 'waktu_mulai', 'waktu_selesai'];
 
     public function ujianTA()
     {

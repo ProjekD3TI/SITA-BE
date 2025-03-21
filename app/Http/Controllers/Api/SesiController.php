@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\SesiResource;
+use Illuminate\Http\Request;
+use App\Http\Responses\ApiResponse;
+use App\Models\Sesi;
+use Illuminate\Validation\ValidationException;
+class SesiController extends Controller
+{
+    public function index()
+    {
+        try {
+            $sesi = Sesi::all();
+            $data = SesiResource::collection($sesi);
+            return ApiResponse::success($data, 'Data Sesi Berhasil Diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Gagal mengambil data ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function show($id)
+    {
+        try {
+            $sesi = Sesi::findOrFail($id);
+            return ApiResponse::success(
+                new SesiResource($sesi),
+                'Detail sesi berhasil diambil'
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data sesi tidak ditemukan ' . $e->getMessage(), 404);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nama_sesi' => 'required|string|max:50',
+                'waktu_mulai' => 'required',
+                'waktu_selesai' => 'required|after:waktu_mulai',
+            ]);
+            $sesi = Sesi::create($validated);
+            return ApiResponse::success(
+                new SesiResource($sesi),
+                'Sesi berhasil ditambahkan',
+                201
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data sesi gagal ditambahkan ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $sesi = Sesi::findOrFail($id);
+            $validated = $request->validate([
+                'nama_sesi' => 'required|string|max:50',
+                'waktu_mulai' => 'required',
+                'waktu_selesai' => 'required|after:waktu_mulai',
+            ]);
+
+            $sesi->update($validated);
+            return ApiResponse::success(
+                new SesiResource($sesi),
+                'Data sesi berhasil diubah',
+                201
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data sesi gagal diubah ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $sesi = Sesi::findOrFail($id);
+            $sesi->delete();
+
+            return ApiResponse::success(
+                null,
+                'Data sesi berhasil dihapus'
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data sesi gagal dihapus ' . $e->getMessage(), 500);
+        }
+    }
+}

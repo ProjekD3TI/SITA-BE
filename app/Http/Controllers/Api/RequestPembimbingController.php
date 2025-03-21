@@ -125,8 +125,8 @@ class RequestPembimbingController extends Controller
             ]);
 
             $requestPembimbing->update([
-               'status_request' => $validatedData['status_request'],
-               'tanggal_respon' => Carbon::now(),
+                'status_request' => $validatedData['status_request'],
+                'tanggal_respon' => Carbon::now(),
             ]);
 
             // Update dosen_pembimbing_id in TugasAkhir if status_request is 1
