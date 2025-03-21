@@ -74,7 +74,7 @@ class SesiController extends Controller
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal' . $e->getMessage(), 422);
         } catch (\Exception $e) {
-            return ApiResponse::error('Data sesi gagal diubah' . $e->getMessage(), 500);
+            return ApiResponse::error('Data sesi gagal diubah ' . $e->getMessage(), 500);
         }
     }
 
@@ -89,7 +89,7 @@ class SesiController extends Controller
                 'Data sesi berhasil dihapus'
             );
         } catch (\Exception $e) {
-            return ApiResponse::error('Data sesi gagal dihapus' . $e->getMessage(), 500);
+            return ApiResponse::error('Data sesi gagal dihapus ' . $e->getMessage(), 500);
         }
     }
 }

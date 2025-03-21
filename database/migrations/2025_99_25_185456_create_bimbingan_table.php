@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->foreignId('tugas_akhir_id')->constrained('tugas_akhir')->onDelete('restrict');
             $table->text('catatan')->nullable();
             $table->tinyInteger('status_verifikasi')->default(0); // 0: Belum diverifikasi, 1: Diverifikasi, 2: Ditolak
+            $table->date('tanggal_bimbingan')->nullable();
             $table->timestamps();
         });
     }

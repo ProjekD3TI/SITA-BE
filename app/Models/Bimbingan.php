@@ -13,6 +13,7 @@ class Bimbingan extends Model
         'tugas_akhir_id',
         'catatan',
         'status_verifikasi',
+        'tanggal_bimbingan'
     ];
 
     public function tugasAkhir()
