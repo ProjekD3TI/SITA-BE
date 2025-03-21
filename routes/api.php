@@ -4,6 +4,8 @@
 use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 use App\Http\Controllers\Admin\AdminTa\AdminTaController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminController;
+use App\Http\Controllers\Api\RuangController;
+use App\Http\Controllers\Api\SesiController;
 use App\Http\Controllers\Auth\AuthAdminController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\AuthDosenController;
@@ -139,6 +141,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role:admin_ta'])->group(function () {
         //route laennya buat admin ta
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
+        Route::apiResource('/admin_ta/sesi', SesiController::class);
+        Route::apiResource('/admin_ta/ruang', RuangController::class);
     });
 
     // Route Admin Pengelola (inventaris)
