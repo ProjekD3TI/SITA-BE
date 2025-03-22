@@ -21,6 +21,8 @@ class ProposalResource extends JsonResource
             'file_transkrip' => $this->file_transkrip,
             'status_proposal' => $this->status_proposal,
             'tanggal_unggah' => $this->tanggal_unggah,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at
         ];
     }
 }

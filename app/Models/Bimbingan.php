@@ -11,6 +11,7 @@ class Bimbingan extends Model
     protected $table = 'bimbingan';
     protected $with = 'tugasAkhir';
     protected $fillable = [
+        'dosen_pembimbing_id',
         'tugas_akhir_id',
         'catatan',
         'status_verifikasi',
@@ -21,4 +22,11 @@ class Bimbingan extends Model
     {
         return $this->belongsTo(TugasAkhir::class, 'tugas_akhir_id', 'id');
     }
+
+    public function dosenPembimbing()
+    {
+        return $this->belongsTo(Dosen::class, 'dosen_pembimbing_id', 'id');
+    }
+
+
 }

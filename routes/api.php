@@ -75,11 +75,15 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     //request pembimbing
     Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
-    Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
 
     //proposal
     Route::post('/mahasiswa/proposal/create', [ProposalController::class, 'store']);
     Route::put('/mahasiswa/proposal/{id}', [ProposalController::class, 'update']);
+
+    // Bimbingan
+    Route::get('/mahasiswa/bimbingan', [TugasAkhirController::class, 'getBimbinganByMahasiswa']);
+    Route::post('/mahasiswa/bimbingan/create', [TugasAkhirController::class, 'storeBimbinganByMahasiswa']);
+
 });
 
 
@@ -100,9 +104,12 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::get('/dosen/profil', [DosenController::class, 'getProfileDosen']);
     Route::put('/dosen/profil/edit', [DosenController::class, 'editProfileDosen']);
 
-    //Tugas-akhir
-    Route::get('/dosen/request-pembimbing/',[ RequestPembimbingController::class,'getByDosen']);
+    // Tugas-akhir (Request Pembimbing)
+    Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'getByDosen']);
     Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
+    // TugasAkhir (Bimbingan)
+    Route::get('/dosen/bimbingan/', [TugasAkhirController::class, 'getBimbinganByDosen']);
+    Route::put('/dosen/bimbingan/{id}', [TugasAkhirController::class, 'updateVerifikasiBimbinganByDosen']);
 
 
     // Route Dosen Biasa
