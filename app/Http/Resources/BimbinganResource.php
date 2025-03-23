@@ -16,11 +16,11 @@ class BimbinganResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'dosen_pembimbing_id' => $this->dosen_pembiming_id,
+            // 'dosen_pembimbing_id' => $this->dosen_pembiming_id,
             'tugas_akhir_id' => $this->tugas_akhir_id,
             'catatan' => $this->catatan,
             'status_verifikasi' => $this->status_verifikasi,
-            'tanggal_bimbingan' => $this->tanggal_bimbingan,
+            // 'tanggal_bimbingan' => $this->tanggal_bimbingan,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];

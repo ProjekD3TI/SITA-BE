@@ -1,25 +1,28 @@
 <?php
 
-use App\Http\Controllers\Api\SemesterController;
+use App\Models\Bimbingan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\SesiController;
+use App\Http\Controllers\Api\RuangController;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
-use App\Http\Controllers\Admin\AdminTa\AdminTaController;
-use App\Http\Controllers\Admin\Superadmin\SuperadminController;
+use App\Http\Controllers\Api\ProposalController;
+use App\Http\Controllers\Api\SemesterController;
+use App\Http\Controllers\Api\BimbinganController;
+use App\Http\Controllers\Api\TugasAkhirController;
 use App\Http\Controllers\Auth\AuthAdminController;
 use App\Http\Controllers\Auth\AuthDosenController;
+use App\Http\Controllers\Api\TahunAjaranController;
+use App\Http\Controllers\Api\DosenPengujiController;
 use App\Http\Controllers\Dosens\Dosen\DosenController;
 use App\Http\Controllers\Dosens\Kalab\KalabController;
 use App\Http\Controllers\Mahasiswa\MahasiswaController;
+use App\Http\Controllers\Admin\AdminTa\AdminTaController;
 use App\Http\Controllers\Api\RequestPembimbingController;
 use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
-use App\Http\Controllers\Api\TugasAkhirController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\Api\RuangController;
-use App\Http\Controllers\Api\SesiController;
-use App\Http\Controllers\Api\ProposalController;
-use App\Http\Controllers\Api\TahunAjaranController;
+use App\Http\Controllers\Admin\Superadmin\SuperadminController;
+use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,7 +38,7 @@ use App\Http\Controllers\Api\TahunAjaranController;
 // filepath: /c:/laragon/www/Backend-Port/routes/api.php
 
 //test api routes tugas-akhir
-Route::apiResource('request-pembimbing', RequestPembimbingController::class);
+// Route::apiResource('request-pembimbing', RequestPembimbingController::class);
 
 
 
@@ -81,8 +84,8 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::put('/mahasiswa/proposal/{id}', [ProposalController::class, 'update']);
 
     // Bimbingan
-    Route::get('/mahasiswa/bimbingan', [TugasAkhirController::class, 'getBimbinganByMahasiswa']);
-    Route::post('/mahasiswa/bimbingan/create', [TugasAkhirController::class, 'storeBimbinganByMahasiswa']);
+    Route::get('/mahasiswa/bimbingan', [BimbinganController::class, 'getBimbinganByMahasiswa']);
+    Route::post('/mahasiswa/bimbingan/create', [BimbinganController::class, 'storeBimbinganByMahasiswa']);
 
 });
 
@@ -107,9 +110,10 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Tugas-akhir (Request Pembimbing)
     Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'getByDosen']);
     Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
+
     // TugasAkhir (Bimbingan)
-    Route::get('/dosen/bimbingan/', [TugasAkhirController::class, 'getBimbinganByDosen']);
-    Route::put('/dosen/bimbingan/{id}', [TugasAkhirController::class, 'updateVerifikasiBimbinganByDosen']);
+    Route::get('/dosen/bimbingan/', [BimbinganController::class, 'getBimbinganByDosen']);
+    Route::put('/dosen/bimbingan/{id}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
 
 
     // Route Dosen Biasa
@@ -185,6 +189,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/proposal', [ProposalController::class, 'index']);
         Route::put('/admin_ta/proposal/{id}', [ProposalController::class, 'updateValidationStatus']);
 
+        //plotting penguji
+        Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTA']);
+        Route::post('/admin_ta/dosen-penguji/create', [DosenPengujiController::class, 'store']);
+
         // Route Sesi
         Route::apiResource('/admin_ta/sesi', SesiController::class);
 
@@ -198,6 +206,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
         // Route Tahun Ajaran
         Route::apiResource('/admin_ta/tahun-ajaran', TahunAjaranController::class);
+
     });
 
     // Route Admin Pengelola (inventaris)

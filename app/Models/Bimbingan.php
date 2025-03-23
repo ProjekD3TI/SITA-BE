@@ -11,11 +11,11 @@ class Bimbingan extends Model
     protected $table = 'bimbingan';
     protected $with = 'tugasAkhir';
     protected $fillable = [
-        'dosen_pembimbing_id',
+        // 'dosen_pembimbing_id',
         'tugas_akhir_id',
         'catatan',
         'status_verifikasi',
-        'tanggal_bimbingan'
+        // 'tanggal_bimbingan'
     ];
 
     public function tugasAkhir()
