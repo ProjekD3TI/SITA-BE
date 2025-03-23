@@ -41,14 +41,17 @@ class ProposalController extends Controller
                 return ApiResponse::error('Mahasiswa tidak memiliki tugas akhir yang aktif', 400);
             }
 
+            // Check if the active TugasAkhir already has a proposal
+            if ($tugasAkhir->proposal_id) {
+                return ApiResponse::error('Tugas Akhir yang aktif sudah memiliki proposal', 400);
+            }
+
             // Create a new proposal record
             $proposal = Proposal::create([
                 'judul_proposal' => $validatedData['judul_proposal'],
                 'file_proposal' => $request->file('file_proposal')->store('proposals'),
                 'file_transkrip' => $request->file('file_transkrip')->store('proposals'),
             ]);
-
-
 
             return ApiResponse::success(new ProposalResource($proposal), 'Proposal berhasil dibuat');
         } catch (Exception $e) {

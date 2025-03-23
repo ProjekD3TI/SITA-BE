@@ -25,6 +25,7 @@ class RequestPembimbingController extends Controller
     //     }
     // }
 
+
     public function getByDosen()  {
         $dosenId = Auth::user()->id;
         try {
@@ -117,6 +118,12 @@ class RequestPembimbingController extends Controller
 
             if (!$requestPembimbing) {
                 return ApiResponse::error('Request not found', 404);
+            }
+
+            // Check if the logged-in user is the dosen assigned to this request
+            $dosenId = Auth::user()->id;
+            if ($requestPembimbing->dosen_id != $dosenId) {
+                return ApiResponse::error('Unauthorized', 403);
             }
 
             $validatedData = $request->validate([
