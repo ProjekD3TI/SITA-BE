@@ -10,6 +10,7 @@ use App\Models\TugasAkhir;
 use App\Http\Resources\ProposalResource;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ProposalController extends Controller
 {
@@ -33,7 +34,7 @@ class ProposalController extends Controller
             ]);
 
             // Check if the student has an active TugasAkhir
-            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $request->user()->id)
+            $tugasAkhir = TugasAkhir::with(['proposal'])->where('mahasiswa_id', $request->user()->id)
                                     ->where('status_aktif', 1)
                                     ->first();
 
@@ -53,23 +54,24 @@ class ProposalController extends Controller
                 'file_transkrip' => $request->file('file_transkrip')->store('proposals'),
             ]);
 
-            return ApiResponse::success(new ProposalResource($proposal), 'Proposal berhasil dibuat');
+            return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir')), 'Proposal berhasil dibuat');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
     }
 
     public function update(Request $request, $id)
     {
         try {
-
             $validatedData = $request->validate([
                 'judul_proposal' => 'required|string',
                 'file_proposal' => 'nullable|file|mimes:pdf',
                 'file_transkrip' => 'nullable|file|mimes:pdf',
             ]);
 
-            $proposal = Proposal::findOrFail($id);
+            $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
 
             if ($request->hasFile('file_proposal')) {
                 $proposal->file_proposal = $request->file('file_proposal')->store('proposals');
@@ -82,41 +84,45 @@ class ProposalController extends Controller
             $proposal->judul_proposal = $validatedData['judul_proposal'];
             $proposal->save();
 
-            return ApiResponse::success(new ProposalResource($proposal), 'Proposal berhasil diubah');
+            return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir')), 'Proposal berhasil diubah');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
     }
 
     public function updateValidationStatus(Request $request, $id)
-{
-    try {
-        // Validate the request
-        $validatedData = $request->validate([
-            'status_proposal' => 'required|in:1,2',
-        ]);
+    {
+        try {
+            // Validate the request
+            $validatedData = $request->validate([
+                'status_proposal' => 'required|in:1,2',
+            ]);
 
-        // Find the proposal by ID
-        $proposal = Proposal::findOrFail($id);
+            // Find the proposal by ID with eager loading
+            $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
 
-        // Update the status_proposal
-        $proposal->status_proposal = $validatedData['status_proposal'];
-        $proposal->save();
+            // Update the status_proposal
+            $proposal->status_proposal = $validatedData['status_proposal'];
+            $proposal->save();
 
-        // Check if the student has an active TugasAkhir
-        $tugasAkhir = TugasAkhir::where('mahasiswa_id', $request->user()->id)
-                                ->where('status_aktif', 1)
-                                ->first();
+            // Check if the student has an active TugasAkhir
+            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $request->user()->id)
+                                    ->where('status_aktif', 1)
+                                    ->first();
 
-        // If status_proposal is 1 (accepted), update the TugasAkhir with the proposal_id
-        if ($validatedData['status_proposal'] == 1) {
-            $tugasAkhir->proposal_id = $proposal->id;
-            $tugasAkhir->save();
+            // If status_proposal is 1 (accepted), update the TugasAkhir with the proposal_id
+            if ($validatedData['status_proposal'] == 1) {
+                $tugasAkhir->proposal_id = $proposal->id;
+                $tugasAkhir->save();
+            }
+
+            return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir')), 'Status proposal berhasil diperbarui');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
-
-        return ApiResponse::success(new ProposalResource($proposal), 'Status proposal berhasil diperbarui');
-    } catch (Exception $e) {
-        return ApiResponse::error($e->getMessage(), 500);
     }
-}
 }

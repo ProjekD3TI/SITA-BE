@@ -14,6 +14,13 @@ class DosenPengujiResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'dosen_id' => $this->dosen_id,
+            'tugas_akhir_id' => $this->tugas_akhir_id,
+            'revisi' => $this->revisi,
+            'catatan_semhas' => $this->catatan_semhas,
+            'nilai_ujian_ta' => $this->nilai_ujian_ta,
+        ];
     }
 }
