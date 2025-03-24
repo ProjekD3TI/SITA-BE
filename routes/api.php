@@ -107,11 +107,11 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::get('/dosen/profil', [DosenController::class, 'getProfileDosen']);
     Route::put('/dosen/profil/edit', [DosenController::class, 'editProfileDosen']);
 
-    // Tugas-akhir (Request Pembimbing)
+    // Sistem Tugas-akhir (Request Pembimbing)
     Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'getByDosen']);
     Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
 
-    // TugasAkhir (Bimbingan)
+    // Sistem TugasAkhir (Bimbingan)
     Route::get('/dosen/bimbingan/', [BimbinganController::class, 'getBimbinganByDosen']);
     Route::put('/dosen/bimbingan/{id}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
 
@@ -178,18 +178,18 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role:admin_ta'])->group(function () {
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
 
-        //Tugas-akhir
+        // Tugas-akhir
         Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'index']);
         Route::put('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'updateActiveStatus']);
 
-        //Plotting Pembimbing
+        // Plotting Pembimbing
         Route::post('/admin_ta/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
 
-        //proposal
+        // Route proposal
         Route::get('/admin_ta/proposal', [ProposalController::class, 'index']);
         Route::put('/admin_ta/proposal/{id}', [ProposalController::class, 'updateValidationStatus']);
 
-        //plotting penguji
+        // Plotting penguji
         Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTA']);
         Route::post('/admin_ta/dosen-penguji/create', [DosenPengujiController::class, 'store']);
 

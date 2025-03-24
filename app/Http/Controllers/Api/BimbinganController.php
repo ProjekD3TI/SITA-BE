@@ -2,98 +2,77 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Resources\BimbinganResource;
-use Illuminate\Http\Request;
-use App\Http\Responses\ApiResponse;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Bimbingan;
 use App\Models\TugasAkhir;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
+use App\Http\Resources\BimbinganResource;
+
 class BimbinganController extends Controller
 {
 
-    public function getBimbinganByDosen()
+    public function getTugasAkhirByDosen()
     {
         $dosenId = Auth::id();
 
         try {
-            // Retrieve TugasAkhir records where dosen_pembimbing_id matches the authenticated dosen's ID
-            $tugasAkhirIds = TugasAkhir::where('dosen_pembimbing_id', $dosenId)->pluck('id');
+            // Mencari kumpulan Id TugasAkhir yang memiliki dosen_pembimbing_id yang sama dengan dosenId (dosen yang sedang login)
+            $daftarTugasAkhir = TugasAkhir::where('dosen_pembimbing_id', $dosenId);
 
-            // Retrieve Bimbingan records where tugas_akhir_id is in the retrieved TugasAkhir IDs
+            return ApiResponse::success($daftarTugasAkhir, 'Data tugas akhir berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data tugas akhir gagal diambil ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function getBimbinganByTugasAkhir($tugasAkhirId)
+    {
+        try {
+            // Mengambil data bimbingan berdasarkan tugas akhir yang dipilih dosen
             $bimbingan = Bimbingan::with(['tugasAkhir', 'dosenPembimbing'])
-                ->whereIn('tugas_akhir_id', $tugasAkhirIds)
+                ->where('tugas_akhir_id', $tugasAkhirId)
                 ->get();
 
-            // $bimbingan = Bimbingan::with(['tugasAkhir', 'dosenPembimbing'])
-            //     ->where('dosen_pembimbing_id', $dosenId)
-            //     ->get();
-
-            $data = BimbinganResource::collection($bimbingan);
-
-            return ApiResponse::success($data, 'Data bimbingan berhasil diambil');
+            return ApiResponse::success(BimbinganResource::collection($bimbingan), 'Data bimbingan berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data bimbingan gagal diambil ' . $e->getMessage(), 500);
         }
     }
 
     public function updateVerifikasiBimbinganByDosen(Request $request, $id)
-{
-    $dosenId = Auth::id();
+    {
+        $dosenId = Auth::id();
 
-    try {
-        // Find the Bimbingan record where the dosen_pembimbing_id matches the authenticated dosen's ID and the Bimbingan ID matches the provided ID
-        $bimbingan = Bimbingan::whereHas('tugasAkhir', function ($query) use ($dosenId) {
-            $query->where('dosen_pembimbing_id', $dosenId);
-        })->where('id', $id)->firstOrFail();
+        try {
 
-        // Validate the request
-        $validated = $request->validate([
-            'status_verifikasi' => 'required|integer',
-        ]);
+            $validated = $request->validate([
+                'status_verifikasi' => 'required|integer|in:0,1,2',
+            ]);
 
-        // Update the Bimbingan record with the validated data
-        $bimbingan->update($validated);
+            // Mencari data bimbingan berdasarkan id yang dipilih dosen
+            $bimbingan = Bimbingan::whereHas(
+                'tugasAkhir',
+                function ($query) use ($dosenId) {
+                    $query->where('dosen_pembimbing_id', $dosenId);
+                }
+            )->where('id', $id)->firstOrFail();
 
-        // Return a success response with the updated Bimbingan resource
-        return ApiResponse::success(
-            new BimbinganResource($bimbingan->load(['tugasAkhir', 'dosenPembimbing'])),
-            'Status verifikasi berhasil diubah'
-        );
-    } catch (ValidationException $e) {
-        // Return a validation error response
-        return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
-    } catch (\Exception $e) {
-        // Return a general error response
-        return ApiResponse::error('Status verifikasi gagal diubah ' . $e->getMessage(), 500);
+
+            $bimbingan->update($validated);
+
+            return ApiResponse::success(
+                new BimbinganResource($bimbingan->load(['tugasAkhir', 'dosenPembimbing'])),
+                'Status verifikasi berhasil diubah'
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Status verifikasi gagal diubah ' . $e->getMessage(), 500);
+        }
     }
-}
-
-    // public function updateVerifikasiBimbinganByDosen(Request $request, $id)
-    // {
-    //     $dosenId = Auth::id();
-
-    //     try {
-    //         $bimbingan = Bimbingan::where('dosen_pembimbing_id', $dosenId)
-    //             ->where('id', $id)
-    //             ->firstOrFail();
-
-    //         $validated = $request->validate([
-    //             'status_verifikasi' => 'required|integer',
-    //         ]);
-
-    //         $bimbingan->update($validated);
-    //         return ApiResponse::success(
-    //             new BimbinganResource($bimbingan->load(['tugasAkhir', 'dosenPembimbing'])),
-    //             'Status verifikasi berhasil diubah'
-    //         );
-    //     } catch (ValidationException $e) {
-    //         return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
-    //     } catch (\Exception $e) {
-    //         return ApiResponse::error('Status verifikasi gagal diubah ' . $e->getMessage(), 500);
-    //     }
-    // }
 
     public function getBimbinganByMahasiswa()
     {
@@ -126,31 +105,26 @@ class BimbinganController extends Controller
             $mahasiswa = Auth::id();
             $validated = $request->validate([
                 'catatan' => 'required|string',
-                // 'tanggal_bimbingan' => 'required|date'
+                'tanggal_bimbingan' => 'required|date'
             ]);
 
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
                 ->where('status_aktif', 1)
-                ->first();
+                ->firstOrFail();
 
-            if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
-            }
-
-            // Check if there is any previous Bimbingan with status_verifikasi = 0
+            // Cek apakah ada bimbingan sebelumnya yang belum diverifikasi
             $previousBimbingan = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
-            ->where('status_verifikasi', 0)
-            ->first();
+                ->where('status_verifikasi', 0)
+                ->exists();
 
             if ($previousBimbingan) {
                 return ApiResponse::error('Tidak dapat membuat bimbingan baru karena bimbingan sebelumnya belum diverifikasi', 400);
             }
 
             $bimbingan = Bimbingan::create([
-                // 'dosen_pembimbing_id' => $tugasAkhir->dosen_pembimbing_id,
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'catatan' => $validated['catatan'],
-                // 'tanggal_bimbingan' => $validated['tanggal_bimbingan']
+                'tanggal_bimbingan' => $validated['tanggal_bimbingan']
             ]);
 
             return ApiResponse::success(

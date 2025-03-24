@@ -59,10 +59,5 @@ class Dosen extends Authenticatable
         return $this->hasMany(RequestPembimbing::class);
     }
 
-    public function bimbingan()
-    {
-        return $this->hasMany(Bimbingan::class);
-    }
-
 }
 
