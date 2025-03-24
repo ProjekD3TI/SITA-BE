@@ -11,6 +11,8 @@ use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\RequestPembimbingResource;
+use Illuminate\Validation\ValidationException;
+
 
 class RequestPembimbingController extends Controller
 {
@@ -48,7 +50,7 @@ class RequestPembimbingController extends Controller
             ]);
 
             // Lazy eager loading
-            $tugasAkhir = TugasAkhir::find($validatedData['tugas_akhir_id']);
+            $tugasAkhir = TugasAkhir::with(['proposal'])->find($validatedData['tugas_akhir_id']);
             if ($tugasAkhir->dosen_pembimbing_id != null) {
                 return ApiResponse::error('Mahasiswa already has an Pembimbing', 400);
             }
@@ -67,8 +69,10 @@ class RequestPembimbingController extends Controller
             }
 
             return ApiResponse::success(new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')), 'Request and Tugas Akhir created successfully', 201);
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
     }
 
@@ -106,15 +110,17 @@ class RequestPembimbingController extends Controller
             ]);
 
             return ApiResponse::success(new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')), 'Request and Tugas Akhir created successfully', 201);
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
     }
 
     public function updateApprovalDosen(Request $request, $id)
     {
         try {
-            $requestPembimbing = RequestPembimbing::find($id);
+            $requestPembimbing = RequestPembimbing::with(['tugasAkhir', 'dosen'])->find($id);
 
             if (!$requestPembimbing) {
                 return ApiResponse::error('Request not found', 404);
@@ -146,8 +152,10 @@ class RequestPembimbingController extends Controller
             }
 
             return ApiResponse::success(new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')), 'Request updated successfully');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
     }
 
