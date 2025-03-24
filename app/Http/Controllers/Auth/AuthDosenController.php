@@ -86,7 +86,8 @@ class AuthDosenController extends Controller
                     'id' => $dosen->id,
                     'name' => $dosen->name,
                     'email' => $dosen->email,
-                    'nik' => $dosen->nik
+                    'nik' => $dosen->nik,
+                    'no_telp' => $dosen->no_telp
                 ],
                 'jabatan_sekarang' => [
                     'id' => $currentJabatan->id,
@@ -214,7 +215,8 @@ class AuthDosenController extends Controller
                     'id' => $dosen->id,
                     'name' => $dosen->name,
                     'email' => $dosen->email,
-                    'nik' => $dosen->nik
+                    'nik' => $dosen->nik,
+                    'no_telp' => $dosen->no_telp
                 ],
                 'punya_jabatan' => $availableJabatan
             ]
