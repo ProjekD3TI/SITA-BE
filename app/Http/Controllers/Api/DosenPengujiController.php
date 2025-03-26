@@ -14,16 +14,19 @@ use App\Http\Resources\DosenPengujiResource;
 
 class DosenPengujiController extends Controller
 {
-    public function getReadyTA() {
+    public function getReadyTA()
+    {
         try {
-            // Eager load the 'bimbingan' relationship and filter TugasAkhir with bimbingan count >= 9 where status_verifikasi = 1
-            $requests = TugasAkhir::withCount(['bimbingan' => function ($query) {
-                $query->where('status_verifikasi', 1);
-            }])
-            ->having('bimbingan_count', '>=', 9)
-            ->get();
+            // Cek list tugas akhir yang sudah memiliki minimal 9 bimbingan yang sudah diverifikasi (bisa lanjut ke semhas & ta)
+            $listTugasAkhir = TugasAkhir::withCount([
+                'bimbingan' => function ($query) {
+                    $query->where('status_verifikasi', 1);
+                }
+            ])
+                ->having('bimbingan_count', '>=', 9)
+                ->paginate(10);
 
-            return ApiResponse::success(TugasAkhirResource::collection($requests));
+            return ApiResponse::success(TugasAkhirResource::collection($listTugasAkhir));
         } catch (Exception $e) {
             return ApiResponse::error($e->getMessage(), 500);
         }
@@ -34,31 +37,31 @@ class DosenPengujiController extends Controller
         try {
             $request->validate([
                 'list_dosen_id' => 'required|array|size:3',
-                'list_dosen_id.*' => 'required|exists:dosens,id',
-                'tugas_akhir_id' => 'required|exists:tugas_akhirs,id',
+                'list_dosen_id.*' => 'required|exists:dosen,id',
+                'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
             ], [
                 'list_dosen_id.size' => 'Exactly 3 dosen must be provided.',
             ]);
 
-            $tugasAkhir = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->find($request->tugas_akhir_id);
+            $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
 
-            // Check if the number of DosenPenguji for the TugasAkhir is less than 3
-            if ($tugasAkhir->dosenPenguji()->count() >= 3) {
-                return ApiResponse::error('Maximum of 3 DosenPenguji allowed for this TugasAkhir', 400);
+            // Cek apakah jumlah dosen penguji lebih dari 3 langsung dari database DosenPenguji agar lebih efisien (tidak perlu melakukan query lagi)
+            if (DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)->count() >= 3) {
+                return ApiResponse::error('Maksimal 3 dosen penguji untuk tugas akhir ini!', 400);
             }
 
-            // Ensure that one of the list_dosen_id is the DosenPembimbing
+            // Memastikan salah satu dosen yang dipilih adalah Dosen Pembimbing
             if (!in_array($tugasAkhir->dosen_pembimbing_id, $request->list_dosen_id)) {
-                return ApiResponse::error('One of the DosenPenguji must be the DosenPembimbing', 400);
+                return ApiResponse::error('Salah satu dosen penguji harus dari dosen pembimbing', 400);
             }
 
-            // Check if any of the dosen_id already exists as DosenPenguji for the given TugasAkhir
-            $existingDosenPenguji = DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)
+            // Cek apakah dosen yang dipilih sudah ada sebagai dosen penguji di tugas akhir yang sama
+            $cekDosenPenguji = DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)
                 ->whereIn('dosen_id', $request->list_dosen_id)
                 ->exists();
 
-            if ($existingDosenPenguji) {
-                return ApiResponse::error('One or more of the selected dosen are already assigned as DosenPenguji for this TugasAkhir', 400);
+            if ($cekDosenPenguji) {
+                return ApiResponse::error('Dosen yang anda pilih sudah ada di tugas akhir ini', 400);
             }
 
             $dosenPengujiData = [];
@@ -76,11 +79,11 @@ class DosenPengujiController extends Controller
 
             $dosenPenguji = DosenPenguji::with(['tugasAkhir', 'dosen'])->where('tugas_akhir_id', $request->tugas_akhir_id)->get();
 
-            return ApiResponse::success(DosenPengujiResource::collection($dosenPenguji), 'DosenPenguji created successfully', 201);
+            return ApiResponse::success(DosenPengujiResource::collection($dosenPenguji), 'Dosen penguji berhasil ditambahkan', 201);
         } catch (ValidationException $e) {
-            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
+            return ApiResponse::error('Data sesi gagal ditambahkan: ' . $e->getMessage(), 500);
         }
     }
 }
