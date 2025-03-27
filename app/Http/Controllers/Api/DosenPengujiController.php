@@ -40,7 +40,7 @@ class DosenPengujiController extends Controller
                 'list_dosen_id.*' => 'required|exists:dosen,id',
                 'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
             ], [
-                'list_dosen_id.size' => 'Exactly 3 dosen must be provided.',
+                'list_dosen_id.size' => 'Harus 3 dosen penguji',
             ]);
 
             $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
@@ -69,7 +69,6 @@ class DosenPengujiController extends Controller
                 $dosenPengujiData[] = [
                     'dosen_id' => $dosenId,
                     'tugas_akhir_id' => $request->tugas_akhir_id,
-                    'is_dosen_pembimbing' => $dosenId == $tugasAkhir->dosen_pembimbing_id,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -77,9 +76,14 @@ class DosenPengujiController extends Controller
 
             DosenPenguji::insert($dosenPengujiData);
 
-            $dosenPenguji = DosenPenguji::with(['tugasAkhir', 'dosen'])->where('tugas_akhir_id', $request->tugas_akhir_id)->get();
+            $tugasAkhir = TugasAkhir::with('dosenPenguji')
+                ->findOrFail($request->tugas_akhir_id);
 
-            return ApiResponse::success(DosenPengujiResource::collection($dosenPenguji), 'Dosen penguji berhasil ditambahkan', 201);
+            return ApiResponse::success(
+                DosenPengujiResource::collection($tugasAkhir->dosenPenguji),
+                'Dosen penguji berhasil ditambahkan',
+                201
+            );
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {

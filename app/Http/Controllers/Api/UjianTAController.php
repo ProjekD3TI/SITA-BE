@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Http\Responses\ApiResponse;
+use App\Models\DosenPenguji;
+use App\Models\TugasAkhir;
+use App\Models\UjianTA;
+use Illuminate\Validation\ValidationException;
+
+
+class UjianTAController extends Controller
+{
+
+    // Menampilkan data tugas akhir yang siap ujian (tidak menampilkan data tugas akhir yang sudah memiliki jadwal ujian)
+    public function getTAReadyByAdmin()
+    {
+        try {
+            $calonPesertaUjian = TugasAkhir::with('dosenPenguji')
+                ->where('status_aktif', 1)
+                ->where('status_valid', 1)
+                ->whereDoesntHave('ujianTA')
+                ->get();
+
+            return ApiResponse::success($calonPesertaUjian, 'Data tugas akhir yang siap ujian berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data tugas akhir yang siap ujian gagal diambil: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function index()
+    {
+
+        try {
+
+            $listUjianTA = UjianTA::with([
+                'tugasAkhir',
+                'tugasAkhir.mahasiswa',
+                'tugasAkhir.dosenPenguji',
+                'ruang',
+                'sesi',
+            ])->paginate(10);
+
+            return ApiResponse::success($listUjianTA, 'Data ujian TA berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data ujian TA gagal diambil: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
+                'tanggal_ujian' => 'required|date',
+                'ruang_id' => 'required|exists:ruang,id',
+                'sesi_id' => 'required|exists:sesi,id',
+                'semester_id' => 'required|exists:semester,id',
+                'tahun_ajaran_id' => 'required|exists:tahun_ajaran,id',
+                'status_ujian' => 'required|in:aktif,non-aktif'
+            ]);
+
+            // Cek apakah ada jadwal bentrok ruangan dan sesinya
+            $cekJadwalBentrok = UjianTA::where('tanggal_ujian', $validated['tanggal_ujian'])
+                ->where('ruang_id', $validated['ruang_id'])
+                ->where('sesi_id', $validated['sesi_id'])
+                ->exists()
+            ;
+
+            if ($cekJadwalBentrok) {
+                return ApiResponse::error('Ruang dan sesi pada tanggal ini sudah terpakai', 422);
+            }
+
+            // Cek apakah ada jadwal bentrok dosen penguji
+            $tugasAkhir = TugasAkhir::findOrFail($validated['tugas_akhir_id']);
+            $listDosenPenguji = $tugasAkhir->dosenPenguji()->pluck('dosen_id')->toArray();
+
+            $cekBentrokDosen = UjianTA::where('tanggal_ujian', $validated['tanggal_ujian'])
+                ->where('sesi_id', $validated['sesi_id'])
+                ->whereHas('tugasAkhir', function ($query) use ($listDosenPenguji) {
+                    $query->whereHas('dosenPenguji', function ($query) use ($listDosenPenguji) {
+                        $query->whereIn('dosen_id', $listDosenPenguji);
+                    });
+                })
+                ->exists();
+
+            if ($cekBentrokDosen) {
+                return ApiResponse::error('Dosen penguji sudah ada yang ujian pada sesi ini', 422);
+            }
+
+            $ujianTA = UjianTA::create($validated);
+
+            return ApiResponse::success($ujianTA, 'Data ujian TA berhasil ditambahkan');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data ujian TA gagal ditambahkan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+
+        try {
+
+
+            $ujianTA = UjianTA::findOrFail($id);
+
+            $validated = $request->validate([
+                'tanggal_ujian' => 'sometimes|required|date',
+                'ruang_id' => 'sometimes|required|exists:ruang,id',
+                'sesi_id' => 'sometimes|required|exists:sesi,id',
+                'semester_id' => 'sometimes|required|exists:semester,id',
+                'tahun_ajaran_id' => 'sometimes|required|exists:tahun_ajaran,id',
+                'status_ujian' => 'sometimes|required|in:aktif,non-aktif'
+            ]);
+
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data ujian TA gagal diubah: ' . $e->getMessage(), 500);
+        }
+
+
+    }
+}
