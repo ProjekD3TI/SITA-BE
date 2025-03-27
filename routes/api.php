@@ -77,15 +77,15 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
 
     //request pembimbing
-    Route::post('/mahasiswa/request-pembimbing/create', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
+    Route::post('/mahasiswa/request-pembimbing/', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
 
     //proposal
-    Route::post('/mahasiswa/proposal/create', [ProposalController::class, 'store']);
+    Route::post('/mahasiswa/proposal/', [ProposalController::class, 'store']);
     Route::put('/mahasiswa/proposal/{id}', [ProposalController::class, 'update']);
 
     // Bimbingan
     Route::get('/mahasiswa/bimbingan', [BimbinganController::class, 'getBimbinganByMahasiswa']);
-    Route::post('/mahasiswa/bimbingan/create', [BimbinganController::class, 'storeBimbinganByMahasiswa']);
+    Route::post('/mahasiswa/bimbingan/', [BimbinganController::class, 'storeBimbinganByMahasiswa']);
 
 });
 
@@ -183,7 +183,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'updateActiveStatus']);
 
         // Plotting Pembimbing
-        Route::post('/admin_ta/request-pembimbing/create', [RequestPembimbingController::class, 'storeByAdmin']);
+        Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeByAdmin']);
 
         // Route proposal
         Route::get('/admin_ta/proposal', [ProposalController::class, 'index']);
@@ -191,7 +191,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
         // Plotting penguji
         Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTA']);
-        Route::post('/admin_ta/dosen-penguji/create', [DosenPengujiController::class, 'store']);
+        Route::post('/admin_ta/dosen-penguji/', [DosenPengujiController::class, 'store']);
+        Route::put('/admin_ta/dosen-penguji/{id}', [DosenPengujiController::class, 'update']);
 
         // Route Sesi
         Route::apiResource('/admin_ta/sesi', SesiController::class);

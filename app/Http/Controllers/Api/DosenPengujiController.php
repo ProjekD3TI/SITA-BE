@@ -40,10 +40,11 @@ class DosenPengujiController extends Controller
                 'list_dosen_id.*' => 'required|exists:dosen,id',
                 'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
             ], [
-                'list_dosen_id.size' => 'Harus 3 dosen penguji',
+                'list_dosen_id.size' => 'Pilih 3 Dosen.',
             ]);
 
-            $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
+            // $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
+            $tugasAkhir = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->find($request->tugas_akhir_id);
 
             // Cek apakah jumlah dosen penguji lebih dari 3 langsung dari database DosenPenguji agar lebih efisien (tidak perlu melakukan query lagi)
             if (DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)->count() >= 3) {
@@ -88,6 +89,56 @@ class DosenPengujiController extends Controller
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
             return ApiResponse::error('Data sesi gagal ditambahkan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function update(Request $request, $tugasAkhirId)
+    {
+        try {
+            $request->validate([
+                'list_dosen_id' => 'required|array|size:3',
+                'list_dosen_id.*' => 'required|exists:dosen,id',
+            ], [
+                'list_dosen_id.size' => 'Pilih 3 Dosen.',
+            ]);
+
+            // Retrieve the TugasAkhir record with eager loading
+            $tugasAkhir = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->find($tugasAkhirId);
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir not found', 404);
+            }
+
+            // Ensure one of the selected dosen is the Dosen Pembimbing
+            if (!in_array($tugasAkhir->dosen_pembimbing_id, $request->list_dosen_id)) {
+                return ApiResponse::error('One of the DosenPenguji must be the Dosen Pembimbing', 400);
+            }
+
+            // Delete existing DosenPenguji records for the TugasAkhir
+            DosenPenguji::where('tugas_akhir_id', $tugasAkhirId)->delete();
+
+            // Prepare new DosenPenguji data
+            $dosenPengujiData = [];
+            foreach ($request->list_dosen_id as $dosenId) {
+                $dosenPengujiData[] = [
+                    'dosen_id' => $dosenId,
+                    'tugas_akhir_id' => $tugasAkhirId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            // Insert the new DosenPenguji records
+            DosenPenguji::insert($dosenPengujiData);
+
+            // Retrieve the updated DosenPenguji records with eager loading
+            $dosenPenguji = DosenPenguji::with(['tugasAkhir', 'dosen'])->where('tugas_akhir_id', $tugasAkhirId)->get();
+
+            return ApiResponse::success(DosenPengujiResource::collection($dosenPenguji), 'Dosen penguji berhasil diperbarui', 200);
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Data sesi gagal diperbarui: ' . $e->getMessage(), 500);
         }
     }
 }
