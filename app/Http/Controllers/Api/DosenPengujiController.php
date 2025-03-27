@@ -40,11 +40,14 @@ class DosenPengujiController extends Controller
                 'list_dosen_id.*' => 'required|exists:dosen,id',
                 'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
             ], [
-                'list_dosen_id.size' => 'Pilih 3 Dosen.',
+                'list_dosen_id.size' => 'Harus memilih 3 dosen!.',
             ]);
 
-            // $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
-            $tugasAkhir = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->find($request->tugas_akhir_id);
+            $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
+
+            if (!$tugasAkhir->proposal_id) {
+                return ApiResponse::error('Tugas Akhir harus memiliki proposal terlebih dahulu sebelum menambahkan dosen penguji', 400);
+            }
 
             // Cek apakah jumlah dosen penguji lebih dari 3 langsung dari database DosenPenguji agar lebih efisien (tidak perlu melakukan query lagi)
             if (DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)->count() >= 3) {
@@ -70,7 +73,6 @@ class DosenPengujiController extends Controller
                 $dosenPengujiData[] = [
                     'dosen_id' => $dosenId,
                     'tugas_akhir_id' => $request->tugas_akhir_id,
-                    // 'is_dosen_pembimbing' => $dosenId == $tugasAkhir->dosen_pembimbing_id,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -95,14 +97,17 @@ class DosenPengujiController extends Controller
                 'list_dosen_id' => 'required|array|size:3',
                 'list_dosen_id.*' => 'required|exists:dosen,id',
             ], [
-                'list_dosen_id.size' => 'Pilih 3 Dosen.',
+                'list_dosen_id.size' => 'Harus memilih 3 dosen!.',
             ]);
 
-            // Retrieve the TugasAkhir record with eager loading
-            $tugasAkhir = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->find($tugasAkhirId);
+            $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
+
+            if (!$tugasAkhir->proposal_id) {
+                return ApiResponse::error('Tugas Akhir harus memiliki proposal terlebih dahulu sebelum menambahkan dosen penguji', 400);
+            }
 
             if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas Akhir not found', 404);
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
             }
 
             // Ensure one of the selected dosen is the Dosen Pembimbing
