@@ -20,4 +20,13 @@ class DosenPenguji extends Pivot
 
     public $timestamps = true;
 
+    public function tugasAkhir()
+    {
+        return $this->belongsTo(TugasAkhir::class, 'tugas_akhir_id', 'id');
+    }
+
+    public function dosen()
+    {
+        return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
+    }
 }
