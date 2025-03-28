@@ -188,7 +188,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
         // Route proposal
         Route::get('/admin_ta/proposal', [ProposalController::class, 'index']);
-        Route::put('/admin_ta/proposal/{id}', [ProposalController::class, 'updateValidationStatus']);
+        Route::put('/admin_ta/proposal/{id}/status', [ProposalController::class, 'updateValidationStatus']);
+        Route::put('/admin_ta/proposal/{id}/nilai-catatan', [ProposalController::class, 'updateScoreandNotes']);
 
         // Plotting penguji
         Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTA']);
