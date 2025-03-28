@@ -62,6 +62,12 @@ class UjianTAController extends Controller
                 'status_ujian' => 'required|in:aktif,non-aktif'
             ]);
 
+            // Cek apakah tugas akhir sudah memiliki jadwal ujian
+            $cekJadwalUjian = UjianTA::where('tugas_akhir_id', $validated['tugas_akhir_id'])->exists();
+            if ($cekJadwalUjian) {
+                return ApiResponse::error('Tugas akhir sudah memiliki jadwal ujian', 422);
+            }
+
             // Cek apakah ada jadwal bentrok ruangan dan sesinya
             $cekJadwalBentrok = UjianTA::where('tanggal_ujian', $validated['tanggal_ujian'])
                 ->where('ruang_id', $validated['ruang_id'])
@@ -74,15 +80,13 @@ class UjianTAController extends Controller
             }
 
             // Cek apakah ada jadwal bentrok dosen penguji
-            $tugasAkhir = TugasAkhir::findOrFail($validated['tugas_akhir_id']);
-            $listDosenPenguji = $tugasAkhir->dosenPenguji()->pluck('dosen_id')->toArray();
+            $tugasAkhir = TugasAkhir::with('dosenPenguji')->findOrFail($validated['tugas_akhir_id']);
+            $listDosenPenguji = $tugasAkhir->dosenPenguji->pluck('dosen_id')->toArray();
 
             $cekBentrokDosen = UjianTA::where('tanggal_ujian', $validated['tanggal_ujian'])
                 ->where('sesi_id', $validated['sesi_id'])
-                ->whereHas('tugasAkhir', function ($query) use ($listDosenPenguji) {
-                    $query->whereHas('dosenPenguji', function ($query) use ($listDosenPenguji) {
-                        $query->whereIn('dosen_id', $listDosenPenguji);
-                    });
+                ->whereHas('tugasAkhir.dosenPenguji', function ($query) use ($listDosenPenguji) {
+                    $query->whereIn('dosen_id', $listDosenPenguji);
                 })
                 ->exists();
 
@@ -91,8 +95,10 @@ class UjianTAController extends Controller
             }
 
             $ujianTA = UjianTA::create($validated);
-
-            return ApiResponse::success($ujianTA, 'Data ujian TA berhasil ditambahkan');
+            return ApiResponse::success(
+                $ujianTA->load(['tugasAkhir', 'tugasAkhir.mahasiswa', 'tugasAkhir.dosenPenguji', 'ruang', 'sesi']),
+                'Data ujian TA berhasil ditambahkan'
+            );
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (\Exception $e) {
@@ -116,6 +122,41 @@ class UjianTAController extends Controller
                 'tahun_ajaran_id' => 'sometimes|required|exists:tahun_ajaran,id',
                 'status_ujian' => 'sometimes|required|in:aktif,non-aktif'
             ]);
+
+            // Cek apakah ada jadwal bentrok ruangan dan sesinya
+            if (isset($validated['tanggal_ujian']) || isset($validated['ruang_id']) || isset($validated['sesi_id'])) {
+                $cekJadwalBentrok = UjianTA::where('id', '!=', $id)
+                    ->where('tanggal_ujian', $validated['tanggal_ujian'] ?? $ujianTA->tanggal_ujian)
+                    ->where('ruang_id', $validated['ruang_id'] ?? $ujianTA->ruang_id)
+                    ->where('sesi_id', $validated['sesi_id'] ?? $ujianTA->sesi_id)
+                    ->exists();
+            }
+
+            if ($cekJadwalBentrok) {
+                return ApiResponse::error('Ruang dan sesi pada tanggal ini sudah terpakai', 422);
+            }
+
+            // Cek apakah ada jadwal bentrok dosen penguji
+            $tugasAkhir = TugasAkhir::with('dosenPenguji')->findOrFail($validated['tugas_akhir_id']);
+            $listDosenPenguji = $tugasAkhir->dosenPenguji->pluck('dosen_id')->toArray();
+
+            $cekBentrokDosen = UjianTA::where('id', '!=', $id)
+                ->where('tanggal_ujian', $validated['tanggal_ujian'] ?? $ujianTA->tanggal_ujian)
+                ->where('sesi_id', $validated['sesi_id'] ?? $ujianTA->sesi_id)
+                ->whereHas('tugasAkhir.dosenPenguji', function ($query) use ($listDosenPenguji) {
+                    $query->whereIn('dosen_id', $listDosenPenguji);
+                })
+                ->exists();
+
+            if ($cekBentrokDosen) {
+                return ApiResponse::error('Dosen penguji sudah ada yang ujian pada sesi ini', 422);
+            }
+
+            $ujianTA->update($validated);
+            return ApiResponse::success(
+                $ujianTA->fresh()->load(['tugasAkhir', 'tugasAkhir.mahasiswa', 'tugasAkhir.dosenPenguji', 'ruang', 'sesi']),
+                'Data ujian TA berhasil diubah'
+            );
 
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);

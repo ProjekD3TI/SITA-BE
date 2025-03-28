@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\UjianTAController;
 use App\Models\Bimbingan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -208,6 +209,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Route Tahun Ajaran
         Route::apiResource('/admin_ta/tahun-ajaran', TahunAjaranController::class);
 
+        // Route Ujian TA
+        Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
+        Route::post('/admin_ta/ujian-ta/', [UjianTAController::class, 'store']);
+        Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
+        Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyByAdmin']);
     });
 
     // Route Admin Pengelola (inventaris)
