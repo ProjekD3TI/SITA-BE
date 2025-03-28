@@ -88,6 +88,9 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('/mahasiswa/bimbingan', [BimbinganController::class, 'getBimbinganByMahasiswa']);
     Route::post('/mahasiswa/bimbingan/', [BimbinganController::class, 'storeBimbinganByMahasiswa']);
 
+    //Tugas Akhir
+    Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirByMahasiswa']);
+
 });
 
 
@@ -181,7 +184,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
         // Tugas-akhir
         Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'index']);
-        Route::put('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'updateActiveStatus']);
+        Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatus']);
+        Route::put('/admin_ta/tugas-akhir/{id}/update-valid-status', [TugasAkhirController::class, 'updateValidationStatusByAdmin']);
+        Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTA']);
+
 
         // Plotting Pembimbing
         Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeByAdmin']);
@@ -195,6 +201,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTA']);
         Route::post('/admin_ta/dosen-penguji/', [DosenPengujiController::class, 'store']);
         Route::put('/admin_ta/dosen-penguji/{id}', [DosenPengujiController::class, 'update']);
+
 
         // Route Sesi
         Route::apiResource('/admin_ta/sesi', SesiController::class);
