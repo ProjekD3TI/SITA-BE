@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Http\Resources\BimbinganResource;
+use App\Http\Resources\TugasAkhirResource;
 
 class BimbinganController extends Controller
 {
@@ -17,12 +18,12 @@ class BimbinganController extends Controller
     public function getTugasAkhirByDosen()
     {
         $dosenId = Auth::id();
-
+    
         try {
-            // Mencari kumpulan Id TugasAkhir yang memiliki dosen_pembimbing_id yang sama dengan dosenId (dosen yang sedang login)
-            $daftarTugasAkhir = TugasAkhir::where('dosen_pembimbing_id', $dosenId);
-
-            return ApiResponse::success($daftarTugasAkhir, 'Data tugas akhir berhasil diambil');
+            // Fetch the list of TugasAkhir where dosen_pembimbing_id matches the logged-in dosen
+            $daftarTugasAkhir = TugasAkhir::where('dosen_pembimbing_id', $dosenId)->get();
+    
+            return ApiResponse::success(TugasAkhirResource::collection($daftarTugasAkhir), 'Data tugas akhir berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data tugas akhir gagal diambil ' . $e->getMessage(), 500);
         }
@@ -31,11 +32,11 @@ class BimbinganController extends Controller
     public function getBimbinganByTugasAkhir($tugasAkhirId)
     {
         try {
-            // Mengambil data bimbingan berdasarkan tugas akhir yang dipilih dosen
-            $bimbingan = Bimbingan::with(['tugasAkhir', 'dosenPembimbing'])
+            // Fetch bimbingan data based on the selected Tugas Akhir
+            $bimbingan = Bimbingan::with(['tugasAkhir']) // Load tugasAkhir relationship
                 ->where('tugas_akhir_id', $tugasAkhirId)
                 ->get();
-
+    
             return ApiResponse::success(BimbinganResource::collection($bimbingan), 'Data bimbingan berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data bimbingan gagal diambil ' . $e->getMessage(), 500);
@@ -87,7 +88,7 @@ class BimbinganController extends Controller
                 return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
             }
 
-            $bimbingan = Bimbingan::with(['tugasAkhir', 'dosenPembimbing'])
+            $bimbingan = Bimbingan::with(['tugasAkhir'])
                 ->where('tugas_akhir_id', $tugasAkhir->id)
                 ->get();
 
@@ -136,6 +137,38 @@ class BimbinganController extends Controller
             return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
         } catch (\Exception $e) {
             return ApiResponse::error('Bimbingan gagal ditambahkan ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function memberiNilaiTAbyDosen(Request $request, $id)
+    {
+        $dosenId = Auth::id();
+    
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'nilai_bimbingan' => 'required|numeric|min:0|max:100', // Ensure the score is between 0 and 100
+            ]);
+    
+            // Find the Bimbingan record by ID and ensure it belongs to a TugasAkhir supervised by the logged-in dosen
+            $bimbingan = Bimbingan::whereHas('tugasAkhir', function ($query) use ($dosenId) {
+                $query->where('dosen_pembimbing_id', $dosenId);
+            })->where('id', $id)->firstOrFail();
+    
+            // Update the nilai_bimbingan attribute in the associated TugasAkhir
+            $tugasAkhir = $bimbingan->tugasAkhir;
+            $tugasAkhir->nilai_bimbingan = $validated['nilai_bimbingan'];
+            $tugasAkhir->save();
+    
+            // Return a success response
+            return ApiResponse::success(
+                new TugasAkhirResource($tugasAkhir),
+                'Nilai bimbingan berhasil diberikan'
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Gagal memberikan nilai bimbingan: ' . $e->getMessage(), 500);
         }
     }
 }

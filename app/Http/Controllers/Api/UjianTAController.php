@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UjianTAResource;
 use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use App\Models\DosenPenguji;
@@ -32,9 +33,7 @@ class UjianTAController extends Controller
 
     public function index()
     {
-
         try {
-
             $listUjianTA = UjianTA::with([
                 'tugasAkhir',
                 'tugasAkhir.mahasiswa',
@@ -42,12 +41,16 @@ class UjianTAController extends Controller
                 'ruang',
                 'sesi',
             ])->paginate(10);
-
-            return ApiResponse::success($listUjianTA, 'Data ujian TA berhasil diambil');
+    
+            \Log::info('Data Ujian TA:', $listUjianTA->toArray());
+    
+            return ApiResponse::success(new UjianTAResource($listUjianTA), 'Data ujian TA berhasil diambil');
         } catch (\Exception $e) {
+            \Log::error('Error fetching Ujian TA: ' . $e->getMessage());
             return ApiResponse::error('Data ujian TA gagal diambil: ' . $e->getMessage(), 500);
         }
     }
+
 
     public function store(Request $request)
     {

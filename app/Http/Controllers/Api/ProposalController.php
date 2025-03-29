@@ -132,23 +132,29 @@ class ProposalController extends Controller
             // Validate the request
             $validatedData = $request->validate([
                 'nilai_proposal' => 'required|numeric|min:0|max:100', // Ensure the score is between 0 and 100
-                'catatan_proposal' => 'required|string', // Notes are optional
+                'catatan_proposal' => 'required|string', // Notes are required
             ]);
-
-            // Find the Proposal by ID with eager loading
+    
+            // Temukan porposal berdasarkan ID dengan eager loading
             $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
-
-            // Update the score and notes
-            $proposal->nilai_proposal = $validatedData['nilai_proposal'];
-            $proposal->catatan_proposal = $validatedData['catatan_proposal'];
-            $proposal->save();
-
-            // Return the updated Proposal using a resource
+    
+            // Pastikan Proposal memiliki TugasAkhir yang terkait
+            if (!$proposal->tugasAkhir) {
+                return ApiResponse::error('Proposal ini tidak terhubung dengan Tugas Akhir manapun', 404);
+            }
+    
+            // Update the TugasAkhir record
+            $tugasAkhir = $proposal->tugasAkhir;
+            $tugasAkhir->nilai_proposal = $validatedData['nilai_proposal'];
+            $tugasAkhir->catatan_proposal = $validatedData['catatan_proposal'];
+            $tugasAkhir->save();
+    
+            // Return the updated TugasAkhir using a resource
             return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir')), 'Proposal score and notes updated successfully');
         } catch (ValidationException $e) {
-            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
+            return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
+            return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
         }
     }
 }

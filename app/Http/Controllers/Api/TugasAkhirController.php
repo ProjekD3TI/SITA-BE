@@ -76,9 +76,9 @@ class TugasAkhirController extends Controller
                 'berita_acara_semhas' => 'required|file|mimes:pdf',
                 'naskah_ta' => 'required|file|mimes:pdf',
                 'masa_perpanjangan_studi' => 'nullable|date',
-                // 'nilai_proposal' => 'required|numeric|min:0|max:100',
-                // 'nilai_bimbingan' => 'required|numeric|min:0|max:100',
-                // 'catatan_proposal' => 'required|string',
+                'nilai_proposal' => 'required|numeric|min:0|max:100',
+                'nilai_bimbingan' => 'required|numeric|min:0|max:100',
+                'catatan_proposal' => 'required|string',
                 'file_transkrip' => 'required|file|mimes:pdf',
             ]);
 
@@ -143,6 +143,66 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
+        }
+    }
+
+
+    //belum di test
+    public function memberiNilaiTAbyDosen(Request $request, $id)
+    {
+        try {
+            // Validasi input
+            $validatedData = $request->validate([
+                'nilai_ujian_ta' => 'required|numeric|min:0|max:100', // Nilai harus antara 0 dan 100
+                'revisi' => 'required|string|max:1000',    // Catatan maksimal 1000 karakter
+            ]);
+    
+            // Ambil data TugasAkhir berdasarkan ID dengan relasi dosenPenguji dan ujianTA
+            $tugasAkhir = TugasAkhir::with(['dosenPenguji', 'ujianTA.sesi'])
+                ->where('id', $id)
+                ->first();
+    
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+    
+            // Pastikan dosen yang sedang login adalah salah satu dosen penguji
+            $dosenId = $request->user()->id; // Ambil ID dosen yang sedang login
+            $isDosenPenguji = $tugasAkhir->dosenPenguji->contains('id', $dosenId);
+    
+            if (!$isDosenPenguji) {
+                return ApiResponse::error('Anda tidak memiliki izin untuk memberikan nilai pada Tugas Akhir ini', 403);
+            }
+    
+            // Pastikan ujian TA sedang terlaksana
+            $ujianTA = $tugasAkhir->ujianTA;
+            if (!$ujianTA) {
+                return ApiResponse::error('Ujian TA belum dijadwalkan untuk Tugas Akhir ini', 400);
+            }
+    
+            // Periksa apakah ujian sedang berlangsung berdasarkan tanggal dan sesi
+            $currentDateTime = now();
+            $ujianStartTime = $ujianTA->tanggal_ujian->startOfDay()->addHours($ujianTA->sesi->start_time);
+            $ujianEndTime = $ujianTA->tanggal_ujian->startOfDay()->addHours($ujianTA->sesi->end_time);
+    
+            if ($currentDateTime->lt($ujianStartTime) || $currentDateTime->gt($ujianEndTime)) {
+                return ApiResponse::error('Nilai hanya dapat diberikan saat ujian sedang berlangsung', 403);
+            }
+    
+            // Update nilai dan catatan pada TugasAkhir
+            $tugasAkhir->nilai_ta = $validatedData['nilai_ujian_ta'];
+            $tugasAkhir->catatan_ta = $validatedData['revisi'];
+            $tugasAkhir->save();
+    
+            // Kembalikan respons sukses
+            return ApiResponse::success(
+                new TugasAkhirResource($tugasAkhir),
+                'Nilai dan catatan revisi berhasil diberikan kepada Tugas Akhir'
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
 }
