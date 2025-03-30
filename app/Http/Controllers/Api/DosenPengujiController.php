@@ -14,7 +14,7 @@ use App\Http\Resources\DosenPengujiResource;
 
 class DosenPengujiController extends Controller
 {
-    public function getReadyTA()
+    public function getReadyTAforAdmin()
     {
         try {
             // Cek list tugas akhir yang sudah memiliki minimal 9 bimbingan yang sudah diverifikasi (bisa lanjut ke semhas & ta)
@@ -32,7 +32,7 @@ class DosenPengujiController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function storeForAdmin(Request $request)
     {
         try {
             $request->validate([
@@ -95,7 +95,7 @@ class DosenPengujiController extends Controller
         }
     }
 
-    public function update(Request $request, $tugasAkhirId)
+    public function updateForAdmin(Request $request, $tugasAkhirId)
     {
         try {
             $request->validate([

@@ -29,6 +29,8 @@ class BimbinganController extends Controller
         }
     }
 
+
+    //ini fungsi blm dikasih endpoint ???
     public function getBimbinganByTugasAkhir($tugasAkhirId)
     {
         try {
@@ -100,7 +102,7 @@ class BimbinganController extends Controller
         }
     }
 
-    public function storeBimbinganByMahasiswa(Request $request)
+    public function storeBimbinganForMahasiswa(Request $request)
     {
         try {
             $mahasiswa = Auth::id();

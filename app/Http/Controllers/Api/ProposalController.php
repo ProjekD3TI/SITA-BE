@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 class ProposalController extends Controller
 {
-    public function index()
+    public function indexForAdmin()
     {
         try {
             $proposals = Proposal::all();
@@ -24,7 +24,7 @@ class ProposalController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function storeForMhs(Request $request)
     {
         try {
             $validatedData = $request->validate([
@@ -62,7 +62,7 @@ class ProposalController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function updateForMhs(Request $request, $id)
     {
         try {
             $validatedData = $request->validate([
@@ -92,7 +92,7 @@ class ProposalController extends Controller
         }
     }
 
-    public function updateValidationStatus(Request $request, $id)
+    public function updateValidationStatusForAdmin(Request $request, $id)
     {
         try {
             // Validate the request
@@ -126,7 +126,7 @@ class ProposalController extends Controller
         }
     }
 
-    public function updateScoreandNotes(Request $request, $id)
+    public function updateScoreandNotesForAdmin(Request $request, $id)
     {
         try {
             // Validate the request

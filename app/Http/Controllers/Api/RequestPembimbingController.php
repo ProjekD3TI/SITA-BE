@@ -41,7 +41,7 @@ class RequestPembimbingController extends Controller
         }
     }
 
-    public function storeByAdmin(Request $request)
+    public function storeForAdmin(Request $request)
     {
         try {
             $validatedData = $request->validate([
@@ -76,7 +76,7 @@ class RequestPembimbingController extends Controller
         }
     }
 
-    public function storeWithTugasAkhir(Request $request)
+    public function storeWithTugasAkhirForMhs(Request $request)
     {
         try {
             $validatedData = $request->validate([
@@ -117,7 +117,7 @@ class RequestPembimbingController extends Controller
         }
     }
 
-    public function updateApprovalDosen(Request $request, $id)
+    public function updateApprovalForDosen(Request $request, $id)
     {
         try {
             $requestPembimbing = RequestPembimbing::with(['tugasAkhir', 'dosen'])->find($id);

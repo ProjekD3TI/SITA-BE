@@ -38,12 +38,6 @@ use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 
 // filepath: /c:/laragon/www/Backend-Port/routes/api.php
 
-//test api routes tugas-akhir
-// Route::apiResource('request-pembimbing', RequestPembimbingController::class);
-
-
-
-
 
 
 
@@ -81,15 +75,15 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::post('/mahasiswa/request-pembimbing/', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
 
     //proposal
-    Route::post('/mahasiswa/proposal/', [ProposalController::class, 'store']);
-    Route::put('/mahasiswa/proposal/{id}', [ProposalController::class, 'update']);
+    Route::post('/mahasiswa/proposal/', [ProposalController::class, 'storeForMhs']);
+    Route::put('/mahasiswa/proposal/{id}', [ProposalController::class, 'updateForMhs']);
 
     // Bimbingan
     Route::get('/mahasiswa/bimbingan', [BimbinganController::class, 'getBimbinganByMahasiswa']);
-    Route::post('/mahasiswa/bimbingan/', [BimbinganController::class, 'storeBimbinganByMahasiswa']);
+    Route::post('/mahasiswa/bimbingan/', [BimbinganController::class, 'storeBimbinganForMahasiswa']);
 
     //Tugas Akhir
-    Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirByMahasiswa']);
+    Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirForMahasiswa']);
 
 });
 
@@ -113,7 +107,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 
     // Sistem Tugas-akhir (Request Pembimbing)
     Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'getByDosen']);
-    Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalDosen']);
+    Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalForDosen']);
 
     // Sistem TugasAkhir (Bimbingan)
     Route::get('/dosen/bimbingan/', [BimbinganController::class, 'getTugasAkhirByDosen']);
@@ -187,24 +181,24 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
 
         // Tugas-akhir
-        Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'index']);
-        Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatus']);
-        Route::put('/admin_ta/tugas-akhir/{id}/update-valid-status', [TugasAkhirController::class, 'updateValidationStatusByAdmin']);
-        Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTA']);
+        Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'indexForAdmin']);
+        Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatusForAdmin']);
+        Route::put('/admin_ta/tugas-akhir/{id}/update-valid-status', [TugasAkhirController::class, 'updateValidationStatusForAdmin']);
+        Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTAForAdmin']);
 
 
         // Plotting Pembimbing
-        Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeByAdmin']);
+        Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeForAdmin']);
 
         // Route proposal
-        Route::get('/admin_ta/proposal', [ProposalController::class, 'index']);
-        Route::put('/admin_ta/proposal/{id}/status', [ProposalController::class, 'updateValidationStatus']);
-        Route::put('/admin_ta/proposal/{id}/nilai-catatan', [ProposalController::class, 'updateScoreandNotes']);
+        Route::get('/admin_ta/proposal', [ProposalController::class, 'indexForAdmin']);
+        Route::put('/admin_ta/proposal/{id}/status', [ProposalController::class, 'updateValidationStatusForAdmin']);
+        Route::put('/admin_ta/proposal/{id}/nilai-catatan', [ProposalController::class, 'updateScoreandNotesForAdmin']);
 
         // Plotting penguji
-        Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTA']);
-        Route::post('/admin_ta/dosen-penguji/', [DosenPengujiController::class, 'store']);
-        Route::put('/admin_ta/dosen-penguji/{id}', [DosenPengujiController::class, 'update']);
+        Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTAforAdmin']);
+        Route::post('/admin_ta/dosen-penguji/', [DosenPengujiController::class, 'storeForAdmin']);
+        Route::put('/admin_ta/dosen-penguji/{id}', [DosenPengujiController::class, 'updateForAdmin']);
 
 
         // Route Sesi
@@ -222,10 +216,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::apiResource('/admin_ta/tahun-ajaran', TahunAjaranController::class);
 
         // Route Ujian TA
-        Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
-        Route::post('/admin_ta/ujian-ta/', [UjianTAController::class, 'store']);
-        Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
-        Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyByAdmin']);
+        Route::apiResource('/admin_ta/ujian-ta', UjianTAController::class);
+        // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
+        // Route::post('/admin_ta/ujian-ta/', [UjianTAController::class, 'store']);
+        // Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
+        Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyForAdmin']);
     });
 
     // Route Admin Pengelola (inventaris)

@@ -16,7 +16,7 @@ class UjianTAController extends Controller
 {
 
     // Menampilkan data tugas akhir yang siap ujian (tidak menampilkan data tugas akhir yang sudah memiliki jadwal ujian)
-    public function getTAReadyByAdmin()
+    public function getTAReadyForAdmin()
     {
         try {
             $calonPesertaUjian = TugasAkhir::with('dosenPenguji')

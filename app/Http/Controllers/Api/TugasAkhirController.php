@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class TugasAkhirController extends Controller
 {
-    public function index(){
+    public function indexForAdmin(){
         try {
             $requests = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->get();
             return ApiResponse::success(TugasAkhirResource::collection($requests));
@@ -22,7 +22,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function getRegisterTA()
+    public function getRegisterTAForAdmin()
     {
         try {
             // Ambil data TugasAkhir dengan status_valid = 0 menggunakan eager loading
@@ -37,7 +37,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function updateActiveStatus(Request $request, $id)
+    public function updateActiveStatusForAdmin(Request $request, $id)
     {
         try {
             $validatedData = $request->validate([
@@ -63,7 +63,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function updateTugasAkhirByMahasiswa(Request $request, $id)
+    public function updateTugasAkhirForMahasiswa(Request $request, $id)
     {
         try {
             // Validasi semua atribut yang tidak boleh null
@@ -119,7 +119,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function updateValidationStatusByAdmin(Request $request, $id)
+    public function updateValidationStatusForAdmin(Request $request, $id)
     {
         try {
             $validatedData = $request->validate([
