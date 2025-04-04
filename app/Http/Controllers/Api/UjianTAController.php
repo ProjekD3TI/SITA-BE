@@ -41,12 +41,12 @@ class UjianTAController extends Controller
                 'ruang',
                 'sesi',
             ])->paginate(10);
-    
-            \Log::info('Data Ujian TA:', $listUjianTA->toArray());
-    
+
+            // \Log::info('Data Ujian TA:', $listUjianTA->toArray());
+
             return ApiResponse::success(new UjianTAResource($listUjianTA), 'Data ujian TA berhasil diambil');
         } catch (\Exception $e) {
-            \Log::error('Error fetching Ujian TA: ' . $e->getMessage());
+            // \Log::error('Error fetching Ujian TA: ' . $e->getMessage());
             return ApiResponse::error('Data ujian TA gagal diambil: ' . $e->getMessage(), 500);
         }
     }

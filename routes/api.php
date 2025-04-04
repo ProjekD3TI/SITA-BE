@@ -111,12 +111,14 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 
     // Sistem TugasAkhir (Bimbingan)
     Route::get('/dosen/bimbingan/', [BimbinganController::class, 'getTugasAkhirByDosen']);
+    Route::get('/dosen/bimbingan/{id}', [BimbinganController::class, 'getBimbinganByTugasAkhir']);
     Route::put('/dosen/bimbingan/{id}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
-    Route::put('/dosen/bimbingan/{id}/nilai', [BimbinganController::class,'memberiNilaiTAbyDosen']);
+
 
     // Sistem Tugas akhir (Tugas Akhir)
-    //blm ditest
+    //blm ditest (nilai bimbingan sudah ditest)
     Route::put('/dosen/tugas-akhir/{id}/nilai', [TugasAkhirController::class, 'memberiNilaiTAbyDosen']);
+    Route::put('/dosen/tugas-akhir/{id}/nilai-bimbingan', [TugasAkhirController::class, 'memberiNilaiBimbinganByDosen']);
 
     // Route Dosen Biasa
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Dosen'])->group(function () {

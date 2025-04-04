@@ -9,11 +9,13 @@ use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TugasAkhirResource;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 
 class TugasAkhirController extends Controller
 {
-    public function indexForAdmin(){
+    public function indexForAdmin()
+    {
         try {
             $requests = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->get();
             return ApiResponse::success(TugasAkhirResource::collection($requests));
@@ -92,7 +94,7 @@ class TugasAkhirController extends Controller
                 return ApiResponse::error('Tugas Akhir tidak ditemukan atau unauthorized', 404);
             }
 
-             // Tambahkan kondisi untuk status_valid
+            // Tambahkan kondisi untuk status_valid
             if (!is_null($tugasAkhir->status_valid) && !in_array($tugasAkhir->status_valid, [2])) {
                 return ApiResponse::error('Tugas Akhir tidak dapat diperbarui karena status validasi tidak sesuai', 403);
             }
@@ -146,6 +148,32 @@ class TugasAkhirController extends Controller
         }
     }
 
+    public function memberiNilaiBimbinganByDosen(Request $request, $id)
+    {
+        $dosenId = Auth::id();
+
+        try {
+            $validated = $request->validate([
+                'nilai_bimbingan' => 'required|numeric|min:0|max:100',
+            ]);
+
+            // Cek apakah tugas akhir yang dipilih dosen sesuai dengan dosen yang sedang login
+            $tugasAkhir = TugasAkhir::where('id', $id)->where('dosen_pembimbing_id', $dosenId)->firstOrFail();
+
+            // Update nilai bimbingan
+            $tugasAkhir->nilai_bimbingan = $validated['nilai_bimbingan'];
+            $tugasAkhir->save();
+
+            return ApiResponse::success(
+                new TugasAkhirResource($tugasAkhir),
+                'Nilai bimbingan berhasil diberikan'
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Gagal memberikan nilai bimbingan: ' . $e->getMessage(), 500);
+        }
+    }
 
     //belum di test
     public function memberiNilaiTAbyDosen(Request $request, $id)
@@ -156,44 +184,44 @@ class TugasAkhirController extends Controller
                 'nilai_ujian_ta' => 'required|numeric|min:0|max:100', // Nilai harus antara 0 dan 100
                 'revisi' => 'required|string|max:1000',    // Catatan maksimal 1000 karakter
             ]);
-    
+
             // Ambil data TugasAkhir berdasarkan ID dengan relasi dosenPenguji dan ujianTA
             $tugasAkhir = TugasAkhir::with(['dosenPenguji', 'ujianTA.sesi'])
                 ->where('id', $id)
                 ->first();
-    
+
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
             }
-    
+
             // Pastikan dosen yang sedang login adalah salah satu dosen penguji
             $dosenId = $request->user()->id; // Ambil ID dosen yang sedang login
             $isDosenPenguji = $tugasAkhir->dosenPenguji->contains('id', $dosenId);
-    
+
             if (!$isDosenPenguji) {
                 return ApiResponse::error('Anda tidak memiliki izin untuk memberikan nilai pada Tugas Akhir ini', 403);
             }
-    
+
             // Pastikan ujian TA sedang terlaksana
             $ujianTA = $tugasAkhir->ujianTA;
             if (!$ujianTA) {
                 return ApiResponse::error('Ujian TA belum dijadwalkan untuk Tugas Akhir ini', 400);
             }
-    
+
             // Periksa apakah ujian sedang berlangsung berdasarkan tanggal dan sesi
             $currentDateTime = now();
             $ujianStartTime = $ujianTA->tanggal_ujian->startOfDay()->addHours($ujianTA->sesi->start_time);
             $ujianEndTime = $ujianTA->tanggal_ujian->startOfDay()->addHours($ujianTA->sesi->end_time);
-    
+
             if ($currentDateTime->lt($ujianStartTime) || $currentDateTime->gt($ujianEndTime)) {
                 return ApiResponse::error('Nilai hanya dapat diberikan saat ujian sedang berlangsung', 403);
             }
-    
+
             // Update nilai dan catatan pada TugasAkhir
             $tugasAkhir->nilai_ta = $validatedData['nilai_ujian_ta'];
             $tugasAkhir->catatan_ta = $validatedData['revisi'];
             $tugasAkhir->save();
-    
+
             // Kembalikan respons sukses
             return ApiResponse::success(
                 new TugasAkhirResource($tugasAkhir),
