@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UjianTAResource;
+use App\Http\Resources\TugasAkhirResource;
 use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use App\Models\DosenPenguji;
@@ -24,29 +25,26 @@ class UjianTAController extends Controller
                 ->where('status_valid', 1)
                 ->whereDoesntHave('ujianTA')
                 ->get();
-
-            return ApiResponse::success($calonPesertaUjian, 'Data tugas akhir yang siap ujian berhasil diambil');
+    
+            // Gunakan Resource untuk memformat data
+            return ApiResponse::success(TugasAkhirResource::collection($calonPesertaUjian), 'Data tugas akhir yang siap ujian berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data tugas akhir yang siap ujian gagal diambil: ' . $e->getMessage(), 500);
         }
     }
-
     public function index()
     {
         try {
-            $listUjianTA = UjianTA::with([
-                'tugasAkhir',
-                'tugasAkhir.mahasiswa',
-                'tugasAkhir.dosenPenguji',
-                'ruang',
-                'sesi',
-            ])->paginate(10);
-
-            // \Log::info('Data Ujian TA:', $listUjianTA->toArray());
-
-            return ApiResponse::success(new UjianTAResource($listUjianTA), 'Data ujian TA berhasil diambil');
+            $listUjianTA = \DB::table('ujian_ta')
+                ->select('ujian_ta.id', 'ujian_ta.tugas_akhir_id', 'ujian_ta.tanggal_ujian', 'ujian_ta.ruang_id', 'ujian_ta.sesi_id')
+                ->join('tugas_akhir', 'ujian_ta.tugas_akhir_id', '=', 'tugas_akhir.id')
+                ->join('mahasiswa', 'tugas_akhir.mahasiswa_id', '=', 'mahasiswa.id')
+                ->join('ruang', 'ujian_ta.ruang_id', '=', 'ruang.id')
+                ->join('sesi', 'ujian_ta.sesi_id', '=', 'sesi.id')
+                ->paginate(10);
+            
+            return ApiResponse::success($listUjianTA, 'Data ujian TA berhasil diambil');
         } catch (\Exception $e) {
-            // \Log::error('Error fetching Ujian TA: ' . $e->getMessage());
             return ApiResponse::error('Data ujian TA gagal diambil: ' . $e->getMessage(), 500);
         }
     }
