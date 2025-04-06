@@ -1,0 +1,213 @@
+<?php
+
+
+namespace App\Http\Controllers\Admin\AdminPengelola;
+
+use App\Exports\InventarisExport;
+use App\Helpers\PaginationHelper;
+use App\Models\AdminPengelola\Inventaris;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str; 
+use App\Exports\AlatsExport;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Writer;
+use Maatwebsite\Excel\Facades\Excel;
+class InventarisController extends Controller
+{
+    public function showInventaris(Request $request) {
+        $query = Inventaris::query()
+        ->leftJoin('jenis_inventaris', 'inventaris.id_jenis_inventaris', '=', 'jenis_inventaris.id_jenis_inventaris')
+        ->leftJoin('ruangs', 'inventaris.id_ruang', '=', 'ruangs.id_ruang')
+        ->select(
+            'inventaris.*',
+            'jenis_inventaris.nama_inventaris',
+            'ruangs.nama_ruang'
+        );
+
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('inventaris.no_inventaris', 'like', "%{$searchTerm}%")
+                ->orWhere('jenis_inventaris.nama_inventaris', 'like', "%{$searchTerm}%")
+                ->orWhere('ruangs.nama_ruang', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('inventaris.status', $request->status);
+        }
+
+        if ($request->has('kondisi') && $request->kondisi !== '') {
+            $query->where('kondisi', $request->kondisi);
+        }
+        
+        $query->orderBy('created_at', 'desc');
+        $inventaris = $query->get();
+
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+
+        $paginatedData = PaginationHelper::paginate($inventaris, $perPage, $page, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data Inventaris',
+            'data' => $paginatedData->items(),
+            'pagination' => [
+                'total' => $paginatedData->total(),
+                'per_page' => $paginatedData->perPage(),
+                'current_page' => $paginatedData->currentPage(),
+                'last_page' => $paginatedData->lastPage(),
+            ]
+        ], 200);
+    }
+
+    public function createInventaris(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'id_jenis_inventaris' => 'required',
+            'no_inventaris' => 'required',
+            'kondisi' => 'required',
+            'id_ruang' => 'required',
+            'tahun_pengadaan' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $inventaris = Inventaris::create([
+            'id_jenis_inventaris' => $request->id_jenis_inventaris,
+            'no_inventaris' => $request->no_inventaris,
+            'kondisi' => $request->kondisi,
+            'id_ruang' => $request->id_ruang,
+            'tahun_pengadaan' => $request->tahun_pengadaan,
+        ]);
+
+        $url = env('FRONTEND_URL') . '/inventaris/' . $inventaris->id_inventaris;
+
+        $renderer = new ImageRenderer(
+            new RendererStyle(400),
+            new SvgImageBackEnd()
+        );
+        $writer = new Writer($renderer);
+        $qrCodeContent = $writer->writeString($url);
+
+        $qrFileName = Str::uuid() . '.svg';
+        $qrFilePath = "public/inventaris/qrcode/{$qrFileName}";
+        Storage::put($qrFilePath, $qrCodeContent);
+
+        $inventaris->qr_code_path = $qrFileName;
+        $inventaris->save();
+
+        return response()->json(['message' => 'Inventaris berhasil ditambahkan']);
+    }
+
+    public function findInventaris($id) {
+        $inventaris = DB::table('inventaris')
+            ->leftJoin('jenis_inventaris', 'inventaris.id_jenis_inventaris', '=', 'jenis_inventaris.id_jenis_inventaris')
+            ->leftJoin('ruangs', 'inventaris.id_ruang', '=', 'ruangs.id_ruang')
+            ->select(
+                'inventaris.*',
+                'jenis_inventaris.nama_inventaris',
+                'ruangs.nama_ruang'
+            )
+            ->where('inventaris.id_inventaris', $id)
+            ->first();
+
+        if (!$inventaris) {
+            return response()->json(['message' => 'inventaris tidak ditemukan'], 404);
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data Inventaris',
+            'data' => $inventaris
+        ], 200);
+        }
+
+    public function editInventaris(Request $request, $id) {
+        $db_inventaris = Inventaris::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'id_jenis_inventaris' => 'required', 
+            'no_inventaris' => 'required',
+            'kondisi' => 'required',
+            'id_ruang' => 'required', 
+            'tahun_pengadaan' => 'required', 
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $data = [
+            'no_inventaris' => $request->no_inventaris,
+            'kondisi' => $request->kondisi,
+            'id_jenis_inventaris' => $request->id_jenis_inventaris,
+            'id_ruang' => $request->id_ruang,
+            'tahun_pengadaan' => $request->tahun_pengadaan,
+        ];
+
+        $db_inventaris->update($data);
+
+        return response()->json(['message' => 'inventaris berhasil diupdate'], 200);
+    }
+
+    public function deleteInventaris($id) {
+        $inventaris = Inventaris::findOrFail($id);
+        
+        if (!$inventaris) {
+            return response()->json(['message' => 'inventaris tidak ditemukan'], 404);
+        }
+
+        $inventaris->delete();
+        if ($inventaris->qr_code_path) {
+            Storage::delete('public/inventaris/qrcode/' . $inventaris->qr_code_path);
+        }
+        
+
+        return response()->json(['message' => 'inventaris berhasil dihapus']);
+    }
+
+    public function exportInventaris(Request $request) {
+        $searchTerm = $request->input('search', null);
+        $status = $request->input('status', null);
+        $kondisi = $request->input('kondisi', null);
+    
+    
+        return Excel::download(
+            new InventarisExport($searchTerm, $status, $kondisi),
+            'inventaris.xlsx'
+        );
+    }
+
+    public function downloadQrCode($id) {
+        $inventaris = Inventaris::findOrFail($id);
+        
+        if (!$inventaris->qr_code_path) {
+            return response()->json(['message' => 'QR Code tidak tersedia'], 404);
+        }
+        
+        $path = storage_path('app/public/inventaris/qrcode/' . $inventaris->qr_code_path);
+        
+        if (!file_exists($path)) {
+            return response()->json(['message' => 'File QR Code tidak ditemukan'], 404);
+        }
+        
+        $filename = 'qrcode_inventaris_' . $inventaris->id_inventaris . '_' . str_replace(' ', '_', $inventaris->no_inventaris) . '.svg';
+        
+        return response()->download($path, $filename, [
+            'Content-Type' => 'image/svg+xml',
+        ]);
+    }
+}

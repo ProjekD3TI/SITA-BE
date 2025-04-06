@@ -1,6 +1,16 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
+use App\Http\Controllers\Admin\AdminPengelola\BhpController;
+use App\Http\Controllers\Admin\AdminPengelola\GedungController;
+use App\Http\Controllers\Admin\AdminPengelola\InventarisController;
+use App\Http\Controllers\Admin\AdminPengelola\JenisInventarisController;
+use App\Http\Controllers\Admin\AdminPengelola\LantaiController;
+use App\Http\Controllers\Admin\AdminPengelola\MerkController;
+use App\Http\Controllers\Admin\AdminPengelola\PeminjamanBhpController;
+use App\Http\Controllers\Admin\AdminPengelola\PeminjamanInventarisController;
+use App\Http\Controllers\Admin\AdminPengelola\RuangController;
+use App\Http\Controllers\Admin\AdminPengelola\TipeController;
 use App\Http\Controllers\Admin\AdminTa\AdminTaController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminController;
 use App\Http\Controllers\Auth\AuthAdminController;
@@ -12,6 +22,7 @@ use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
 use App\Http\Controllers\Mahasiswa\MahasiswaController;
 use App\Http\Controllers\UserController;
+use App\Models\AdminPengelola\Bhp;
 use App\Models\JabatanDosen;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -102,10 +113,14 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 
 
 
+Route::get('/admin_pengelola/bhp/export', [BhpController::class, 'exportBhp']);
+Route::get('/admin_pengelola/jenis_inventaris/export', [JenisInventarisController::class, 'exportJenisInventaris']);
+Route::get('/admin_pengelola/inventaris/export', [InventarisController::class, 'exportInventaris']);
 
 // ---------- || Route Admin || ---------- \\
 
 Route::post('/login/admin', [AuthAdminController::class, 'loginAdmin']);
+
 
 // Route Global Middleware Admin 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
@@ -145,6 +160,94 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role:admin_pengelola'])->group(function () {
         //route laennya buat admin pengelola
         Route::get('/admin_pengelola/dashboard', [AdminPengelolaController::class, 'dashboard']);
+
+        //BHP
+        Route::get('/admin_pengelola/bhp', [BhpController::class, 'showBhp']);
+        Route::post('/admin_pengelola/bhp/create', [BhpController::class, 'createBhp']);
+        Route::get('/admin_pengelola/bhp/{id}', [BhpController::class, 'findBhp']);
+        Route::put('/admin_pengelola/bhp/edit/{id}', [BhpController::class, 'editBhp']);
+        Route::delete('/admin_pengelola/bhp/{id}', [BhpController::class, 'deleteBhp']);
+        
+
+
+        // Tipe
+        Route::get('/admin_pengelola/tipe', [TipeController::class, 'showTipe']);
+        Route::post('/admin_pengelola/tipe/create', [TipeController::class, 'createTipe']);
+        Route::get('/admin_pengelola/tipe/{id}', [TipeController::class, 'findTipe']);
+        Route::put('/admin_pengelola/tipe/edit/{id}', [TipeController::class, 'editTipe']);
+        Route::delete('/admin_pengelola/tipe/{id}', [TipeController::class, 'deleteTipe']);
+
+        // Merk 
+        Route::get('/admin_pengelola/merk', [MerkController::class, 'showMerk']);
+        Route::post('/admin_pengelola/merk/create', [MerkController::class, 'createMerk']);
+        Route::get('/admin_pengelola/merk/{id}', [MerkController::class, 'findMerk']);
+        Route::put('/admin_pengelola/merk/edit/{id}', [MerkController::class, 'editMerk']);
+        Route::delete('/admin_pengelola/merk/{id}', [MerkController::class, 'deleteMerk']);
+
+        // Jenis Inventaris
+        Route::get('/admin_pengelola/jenis_inventaris', [JenisInventarisController::class, 'showJenisInventaris']);
+        Route::post('/admin_pengelola/jenis_inventaris/create', [JenisInventarisController::class, 'createJenisInventaris']);
+        Route::get('/admin_pengelola/jenis_inventaris/{id}', [JenisInventarisController::class, 'findJenisInventaris']);
+        Route::put('/admin_pengelola/jenis_inventaris/edit/{id}', [JenisInventarisController::class, 'editJenisInventaris']);
+        Route::delete('/admin_pengelola/jenis_inventaris/{id}', [JenisInventarisController::class, 'deleteJenisInventaris']);
+
+        // Inventaris
+        Route::get('/admin_pengelola/inventaris', [InventarisController::class, 'showInventaris']);
+        Route::post('/admin_pengelola/inventaris/create', [InventarisController::class, 'createInventaris']);
+        Route::get('/admin_pengelola/inventaris/{id}', [InventarisController::class, 'findInventaris']);
+        Route::put('/admin_pengelola/inventaris/edit/{id}', [InventarisController::class, 'editInventaris']);
+        Route::delete('/admin_pengelola/inventaris/{id}', [InventarisController::class, 'deleteInventaris']);
+        
+
+        // Lantai
+        Route::get('/admin_pengelola/lantai', [LantaiController::class, 'showLantai']);
+        Route::post('/admin_pengelola/lantai/create', [LantaiController::class, 'createLantai']);
+        Route::get('/admin_pengelola/lantai/{id}', [LantaiController::class, 'findLantai']);
+        Route::put('/admin_pengelola/lantai/edit/{id}', [LantaiController::class, 'editLantai']);
+        Route::delete('/admin_pengelola/lantai/{id}', [LantaiController::class, 'deleteLantai']);
+
+        // Gedung 
+        Route::get('/admin_pengelola/gedung', [GedungController::class, 'showGedung']);
+        Route::post('/admin_pengelola/gedung/create', [GedungController::class, 'createGedung']);
+        Route::get('/admin_pengelola/gedung/{id}', [GedungController::class, 'findGedung']);
+        Route::put('/admin_pengelola/gedung/edit/{id}', [GedungController::class, 'editGedung']);
+        Route::delete('/admin_pengelola/gedung/{id}', [GedungController::class, 'deleteGedung']);
+
+        // Ruang
+        Route::get('/admin_pengelola/ruang', [RuangController::class, 'showRuang']);
+        Route::post('/admin_pengelola/ruang/create', [RuangController::class, 'createRuang']);
+        Route::get('/admin_pengelola/ruang/{id}', [RuangController::class, 'findRuang']);
+        Route::put('/admin_pengelola/ruang/edit/{id}', [RuangController::class, 'editRuang']);
+        Route::delete('/admin_pengelola/ruang/{id}', [RuangController::class, 'deleteRuang']);
+
+        // get untuk keperluan peminajman 
+        Route::get('/admin_pengelola/mahasiswa', [AdminPengelolaController::class, 'getMahasiswa']); //status = 1
+        Route::get('/admin_pengelola/dosen', [AdminPengelolaController::class, 'getDosen']); //status = 1
+        Route::get('/admin_pengelola/get_inventaris', [AdminPengelolaController::class, 'getInventaris']); //kondisi baik klo yang atas seluruh inventaris
+
+
+        // Peminjaman Bhp
+        Route::get('/admin_pengelola/peminjaman_bhp', [PeminjamanBhpController::class, 'showPeminjamanBhp']);
+        Route::post('/admin_pengelola/peminjaman_bhp/create', [PeminjamanBhpController::class, 'createPeminjamanBhp']);
+        Route::get('/admin_pengelola/peminjaman_bhp/{id}', [PeminjamanBhpController::class, 'findPeminjamanBhp']);
+        Route::put('/admin_pengelola/peminjaman_bhp/edit/{id}', [PeminjamanBhpController::class, 'editPeminjamanBhp']);
+        // Route::delete('/admin_pengelola/peminjaman_bhp/{id}', [PeminjamanBhpController::class, 'deletePeminjamanBhp']);
+        Route::post('/admin_pengelola/peminjaman_bhp/return/{id}', [PeminjamanBhpController::class, 'returnPeminjamanBhp']);
+
+        // Peminjaman Inventaris
+        Route::get('/admin_pengelola/peminjaman_inventaris', [PeminjamanInventarisController::class, 'showPeminjamanInventaris']);
+        Route::post('/admin_pengelola/peminjaman_inventaris/create', [PeminjamanInventarisController::class, 'createPeminjamanInventaris']);
+        Route::put('/admin_pengelola/peminjaman_inventaris/edit/{id}', [PeminjamanInventarisController::class, 'editPeminjamanInventaris']); //edit delete blom
+        Route::delete('/admin_pengelola/peminjaman_inventaris/{id}', [PeminjamanInventarisController::class, 'deletePeminjamanInventaris']);
+        
+        Route::get('/admin_pengelola/peminjaman_inventaris/grouped', [PeminjamanInventarisController::class, 'getPeminjamanGrouped']);
+        Route::get('/admin_pengelola/peminjaman_inventaris/reference/{referensi}', [PeminjamanInventarisController::class, 'getPeminjamanByReference']);
+        Route::post('/admin_pengelola/peminjaman_inventaris/return', [PeminjamanInventarisController::class, 'pengembalianInventaris']);
+        
     });
 });
+
+// download qrcode
+Route::get('/admin_pengelola/bhp/{id}/download_qrcode', [BhpController::class, 'downloadQrCode']);
+Route::get('/admin_pengelola/inventaris/{id}/download_qrcode', [InventarisController::class, 'downloadQrCode']);
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\AdminPengelola\PeminjamanBhp;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -43,5 +44,6 @@ class Dosen extends Authenticatable
                     ->withTimestamps()
                     ->withPivot('is_active');
     }
+
 }
 
