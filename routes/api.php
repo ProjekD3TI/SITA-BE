@@ -42,6 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/laporan/{id}', [LaporanController::class, 'showDetailLaporan']);
     Route::put('/laporan/update/{id}', [LaporanController::class, 'editLaporan']);
     Route::delete('/laporan/{id}', [LaporanController::class, 'deleteLaporan']);
+
+    // laporan kekerasan
+    Route::get('/laporan_kekerasan', [LaporanKekerasanController::class, 'showAllLaporanKekerasan']);
+    Route::get('/laporan_kekerasan/{id}', [LaporanKekerasanController::class, 'showDetailLaporanKekerasan']);
 });
 
 
@@ -119,9 +123,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
         // laporan
         Route::put('/laporan/update_status/{id}', [LaporanController::class, 'editStatusLaporan']);
         
-        // laporan kekerasan
-        Route::get('/laporan_kekerasan', [LaporanKekerasanController::class, 'showAllLaporanKekerasan']);
-        Route::get('/laporan_kekerasan/{id}', [LaporanKekerasanController::class, 'showDetailLaporanKekerasan']);
+        //laporan kekerasan
         Route::delete('/laporan_kekerasan/{id}', [LaporanKekerasanController::class, 'deleteLaporanKekerasan']);
     });
 
