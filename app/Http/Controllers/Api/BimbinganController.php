@@ -111,7 +111,7 @@ class BimbinganController extends Controller
         }
     }
 
-    public function storeBimbinganForMahasiswa(Request $request)
+    public function storeBimbinganByMahasiswa(Request $request)
     {
         try {
             $mahasiswa = Auth::id();
@@ -140,7 +140,7 @@ class BimbinganController extends Controller
             ]);
 
             return ApiResponse::success(
-                new BimbinganResource($bimbingan->load(['tugasAkhir', 'dosenPembimbing'])),
+                new BimbinganResource($bimbingan->load(['tugasAkhir'])),
                 'Bimbingan berhasil ditambahkan',
                 201
             );
@@ -148,6 +148,68 @@ class BimbinganController extends Controller
             return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
         } catch (\Exception $e) {
             return ApiResponse::error('Bimbingan gagal ditambahkan ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function updateBimbinganByMahasiswa(Request $request, $id)
+    {
+        try {
+            $mahasiswa = Auth::id();
+            $validated = $request->validate([
+                'catatan' => 'required|string',
+                'tanggal_bimbingan' => 'required|date'
+            ]);
+
+            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
+                ->where('status_aktif', 1)
+                ->firstOrFail();
+
+            $bimbingan = Bimbingan::where('id', $id)
+                ->where('tugas_akhir_id', $tugasAkhir->id)
+                ->firstOrFail();
+
+
+            // Cek apakah bimbingan sudah diverifikasi
+            if ($bimbingan->status_verifikasi != 0) {
+                return ApiResponse::error('Bimbingan sudah diverifikasi dan tidak dapat diubah', 400);
+            }
+
+            $bimbingan->update($validated);
+
+            return ApiResponse::success(
+                new BimbinganResource($bimbingan->load(['tugasAkhir'])),
+                'Data bimbingan berhasil diubah'
+            );
+
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Bimbingan gagal diubah: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function destroyBimbinganByMahasiswa($id)
+    {
+        try {
+            $mahasiswa = Auth::id();
+
+            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
+                ->where('status_aktif', 1)
+                ->firstOrFail();
+
+            $bimbingan = Bimbingan::where('id', $id)
+                ->where('tugas_akhir_id', $tugasAkhir->id)
+                ->firstOrFail();
+
+            // Cek apakah bimbingan sudah diverifikasi
+            if ($bimbingan->status_verifikasi != 0) {
+                return ApiResponse::error('Bimbingan sudah diverifikasi dan tidak dapat dihapus', 400);
+            }
+
+            $bimbingan->delete();
+            return ApiResponse::success(null, 'Data bimbingan berhasil dihapus');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Bimbingan gagal dihapus: ' . $e->getMessage(), 500);
         }
     }
 

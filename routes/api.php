@@ -80,7 +80,9 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     // Bimbingan
     Route::get('/mahasiswa/bimbingan', [BimbinganController::class, 'getBimbinganByMahasiswa']);
-    Route::post('/mahasiswa/bimbingan/', [BimbinganController::class, 'storeBimbinganForMahasiswa']);
+    Route::post('/mahasiswa/bimbingan/', [BimbinganController::class, 'storeBimbinganByMahasiswa']);
+    Route::put('/mahasiswa/bimbingan/{id}', [BimbinganController::class, 'updateBimbinganByMahasiswa']);
+    Route::delete('/mahasiswa/bimbingan/{id}', [BimbinganController::class, 'destroyBimbinganByMahasiswa']);
 
     //Tugas Akhir
     Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirForMahasiswa']);
@@ -218,7 +220,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::apiResource('/admin_ta/tahun-ajaran', TahunAjaranController::class);
 
         // Route Ujian TA
-        Route::get('/admin_ta/ujian-ta', [UjianTAController::class,'index']);
+        Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
         // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
         // Route::post('/admin_ta/ujian-ta/', [UjianTAController::class, 'store']);
         // Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
