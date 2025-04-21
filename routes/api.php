@@ -24,6 +24,7 @@ use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminController;
 use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
+use App\Http\Controllers\Api\NilaiBimbinganController;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,9 +81,13 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     // Bimbingan
     Route::get('/mahasiswa/bimbingan', [BimbinganController::class, 'getBimbinganByMahasiswa']);
+    Route::get('/mahasiswa/bimbingan/{id}', [BimbinganController::class, 'showBimbinganByMahasiswa']);
     Route::post('/mahasiswa/bimbingan/', [BimbinganController::class, 'storeBimbinganByMahasiswa']);
     Route::put('/mahasiswa/bimbingan/{id}', [BimbinganController::class, 'updateBimbinganByMahasiswa']);
     Route::delete('/mahasiswa/bimbingan/{id}', [BimbinganController::class, 'destroyBimbinganByMahasiswa']);
+
+    // Nilai Bimbingan
+    Route::get('/mahasiswa/nilai-bimbingan', [NilaiBimbinganController::class, 'getNilaiBimbinganByMahasiswa']);
 
     //Tugas Akhir
     Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirForMahasiswa']);
@@ -116,11 +121,13 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::get('/dosen/bimbingan/{id}', [BimbinganController::class, 'getBimbinganByTugasAkhir']);
     Route::put('/dosen/bimbingan/{id}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
 
+    // Sistem TugasAkhir (Nilai Bimbingan)
+    Route::get('/dosen/nilai-bimbingan/{id}', [NilaiBimbinganController::class, 'getNilaiBimbinganByDosen']);
+    Route::post('/dosen/nilai-bimbingan/{id}', [NilaiBimbinganController::class, 'storeNilaiBimbinganByDosen']);
 
     // Sistem Tugas akhir (Tugas Akhir)
     //blm ditest (nilai bimbingan sudah ditest)
     Route::put('/dosen/tugas-akhir/{id}/nilai', [TugasAkhirController::class, 'memberiNilaiTAbyDosen']);
-    Route::put('/dosen/tugas-akhir/{id}/nilai-bimbingan', [TugasAkhirController::class, 'memberiNilaiBimbinganByDosen']);
 
     // Route Dosen Biasa
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Dosen'])->group(function () {

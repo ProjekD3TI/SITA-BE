@@ -16,6 +16,7 @@ class TugasAkhir extends Model
         'semester_id',
         'dosen_pembimbing_id',
         'tahun_ajaran_id',
+        'nilai_bimbingan_id',
         'judul_tugas_akhir',
         'krs',
         'persetujuan_pembimbing',
@@ -25,7 +26,6 @@ class TugasAkhir extends Model
         'naskah_ta',
         'masa_perpanjangan_studi',
         'nilai_proposal',
-        'nilai_bimbingan',
         'nilai_akhir',
         'catatan_proposal',
         'file_transkrip',
@@ -66,6 +66,11 @@ class TugasAkhir extends Model
     public function ujianTA()
     {
         return $this->hasMany(UjianTA::class);
+    }
+
+    public function nilaiBimbingan()
+    {
+        return $this->belongsTo(NilaiBimbingan::class, 'nilai_bimbingan_id', 'id');
     }
 
     public function dosenPenguji()

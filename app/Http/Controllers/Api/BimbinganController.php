@@ -122,6 +122,7 @@ class BimbinganController extends Controller
 
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
                 ->where('status_aktif', 1)
+                ->select('id')
                 ->firstOrFail();
 
             // Cek apakah ada bimbingan sebelumnya yang belum diverifikasi
@@ -162,6 +163,7 @@ class BimbinganController extends Controller
 
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
                 ->where('status_aktif', 1)
+                ->select('id')
                 ->firstOrFail();
 
             $bimbingan = Bimbingan::where('id', $id)
@@ -188,6 +190,32 @@ class BimbinganController extends Controller
         }
     }
 
+    public function showBimbinganByMahasiswa($id)
+    {
+        try {
+            $mahasiswa = Auth::id();
+
+            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
+                ->where('status_aktif', 1)
+                ->select('id')
+                ->firstOrFail();
+
+            $bimbingan = Bimbingan::with('tugasAkhir')
+                ->where('id', $id)
+                ->where('tugas_akhir_id', $tugasAkhir->id)
+                ->firstOrFail();
+
+            return ApiResponse::success(
+                new BimbinganResource($bimbingan),
+                'Detail bimbingan berhasil diambil'
+            );
+
+        } catch (\Exception $e) {
+            return ApiResponse::error('Detail bimbingan gagal diambil: ' . $e->getMessage(), 500);
+        }
+    }
+
+
     public function destroyBimbinganByMahasiswa($id)
     {
         try {
@@ -195,6 +223,7 @@ class BimbinganController extends Controller
 
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
                 ->where('status_aktif', 1)
+                ->select('id')
                 ->firstOrFail();
 
             $bimbingan = Bimbingan::where('id', $id)

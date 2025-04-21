@@ -28,7 +28,8 @@ class RequestPembimbingController extends Controller
     // }
 
 
-    public function getByDosen()  {
+    public function getByDosen()
+    {
         $dosenId = Auth::user()->id;
         try {
             // Eager loading relationships
@@ -76,7 +77,7 @@ class RequestPembimbingController extends Controller
         }
     }
 
-    public function storeWithTugasAkhirForMhs(Request $request)
+    public function storeWithTugasAkhir(Request $request)
     {
         try {
             $validatedData = $request->validate([

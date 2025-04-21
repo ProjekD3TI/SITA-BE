@@ -78,8 +78,8 @@ class TugasAkhirController extends Controller
                 'berita_acara_semhas' => 'required|file|mimes:pdf',
                 'naskah_ta' => 'required|file|mimes:pdf',
                 'masa_perpanjangan_studi' => 'nullable|date',
-                'nilai_proposal' => 'required|numeric|min:0|max:100',
-                'nilai_bimbingan' => 'required|numeric|min:0|max:100',
+                // 'nilai_proposal' => 'required|numeric|min:0|max:100',
+                // 'nilai_bimbingan' => 'required|numeric|min:0|max:100',
                 'catatan_proposal' => 'required|string',
                 'file_transkrip' => 'required|file|mimes:pdf',
             ]);
@@ -145,33 +145,6 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
-        }
-    }
-
-    public function memberiNilaiBimbinganByDosen(Request $request, $id)
-    {
-        $dosenId = Auth::id();
-
-        try {
-            $validated = $request->validate([
-                'nilai_bimbingan' => 'required|numeric|min:0|max:100',
-            ]);
-
-            // Cek apakah tugas akhir yang dipilih dosen sesuai dengan dosen yang sedang login
-            $tugasAkhir = TugasAkhir::where('id', $id)->where('dosen_pembimbing_id', $dosenId)->firstOrFail();
-
-            // Update nilai bimbingan
-            $tugasAkhir->nilai_bimbingan = $validated['nilai_bimbingan'];
-            $tugasAkhir->save();
-
-            return ApiResponse::success(
-                new TugasAkhirResource($tugasAkhir),
-                'Nilai bimbingan berhasil diberikan'
-            );
-        } catch (ValidationException $e) {
-            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
-        } catch (Exception $e) {
-            return ApiResponse::error('Gagal memberikan nilai bimbingan: ' . $e->getMessage(), 500);
         }
     }
 
