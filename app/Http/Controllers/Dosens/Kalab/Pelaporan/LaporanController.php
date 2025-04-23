@@ -25,7 +25,7 @@ class LaporanController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'judul' => 'required',
-            'image_path' => 'required',
+            'image_path.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate multiple images
             'category_id' => 'required',
             'deskripsi' => 'required',
             'tanggal_kejadian' => 'required',
@@ -46,28 +46,25 @@ class LaporanController extends Controller
             'ni_pelapor' => Auth::user()->nim ?? Auth::user()->nik,
             'status' => 'unverified',
             'email' => Auth::user()->email,
-
         ];
 
         if ($request->hasFile('image_path')) {
-            $image = $request->file('image_path');
-            $uuid = Str::uuid()->toString();
-            $extension = $image->getClientOriginalExtension();
-            $filename = $uuid . '.' . $extension;
-            $path = $image->storeAs('public/laporan', $filename);
+            $imageNames = [];
             
-            $data['image_path'] = $filename;
+            // Process multiple images
+            foreach($request->file('image_path') as $image) {
+                $uuid = Str::uuid()->toString();
+                $extension = $image->getClientOriginalExtension();
+                $filename = $uuid . '.' . $extension;
+                $image->storeAs('public/laporan', $filename);
+                
+                $imageNames[] = $filename;
+            }
+            
+            // Store image names as JSON in the database
+            $data['image_path'] = json_encode($imageNames);
     
             $laporan = Laporan::create($data);
-
-            // Mail::send('pelaporan.send-pelapor', [
-            //     'nomor_laporan' =>  $laporan -> nomor_laporan,
-            //     'tanggal_kejadian' => $request -> tanggal_kejadian,
-            //     'nama_pelapor' => $laporan -> nama_pelapor
-            // ], function($message) use ($laporan) {
-            //     $message->to(Auth::user()->email, Auth::user()->name);
-            //     $message->subject('Laporan Portal D3TI');
-            // });
 
             $kalabJabatan = Jabatan::where('name', 'Kalab')->first();
             if ($kalabJabatan) {
@@ -99,10 +96,22 @@ class LaporanController extends Controller
     {
         $laporan = Laporan::find($id);
         if ($laporan) {
+            // Decode image paths for the frontend
+            if (is_string($laporan->image_path) && $this->isJson($laporan->image_path)) {
+                $laporan->image_paths = json_decode($laporan->image_path);
+            } else {
+                $laporan->image_paths = [$laporan->image_path];
+            }
             return response()->json($laporan);
         } else {
             return response()->json(['message' => 'laporan tidak ditemukan'], 404);
         }
+    }
+
+    // Helper function to check if a string is valid JSON
+    private function isJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
     }
 
     public function editLaporan(Request $request, $id)
@@ -116,7 +125,7 @@ class LaporanController extends Controller
             'nomor_telepon' => 'required',
             'nama_pelapor' => 'required',
             'ni_pelapor' => 'required',
-
+            'image_path.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate multiple images
         ]);
 
         if ($validator->fails()) {
@@ -133,17 +142,32 @@ class LaporanController extends Controller
         ];
 
         if ($request->hasFile('image_path')) {
+            // Delete old images if they exist
             if ($laporan->image_path) {
-                Storage::delete('public/laporan/' . $laporan->image_path);
+                $oldImages = json_decode($laporan->image_path, true);
+                if (is_array($oldImages)) {
+                    foreach ($oldImages as $oldImage) {
+                        Storage::delete('public/laporan/' . $oldImage);
+                    }
+                } else {
+                    Storage::delete('public/laporan/' . $laporan->image_path);
+                }
             }
-        
-            $image = $request->file('image_path');
-            $uuid = Str::uuid()->toString();
-            $extension = $image->getClientOriginalExtension();
-            $filename = $uuid . '.' . $extension;
-            $image->storeAs('public/laporan', $filename);
+            
+            $imageNames = [];
+            
+            // Process multiple images
+            foreach($request->file('image_path') as $image) {
+                $uuid = Str::uuid()->toString();
+                $extension = $image->getClientOriginalExtension();
+                $filename = $uuid . '.' . $extension;
+                $image->storeAs('public/laporan', $filename);
                 
-            $data['image_path'] = $filename;
+                $imageNames[] = $filename;
+            }
+            
+            // Store image names as JSON in the database
+            $data['image_path'] = json_encode($imageNames);
         }
         
         $laporan->update($data);
@@ -160,7 +184,14 @@ class LaporanController extends Controller
         }
 
         if ($laporan->image_path) {
-            Storage::delete('public/laporan/' . $laporan->image_path);
+            $images = json_decode($laporan->image_path, true);
+            if (is_array($images)) {
+                foreach ($images as $image) {
+                    Storage::delete('public/laporan/' . $image);
+                }
+            } else {
+                Storage::delete('public/laporan/' . $laporan->image_path);
+            }
         }
     
         $laporan->delete();
@@ -188,7 +219,6 @@ class LaporanController extends Controller
         $laporan->update($data);
 
         Mail::send('pelaporan.send-kalab', [
-
             'nomor_laporan' => $laporan -> nomor_laporan,
             'nama_pelapor' => $laporan -> nama_pelapor,
             'tanggal_kejadian' => $laporan -> tanggal_kejadian,

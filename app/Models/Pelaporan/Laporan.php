@@ -26,6 +26,10 @@ class Laporan extends Model
         'email',
     ];
 
+    protected $casts = [
+        'image_path' => 'array', // This will automatically cast the JSON string to an array
+    ];
+
     public static function generateNomorLaporan()
     {
         $prefix = 'LPR-D3TI-';
@@ -46,5 +50,37 @@ class Laporan extends Model
         
         return $prefix . $formattedCounter;
     }
-}
 
+    /**
+     * Get the image URLs for display
+     * 
+     * @return array
+     */
+    public function getImageUrls()
+    {
+        if (is_string($this->image_path) && $this->isJson($this->image_path)) {
+            return json_decode($this->image_path, true);
+        } elseif (is_array($this->image_path)) {
+            return $this->image_path;
+        }
+        
+        // Fallback for single image path stored as string
+        return [$this->image_path];
+    }
+
+    /**
+     * Check if a string is valid JSON
+     * 
+     * @param string $string
+     * @return boolean
+     */
+    protected function isJson($string)
+    {
+        if (!is_string($string)) {
+            return false;
+        }
+        
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
+}
