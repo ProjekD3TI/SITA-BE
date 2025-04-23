@@ -22,6 +22,9 @@ class LaporanKekerasan extends Model
         'nama_pelapor',
         'nim_pelapor',
         'tanggapan',
+        'saksi_nama',
+        'saksi_email',
+        'saksi_nomor_telepon',
     ];
 
     public static function generateNomorLaporanKekerasan()

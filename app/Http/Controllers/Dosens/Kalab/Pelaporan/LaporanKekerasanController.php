@@ -31,6 +31,10 @@ class LaporanKekerasanController extends Controller
             'nomor_telepon' => 'required',
             'nama_pelapor' => 'required',
             'nim_pelapor' => 'required',
+            // Frontend will validate these as required, but in backend we allow them to be null
+            'saksi_nama' => 'nullable|string',
+            'saksi_email' => 'nullable|email',
+            'saksi_nomor_telepon' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -46,7 +50,10 @@ class LaporanKekerasanController extends Controller
             'nomor_laporan_kekerasan' => LaporanKekerasan::generateNomorLaporanKekerasan(),
             'nama_pelapor' => $request->nama_pelapor,
             'nim_pelapor' => $request->nim_pelapor,
-
+            // Add Saksi fields
+            'saksi_nama' => $request->saksi_nama,
+            'saksi_email' => $request->saksi_email,
+            'saksi_nomor_telepon' => $request->saksi_nomor_telepon,
         ];
 
         if ($request->hasFile('image_path')) {
@@ -80,6 +87,7 @@ class LaporanKekerasanController extends Controller
             
             return response()->json([
                 'message' => 'Laporan kekerasan berhasil ditambahkan',
+                'laporan' => $laporan
             ], 201);
         }
     
@@ -96,6 +104,68 @@ class LaporanKekerasanController extends Controller
         }
     }
 
+    public function updateLaporanKekerasan(Request $request, $id)
+    {
+        $laporan = LaporanKekerasan::find($id);
+        if (!$laporan) {
+            return response()->json(['message' => 'laporan kekerasan tidak ditemukan'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'judul' => 'sometimes|required',
+            'category_id' => 'sometimes|required',
+            'deskripsi' => 'sometimes|required',
+            'tanggal_kejadian' => 'sometimes|required',
+            'nomor_telepon' => 'sometimes|required',
+            'nama_pelapor' => 'sometimes|required',
+            'nim_pelapor' => 'sometimes|required',
+            'saksi_nama' => 'nullable|string',
+            'saksi_email' => 'nullable|email',
+            'saksi_nomor_telepon' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        // Update basic fields
+        if ($request->has('judul')) $laporan->judul = $request->judul;
+        if ($request->has('category_id')) $laporan->category_id = $request->category_id;
+        if ($request->has('deskripsi')) $laporan->deskripsi = $request->deskripsi;
+        if ($request->has('tanggal_kejadian')) $laporan->tanggal_kejadian = $request->tanggal_kejadian;
+        if ($request->has('nomor_telepon')) $laporan->nomor_telepon = $request->nomor_telepon;
+        if ($request->has('nama_pelapor')) $laporan->nama_pelapor = $request->nama_pelapor;
+        if ($request->has('nim_pelapor')) $laporan->nim_pelapor = $request->nim_pelapor;
+        
+        // Update Saksi fields
+        if ($request->has('saksi_nama')) $laporan->saksi_nama = $request->saksi_nama;
+        if ($request->has('saksi_email')) $laporan->saksi_email = $request->saksi_email;
+        if ($request->has('saksi_nomor_telepon')) $laporan->saksi_nomor_telepon = $request->saksi_nomor_telepon;
+
+        // Update image if provided
+        if ($request->hasFile('image_path')) {
+            // Remove old image if it exists
+            if ($laporan->image_path) {
+                Storage::delete('public/laporankekerasan/' . $laporan->image_path);
+            }
+
+            $image = $request->file('image_path');
+            $uuid = Str::uuid()->toString();
+            $extension = $image->getClientOriginalExtension();
+            $filename = $uuid . '.' . $extension;
+            $path = $image->storeAs('public/laporankekerasan', $filename);
+            
+            $laporan->image_path = $filename;
+        }
+
+        $laporan->save();
+        
+        return response()->json([
+            'message' => 'Laporan kekerasan berhasil diperbarui',
+            'laporan' => $laporan
+        ]);
+    }
+
     public function deleteLaporanKekerasan($id)
     {
         $laporan = LaporanKekerasan::findOrFail($id);
@@ -108,5 +178,4 @@ class LaporanKekerasanController extends Controller
     
         return response()->json(['message' => 'laporan Kekerasan berhasil dihapus']);
     }
-
 }

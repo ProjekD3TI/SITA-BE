@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('nomor_laporan_kekerasan');
             $table->string('nama_pelapor');
             $table->string('nim_pelapor');
+            $table->string('saksi_nama')->nullable();
+            $table->string('saksi_email')->nullable();
+            $table->string('saksi_nomor_telepon')->nullable();
             $table->text('tanggapan')->nullable();
             $table->timestamps();
         });
