@@ -29,6 +29,7 @@ class LaporanController extends Controller
             'category_id' => 'required',
             'deskripsi' => 'required',
             'tanggal_kejadian' => 'required',
+            'lampiran_link' => 'nullable|url', // Validasi untuk link
         ]);
 
         if ($validator->fails()) {
@@ -46,6 +47,7 @@ class LaporanController extends Controller
             'ni_pelapor' => Auth::user()->nim ?? Auth::user()->nik,
             'status' => 'unverified',
             'email' => Auth::user()->email,
+            'lampiran_link' => $request->lampiran_link, // Menambahkan lampiran link
         ];
 
         if ($request->hasFile('image_path')) {
@@ -126,6 +128,7 @@ class LaporanController extends Controller
             'nama_pelapor' => 'required',
             'ni_pelapor' => 'required',
             'image_path.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate multiple images
+            'lampiran_link' => 'nullable|url', // Validasi untuk link
         ]);
 
         if ($validator->fails()) {
@@ -139,6 +142,7 @@ class LaporanController extends Controller
             'nomor_telepon' => $request->nomor_telepon,
             'nama_pelapor' => $request->nama_pelapor,
             'ni_pelapor' => $request->ni_pelapor,
+            'lampiran_link' => $request->lampiran_link, // Menambahkan lampiran link
         ];
 
         if ($request->hasFile('image_path')) {

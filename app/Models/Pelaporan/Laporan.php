@@ -24,6 +24,7 @@ class Laporan extends Model
         'status',
         'tanggapan',
         'email',
+        'lampiran_link', // Kolom baru yang ditambahkan
     ];
 
     protected $casts = [

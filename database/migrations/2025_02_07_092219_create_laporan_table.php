@@ -24,6 +24,7 @@ return new class extends Migration
             $table->dateTime('tanggal_kejadian');
             $table->enum('status', ['unverified', 'verified', 'rejected', 'finished'])->default('unverified');
             $table->text('tanggapan')->nullable();
+            $table->string('lampiran_link')->nullable(); // Kolom baru yang ditambahkan
             $table->bigInteger('user_id')->index('user_id');
             $table->timestamps();
         });
