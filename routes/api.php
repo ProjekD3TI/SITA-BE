@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/laporan/add_laporan', [LaporanController::class, 'createLaporan']);
     Route::get('/laporan/{id}', [LaporanController::class, 'showDetailLaporan']);
     Route::put('/laporan/update/{id}', [LaporanController::class, 'editLaporan']);
+    Route::put('/laporan/update_status/{id}', [LaporanController::class, 'editStatusLaporan']);
     Route::delete('/laporan/{id}', [LaporanController::class, 'deleteLaporan']);
 
     // laporan kekerasan
@@ -119,9 +120,6 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
         Route::get('/slider/{id}', [SliderController::class, 'showDetailSlider']);
         Route::put('/slider/update/{id}', [SliderController::class, 'editSlider']);
         Route::delete('/slider/{id}', [SliderController::class, 'deleteSlider']);
-
-        // laporan
-        Route::put('/laporan/update_status/{id}', [LaporanController::class, 'editStatusLaporan']);
         
         //laporan kekerasan
         Route::delete('/laporan_kekerasan/{id}', [LaporanKekerasanController::class, 'deleteLaporanKekerasan']);

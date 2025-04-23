@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('nama_pelapor');
             $table->string('nim_pelapor');
             $table->dateTime('tanggal_kejadian');
-            $table->enum('status', ['unverified', 'verified', 'rejected'])->default('unverified');
+            $table->enum('status', ['unverified', 'verified', 'rejected', 'finished'])->default('unverified');
             $table->text('tanggapan')->nullable();
             $table->bigInteger('user_id')->index('user_id');
             $table->timestamps();
