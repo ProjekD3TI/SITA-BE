@@ -25,14 +25,28 @@ class LaporanController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'judul' => 'required',
-            'image_path.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate multiple images
+            'image_path.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', 
             'category_id' => 'required',
             'deskripsi' => 'required',
             'tanggal_kejadian' => 'required',
-            'lampiran_link' => 'nullable|url', // Validasi untuk link
-            'profesi' => 'required|string', // Validasi untuk profesi
-            'jenis_kelamin' => 'required|in:laki-laki,perempuan', // Validasi untuk jenis kelamin
-            'umur_pelapor' => 'required|in:<20,20-40,40<', // Validasi untuk umur pelapor
+            'lampiran_link' => 'nullable|url',
+            'profesi' => 'required|string',
+            'jenis_kelamin' => 'required|in:laki-laki,perempuan',
+            'umur_pelapor' => 'required|in:<20,20-40,40<',
+            
+            // Validations for terlapor array
+            'terlapor' => 'nullable|array',
+            'terlapor.*.nama_lengkap' => 'required_with:terlapor|string|max:255',
+            'terlapor.*.email' => 'nullable|email|max:255',
+            'terlapor.*.nomor_telepon' => 'nullable|string|max:20',
+            'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
+            'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
+            
+            // Validations for saksi array
+            'saksi' => 'nullable|array',
+            'saksi.*.nama_lengkap' => 'required_with:saksi|string|max:255',
+            'saksi.*.email' => 'nullable|email|max:255',
+            'saksi.*.nomor_telepon' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -51,9 +65,11 @@ class LaporanController extends Controller
             'profesi' => $request->profesi,
             'jenis_kelamin' => $request->jenis_kelamin,
             'umur_pelapor' => $request->umur_pelapor,
+            'terlapor' => $request->terlapor, // New field for terlapor data
+            'saksi' => $request->saksi, // New field for saksi data
             'status' => 'unverified',
             'email' => Auth::user()->email,
-            'lampiran_link' => $request->lampiran_link, // Menambahkan lampiran link
+            'lampiran_link' => $request->lampiran_link,
         ];
 
         if ($request->hasFile('image_path')) {
@@ -110,6 +126,16 @@ class LaporanController extends Controller
             } else {
                 $laporan->image_paths = [$laporan->image_path];
             }
+            
+            // Make sure terlapor and saksi are properly formatted as arrays
+            if (empty($laporan->terlapor)) {
+                $laporan->terlapor = [];
+            }
+            
+            if (empty($laporan->saksi)) {
+                $laporan->saksi = [];
+            }
+            
             return response()->json($laporan);
         } else {
             return response()->json(['message' => 'laporan tidak ditemukan'], 404);
@@ -118,6 +144,9 @@ class LaporanController extends Controller
 
     // Helper function to check if a string is valid JSON
     private function isJson($string) {
+        if (!is_string($string)) {
+            return false;
+        }
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
     }
@@ -133,11 +162,25 @@ class LaporanController extends Controller
             'nomor_telepon' => 'required',
             'nama_pelapor' => 'required',
             'ni_pelapor' => 'required',
-            'profesi' => 'required|string', // Validasi untuk profesi
-            'jenis_kelamin' => 'required|in:laki-laki,perempuan', // Validasi untuk jenis kelamin
-            'umur_pelapor' => 'required|in:<20,20-40,40<', // Validasi untuk umur pelapor
-            'image_path.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate multiple images
-            'lampiran_link' => 'nullable|url', // Validasi untuk link
+            'profesi' => 'required|string',
+            'jenis_kelamin' => 'required|in:laki-laki,perempuan',
+            'umur_pelapor' => 'required|in:<20,20-40,40<',
+            'image_path.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'lampiran_link' => 'nullable|url',
+            
+            // Validations for terlapor array
+            'terlapor' => 'nullable|array',
+            'terlapor.*.nama_lengkap' => 'required_with:terlapor|string|max:255',
+            'terlapor.*.email' => 'nullable|email|max:255',
+            'terlapor.*.nomor_telepon' => 'nullable|string|max:20',
+            'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
+            'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
+            
+            // Validations for saksi array
+            'saksi' => 'nullable|array',
+            'saksi.*.nama_lengkap' => 'required_with:saksi|string|max:255',
+            'saksi.*.email' => 'nullable|email|max:255',
+            'saksi.*.nomor_telepon' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -154,7 +197,9 @@ class LaporanController extends Controller
             'profesi' => $request->profesi,
             'jenis_kelamin' => $request->jenis_kelamin,
             'umur_pelapor' => $request->umur_pelapor,
-            'lampiran_link' => $request->lampiran_link, // Menambahkan lampiran link
+            'terlapor' => $request->terlapor, // Update terlapor data
+            'saksi' => $request->saksi, // Update saksi data
+            'lampiran_link' => $request->lampiran_link,
         ];
 
         if ($request->hasFile('image_path')) {

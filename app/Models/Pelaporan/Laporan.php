@@ -23,7 +23,9 @@ class Laporan extends Model
         'ni_pelapor',
         'profesi',           
         'jenis_kelamin',     
-        'umur_pelapor',      
+        'umur_pelapor',
+        'terlapor',          // New field for reported persons
+        'saksi',             // New field for witnesses    
         'status',
         'tanggapan',
         'email',
@@ -32,6 +34,8 @@ class Laporan extends Model
 
     protected $casts = [
         'image_path' => 'array', // This will automatically cast the JSON string to an array
+        'terlapor' => 'array',   // This will automatically cast the JSON string to an array
+        'saksi' => 'array',      // This will automatically cast the JSON string to an array
     ];
 
     public static function generateNomorLaporan()
