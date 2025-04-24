@@ -13,6 +13,7 @@ class Bimbingan extends Model
     protected $fillable = [
         'tugas_akhir_id',
         'catatan',
+        'bab',
         'status_verifikasi',
         'tanggal_bimbingan'
     ];

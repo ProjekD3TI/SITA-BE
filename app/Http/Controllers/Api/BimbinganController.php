@@ -117,6 +117,7 @@ class BimbinganController extends Controller
             $mahasiswa = Auth::id();
             $validated = $request->validate([
                 'catatan' => 'required|string',
+                'bab' => 'required|integer',
                 'tanggal_bimbingan' => 'required|date'
             ]);
 
@@ -137,6 +138,7 @@ class BimbinganController extends Controller
             $bimbingan = Bimbingan::create([
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'catatan' => $validated['catatan'],
+                'bab' => $validated['bab'],
                 'tanggal_bimbingan' => $validated['tanggal_bimbingan']
             ]);
 
@@ -158,6 +160,7 @@ class BimbinganController extends Controller
             $mahasiswa = Auth::id();
             $validated = $request->validate([
                 'catatan' => 'required|string',
+                'bab' => 'required|integer',
                 'tanggal_bimbingan' => 'required|date'
             ]);
 

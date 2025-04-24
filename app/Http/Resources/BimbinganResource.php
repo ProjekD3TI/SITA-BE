@@ -18,6 +18,7 @@ class BimbinganResource extends JsonResource
             'id' => $this->id,
             'tugas_akhir_id' => $this->tugas_akhir_id,
             'catatan' => $this->catatan,
+            'bab' => $this->bab,
             'status_verifikasi' => $this->status_verifikasi,
             'tanggal_bimbingan' => $this->tanggal_bimbingan,
             'created_at' => $this->created_at,
