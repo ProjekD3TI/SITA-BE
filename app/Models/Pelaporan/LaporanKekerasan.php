@@ -22,9 +22,17 @@ class LaporanKekerasan extends Model
         'nama_pelapor',
         'nim_pelapor',
         'tanggapan',
-        'saksi_nama',
-        'saksi_email',
-        'saksi_nomor_telepon',
+        'bukti_pelanggaran', // Added field for evidence
+        'terlapor', // Added field for reported person
+        'saksi', // Changed to JSON field
+        'lampiran_link',
+    ];
+
+    protected $casts = [
+        'image_path' => 'array', // Cast as array if you're storing multiple images
+        'bukti_pelanggaran' => 'array', // Cast JSON to array
+        'terlapor' => 'array', // Cast JSON to array
+        'saksi' => 'array', // Cast JSON to array
     ];
 
     public static function generateNomorLaporanKekerasan()
@@ -46,5 +54,38 @@ class LaporanKekerasan extends Model
         $formattedCounter = str_pad($counter, 5, '0', STR_PAD_LEFT);
         
         return $prefix . $formattedCounter;
+    }
+    
+    /**
+     * Get the image URLs for display
+     * 
+     * @return array
+     */
+    public function getImageUrls()
+    {
+        if (is_string($this->image_path) && $this->isJson($this->image_path)) {
+            return json_decode($this->image_path, true);
+        } elseif (is_array($this->image_path)) {
+            return $this->image_path;
+        }
+        
+        // Fallback for single image path stored as string
+        return [$this->image_path];
+    }
+
+    /**
+     * Check if a string is valid JSON
+     * 
+     * @param string $string
+     * @return boolean
+     */
+    protected function isJson($string)
+    {
+        if (!is_string($string)) {
+            return false;
+        }
+        
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
     }
 }

@@ -31,10 +31,25 @@ class LaporanKekerasanController extends Controller
             'nomor_telepon' => 'required',
             'nama_pelapor' => 'required',
             'nim_pelapor' => 'required',
-            // Frontend will validate these as required, but in backend we allow them to be null
-            'saksi_nama' => 'nullable|string',
-            'saksi_email' => 'nullable|email',
-            'saksi_nomor_telepon' => 'nullable|string',
+            'lampiran_link' => 'nullable|url',
+            // Added validations for bukti_pelanggaran
+            'bukti_pelanggaran' => 'nullable|array',
+            'bukti_pelanggaran.*' => 'string',
+            
+            // Added validations for terlapor array
+            'terlapor' => 'nullable|array',
+            'terlapor.*.nama_lengkap' => 'required_with:terlapor|string|max:255',
+            'terlapor.*.email' => 'nullable|email|max:255',
+            'terlapor.*.nomor_telepon' => 'nullable|string|max:20',
+            'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
+            'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
+            'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan',
+            
+            // Updated validations for saksi array
+            'saksi' => 'nullable|array',
+            'saksi.*.nama_lengkap' => 'required_with:saksi|string|max:255',
+            'saksi.*.email' => 'nullable|email|max:255',
+            'saksi.*.nomor_telepon' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -50,13 +65,17 @@ class LaporanKekerasanController extends Controller
             'nomor_laporan_kekerasan' => LaporanKekerasan::generateNomorLaporanKekerasan(),
             'nama_pelapor' => $request->nama_pelapor,
             'nim_pelapor' => $request->nim_pelapor,
-            // Add Saksi fields
-            'saksi_nama' => $request->saksi_nama,
-            'saksi_email' => $request->saksi_email,
-            'saksi_nomor_telepon' => $request->saksi_nomor_telepon,
+            'status' => 'unverified',
+            // Added fields for bukti_pelanggaran and terlapor
+            'bukti_pelanggaran' => $request->bukti_pelanggaran,
+            'terlapor' => $request->terlapor,
+            // Updated saksi to use JSON structure
+            'saksi' => $request->saksi,
+            'lampiran_link' => $request->lampiran_link,
         ];
 
         if ($request->hasFile('image_path')) {
+            // Handle file upload - you may need to update this for multiple images if needed
             $image = $request->file('image_path');
             $uuid = Str::uuid()->toString();
             $extension = $image->getClientOriginalExtension();
@@ -98,6 +117,19 @@ class LaporanKekerasanController extends Controller
     {
         $laporan = LaporanKekerasan::find($id);
         if ($laporan) {
+            // Make sure JSON fields are properly formatted as arrays
+            if (empty($laporan->terlapor)) {
+                $laporan->terlapor = [];
+            }
+            
+            if (empty($laporan->bukti_pelanggaran)) {
+                $laporan->bukti_pelanggaran = [];
+            }
+            
+            if (empty($laporan->saksi)) {
+                $laporan->saksi = [];
+            }
+            
             return response()->json($laporan);
         } else {
             return response()->json(['message' => 'laporan kekerasan tidak ditemukan'], 404);
@@ -119,9 +151,25 @@ class LaporanKekerasanController extends Controller
             'nomor_telepon' => 'sometimes|required',
             'nama_pelapor' => 'sometimes|required',
             'nim_pelapor' => 'sometimes|required',
-            'saksi_nama' => 'nullable|string',
-            'saksi_email' => 'nullable|email',
-            'saksi_nomor_telepon' => 'nullable|string',
+            'lampiran_link' => 'nullable|url',
+            // Added validations for bukti_pelanggaran
+            'bukti_pelanggaran' => 'nullable|array',
+            'bukti_pelanggaran.*' => 'string',
+            
+            // Added validations for terlapor
+            'terlapor' => 'nullable|array',
+            'terlapor.*.nama_lengkap' => 'required_with:terlapor|string|max:255',
+            'terlapor.*.email' => 'nullable|email|max:255',
+            'terlapor.*.nomor_telepon' => 'nullable|string|max:20',
+            'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
+            'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
+            'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan',
+            
+            // Updated validations for saksi
+            'saksi' => 'nullable|array',
+            'saksi.*.nama_lengkap' => 'required_with:saksi|string|max:255',
+            'saksi.*.email' => 'nullable|email|max:255',
+            'saksi.*.nomor_telepon' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -136,11 +184,12 @@ class LaporanKekerasanController extends Controller
         if ($request->has('nomor_telepon')) $laporan->nomor_telepon = $request->nomor_telepon;
         if ($request->has('nama_pelapor')) $laporan->nama_pelapor = $request->nama_pelapor;
         if ($request->has('nim_pelapor')) $laporan->nim_pelapor = $request->nim_pelapor;
+        if ($request->has('lampiran_link')) $laporan->lampiran_link = $request->lampiran_link;
         
-        // Update Saksi fields
-        if ($request->has('saksi_nama')) $laporan->saksi_nama = $request->saksi_nama;
-        if ($request->has('saksi_email')) $laporan->saksi_email = $request->saksi_email;
-        if ($request->has('saksi_nomor_telepon')) $laporan->saksi_nomor_telepon = $request->saksi_nomor_telepon;
+        // Update bukti_pelanggaran, terlapor and saksi fields
+        if ($request->has('bukti_pelanggaran')) $laporan->bukti_pelanggaran = $request->bukti_pelanggaran;
+        if ($request->has('terlapor')) $laporan->terlapor = $request->terlapor;
+        if ($request->has('saksi')) $laporan->saksi = $request->saksi;
 
         // Update image if provided
         if ($request->hasFile('image_path')) {

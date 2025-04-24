@@ -26,8 +26,8 @@ return new class extends Migration
             $table->enum('umur_pelapor', ['<20', '20-40', '40<'])->nullable();
             $table->json('bukti_pelanggaran')->nullable()->after('umur_pelapor');
             // Add JSON columns for terlapor and saksi
-            $table->json('terlapor')->nullable(); // Add this line
-            $table->json('saksi')->nullable();    // Add this line
+            $table->json('terlapor')->nullable();
+            $table->json('saksi')->nullable();
             $table->dateTime('tanggal_kejadian');
             $table->enum('status', ['unverified', 'verified', 'rejected', 'finished'])->default('unverified');
             $table->text('tanggapan')->nullable();

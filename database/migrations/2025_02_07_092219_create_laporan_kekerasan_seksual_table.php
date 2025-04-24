@@ -22,10 +22,13 @@ return new class extends Migration
             $table->string('nomor_laporan_kekerasan');
             $table->string('nama_pelapor');
             $table->string('nim_pelapor');
-            $table->string('saksi_nama')->nullable();
-            $table->string('saksi_email')->nullable();
-            $table->string('saksi_nomor_telepon')->nullable();
+            // Add json fields for terlapor and bukti_pelanggaran
+            $table->json('terlapor')->nullable();
+            $table->json('bukti_pelanggaran')->nullable();
+            // Existing saksi fields enhanced to JSON structure
+            $table->json('saksi')->nullable();
             $table->text('tanggapan')->nullable();
+            $table->string('lampiran_link')->nullable();
             $table->timestamps();
         });
     }

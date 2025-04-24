@@ -181,7 +181,7 @@ class LaporanController extends Controller
             'terlapor.*.nomor_telepon' => 'nullable|string|max:20',
             'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
             'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
-            'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan', // Add gender enum validation
+            'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan',
             
             // Validations for saksi array
             'saksi' => 'nullable|array',

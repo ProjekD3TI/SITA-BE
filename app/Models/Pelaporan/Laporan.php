@@ -24,9 +24,9 @@ class Laporan extends Model
         'profesi',           
         'jenis_kelamin',     
         'umur_pelapor',
-        'bukti_pelanggaran', // New field
-        'terlapor',          // New field for reported persons
-        'saksi',             // New field for witnesses    
+        'bukti_pelanggaran',
+        'terlapor',
+        'saksi',   
         'status',
         'tanggapan',
         'email',
