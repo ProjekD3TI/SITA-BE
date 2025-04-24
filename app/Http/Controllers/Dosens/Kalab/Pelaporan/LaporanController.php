@@ -33,6 +33,8 @@ class LaporanController extends Controller
             'profesi' => 'required|string',
             'jenis_kelamin' => 'required|in:laki-laki,perempuan',
             'umur_pelapor' => 'required|in:<20,20-40,40<',
+            'bukti_pelanggaran' => 'nullable|array', // Validate as array
+            'bukti_pelanggaran.*' => 'string', // Each item should be a string
             
             // Validations for terlapor array
             'terlapor' => 'nullable|array',
@@ -65,6 +67,7 @@ class LaporanController extends Controller
             'profesi' => $request->profesi,
             'jenis_kelamin' => $request->jenis_kelamin,
             'umur_pelapor' => $request->umur_pelapor,
+            'bukti_pelanggaran' => $request->bukti_pelanggaran, // Add the new field
             'terlapor' => $request->terlapor, // New field for terlapor data
             'saksi' => $request->saksi, // New field for saksi data
             'status' => 'unverified',
@@ -165,6 +168,8 @@ class LaporanController extends Controller
             'profesi' => 'required|string',
             'jenis_kelamin' => 'required|in:laki-laki,perempuan',
             'umur_pelapor' => 'required|in:<20,20-40,40<',
+            'bukti_pelanggaran' => 'nullable|array',
+            'bukti_pelanggaran.*' => 'string',
             'image_path.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'lampiran_link' => 'nullable|url',
             
@@ -197,6 +202,7 @@ class LaporanController extends Controller
             'profesi' => $request->profesi,
             'jenis_kelamin' => $request->jenis_kelamin,
             'umur_pelapor' => $request->umur_pelapor,
+            'bukti_pelanggaran' => $request->bukti_pelanggaran,
             'terlapor' => $request->terlapor, // Update terlapor data
             'saksi' => $request->saksi, // Update saksi data
             'lampiran_link' => $request->lampiran_link,

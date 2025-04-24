@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('profesi', 50)->nullable();
             $table->enum('jenis_kelamin', ['laki-laki', 'perempuan'])->nullable();
             $table->enum('umur_pelapor', ['<20', '20-40', '40<'])->nullable();
+            $table->json('bukti_pelanggaran')->nullable()->after('umur_pelapor');
             // Add JSON columns for terlapor and saksi
             $table->json('terlapor')->nullable(); // Add this line
             $table->json('saksi')->nullable();    // Add this line
