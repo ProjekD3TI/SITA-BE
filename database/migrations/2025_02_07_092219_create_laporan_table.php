@@ -21,6 +21,9 @@ return new class extends Migration
             $table->string('nomor_laporan');
             $table->string('nama_pelapor');
             $table->string('nim_pelapor');
+            $table->string('profesi', 50)->after('ni_pelapor')->nullable();
+            $table->enum('jenis_kelamin', ['laki-laki', 'perempuan'])->after('profesi')->nullable();
+            $table->enum('umur_pelapor', ['<20', '20-40', '40<'])->after('jenis_kelamin')->nullable();
             $table->dateTime('tanggal_kejadian');
             $table->enum('status', ['unverified', 'verified', 'rejected', 'finished'])->default('unverified');
             $table->text('tanggapan')->nullable();

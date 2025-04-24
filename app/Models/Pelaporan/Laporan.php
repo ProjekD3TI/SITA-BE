@@ -21,10 +21,13 @@ class Laporan extends Model
         'nomor_laporan',
         'nama_pelapor',
         'ni_pelapor',
+        'profesi',           
+        'jenis_kelamin',     
+        'umur_pelapor',      
         'status',
         'tanggapan',
         'email',
-        'lampiran_link', // Kolom baru yang ditambahkan
+        'lampiran_link',
     ];
 
     protected $casts = [

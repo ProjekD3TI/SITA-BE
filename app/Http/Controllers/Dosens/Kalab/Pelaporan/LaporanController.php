@@ -30,6 +30,9 @@ class LaporanController extends Controller
             'deskripsi' => 'required',
             'tanggal_kejadian' => 'required',
             'lampiran_link' => 'nullable|url', // Validasi untuk link
+            'profesi' => 'required|string', // Validasi untuk profesi
+            'jenis_kelamin' => 'required|in:laki-laki,perempuan', // Validasi untuk jenis kelamin
+            'umur_pelapor' => 'required|in:<20,20-40,40<', // Validasi untuk umur pelapor
         ]);
 
         if ($validator->fails()) {
@@ -45,6 +48,9 @@ class LaporanController extends Controller
             'nomor_laporan' => Laporan::generateNomorLaporan(),
             'nama_pelapor' => Auth::user()->name,
             'ni_pelapor' => Auth::user()->nim ?? Auth::user()->nik,
+            'profesi' => $request->profesi,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'umur_pelapor' => $request->umur_pelapor,
             'status' => 'unverified',
             'email' => Auth::user()->email,
             'lampiran_link' => $request->lampiran_link, // Menambahkan lampiran link
@@ -127,6 +133,9 @@ class LaporanController extends Controller
             'nomor_telepon' => 'required',
             'nama_pelapor' => 'required',
             'ni_pelapor' => 'required',
+            'profesi' => 'required|string', // Validasi untuk profesi
+            'jenis_kelamin' => 'required|in:laki-laki,perempuan', // Validasi untuk jenis kelamin
+            'umur_pelapor' => 'required|in:<20,20-40,40<', // Validasi untuk umur pelapor
             'image_path.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate multiple images
             'lampiran_link' => 'nullable|url', // Validasi untuk link
         ]);
@@ -142,6 +151,9 @@ class LaporanController extends Controller
             'nomor_telepon' => $request->nomor_telepon,
             'nama_pelapor' => $request->nama_pelapor,
             'ni_pelapor' => $request->ni_pelapor,
+            'profesi' => $request->profesi,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'umur_pelapor' => $request->umur_pelapor,
             'lampiran_link' => $request->lampiran_link, // Menambahkan lampiran link
         ];
 
