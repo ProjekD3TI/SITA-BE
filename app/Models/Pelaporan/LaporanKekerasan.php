@@ -21,7 +21,6 @@ class LaporanKekerasan extends Model
         'nomor_laporan_kekerasan',
         'nama_pelapor',
         'nim_pelapor',
-        'tanggapan',
         'bukti_pelanggaran', // Added field for evidence
         'terlapor', // Added field for reported person
         'saksi', // Changed to JSON field

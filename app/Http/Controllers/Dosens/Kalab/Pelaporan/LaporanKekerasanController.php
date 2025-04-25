@@ -24,7 +24,7 @@ class LaporanKekerasanController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'judul' => 'required',
-            'image_path' => 'required',
+            'image_path.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', 
             'category_id' => 'required',
             'deskripsi' => 'required',
             'tanggal_kejadian' => 'required',
@@ -44,6 +44,7 @@ class LaporanKekerasanController extends Controller
             'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
             'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
             'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan',
+            'terlapor.*.umur_terlapor' => 'required_with:terlapor|in:<20,20-40,40<',
             
             // Updated validations for saksi array
             'saksi' => 'nullable|array',
@@ -66,23 +67,27 @@ class LaporanKekerasanController extends Controller
             'nama_pelapor' => $request->nama_pelapor,
             'nim_pelapor' => $request->nim_pelapor,
             'status' => 'unverified',
-            // Added fields for bukti_pelanggaran and terlapor
             'bukti_pelanggaran' => $request->bukti_pelanggaran,
             'terlapor' => $request->terlapor,
-            // Updated saksi to use JSON structure
             'saksi' => $request->saksi,
             'lampiran_link' => $request->lampiran_link,
         ];
 
         if ($request->hasFile('image_path')) {
-            // Handle file upload - you may need to update this for multiple images if needed
-            $image = $request->file('image_path');
-            $uuid = Str::uuid()->toString();
-            $extension = $image->getClientOriginalExtension();
-            $filename = $uuid . '.' . $extension;
-            $path = $image->storeAs('public/laporankekerasan', $filename);
+            $imageNames = [];
             
-            $data['image_path'] = $filename;
+            // Process multiple images - THIS IS THE KEY CHANGE
+            foreach($request->file('image_path') as $image) {
+                $uuid = Str::uuid()->toString();
+                $extension = $image->getClientOriginalExtension();
+                $filename = $uuid . '.' . $extension;
+                $image->storeAs('public/laporankekerasan', $filename);
+                
+                $imageNames[] = $filename;
+            }
+            
+            // Store image names as JSON in the database - THIS IS THE KEY CHANGE
+            $data['image_path'] = json_encode($imageNames);
     
             $laporan = LaporanKekerasan::create($data);
 

@@ -27,7 +27,6 @@ return new class extends Migration
             $table->json('bukti_pelanggaran')->nullable();
             // Existing saksi fields enhanced to JSON structure
             $table->json('saksi')->nullable();
-            $table->text('tanggapan')->nullable();
             $table->string('lampiran_link')->nullable();
             $table->timestamps();
         });
