@@ -33,8 +33,8 @@ class LaporanController extends Controller
             'profesi' => 'required|string',
             'jenis_kelamin' => 'required|in:laki-laki,perempuan',
             'umur_pelapor' => 'required|in:<20,20-40,40<',
-            'bukti_pelanggaran' => 'nullable|array', // Validate as array
-            'bukti_pelanggaran.*' => 'string', // Each item should be a string
+            'bukti_pelanggaran' => 'nullable|array',
+            'bukti_pelanggaran.*' => 'string',
             
             // Validations for terlapor array
             'terlapor' => 'nullable|array',
@@ -43,7 +43,8 @@ class LaporanController extends Controller
             'terlapor.*.nomor_telepon' => 'nullable|string|max:20',
             'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
             'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
-            'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan', // Add gender enum validation
+            'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan',
+            'terlapor.*.umur_terlapor' => 'required_with:terlapor|in:<20,20-40,40<',
             
             // Validations for saksi array
             'saksi' => 'nullable|array',
