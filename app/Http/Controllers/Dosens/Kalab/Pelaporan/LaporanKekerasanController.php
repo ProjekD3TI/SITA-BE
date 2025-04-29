@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Http;
 
 class LaporanKekerasanController extends Controller
 {
@@ -22,9 +23,20 @@ class LaporanKekerasanController extends Controller
 
     public function createLaporanKekerasan(Request $request)
     {
+        // First, validate reCAPTCHA
+        $recaptchaResponse = $request->input('g-recaptcha-response');
+        
+        if (!$this->validateRecaptcha($recaptchaResponse)) {
+            return response()->json([
+                'message' => 'reCAPTCHA verification failed',
+                'errors' => ['recaptcha' => ['Verifikasi reCAPTCHA gagal. Silakan coba lagi.']]
+            ], 400);
+        }
+        
         $validator = Validator::make($request->all(), [
             'judul' => 'required',
-            'image_path.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', 
+            'image_path' => 'required|array', 
+            'image_path.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // Increased max size to 5MB
             'category_id' => 'required',
             'deskripsi' => 'required',
             'tanggal_kejadian' => 'required',
@@ -32,25 +44,27 @@ class LaporanKekerasanController extends Controller
             'nama_pelapor' => 'required',
             'nim_pelapor' => 'required',
             'lampiran_link' => 'nullable|url',
-            // Added validations for bukti_pelanggaran
+            'agreement' => 'required|accepted',
+            
+            // Validations for bukti_pelanggaran
             'bukti_pelanggaran' => 'nullable|array',
             'bukti_pelanggaran.*' => 'string',
             
-            // Added validations for terlapor array
+            // Validations for terlapor array
             'terlapor' => 'nullable|array',
             'terlapor.*.nama_lengkap' => 'required_with:terlapor|string|max:255',
             'terlapor.*.email' => 'nullable|email|max:255',
             'terlapor.*.nomor_telepon' => 'nullable|string|max:20',
             'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
-            'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
             'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan',
-            'terlapor.*.umur_terlapor' => 'required_with:terlapor|in:<20,20-40,40<',
+            'terlapor.*.unit_kerja' => 'nullable|string|max:255',
+            'terlapor.*.umur_terlapor' => 'nullable|in:<20,20-40,40<',
             
-            // Updated validations for saksi array
+            // Validations for saksi array
             'saksi' => 'nullable|array',
             'saksi.*.nama_lengkap' => 'required_with:saksi|string|max:255',
-            'saksi.*.email' => 'nullable|email|max:255',
-            'saksi.*.nomor_telepon' => 'nullable|string|max:20',
+            'saksi.*.email' => 'required_with:saksi|email|max:255',
+            'saksi.*.nomor_telepon' => 'required_with:saksi|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -71,12 +85,15 @@ class LaporanKekerasanController extends Controller
             'terlapor' => $request->terlapor,
             'saksi' => $request->saksi,
             'lampiran_link' => $request->lampiran_link,
+            'created_at' => now(),
+            'updated_at' => now(),
+            'username' => $request->username ?? 'miftahul01',
         ];
 
         if ($request->hasFile('image_path')) {
             $imageNames = [];
             
-            // Process multiple images - THIS IS THE KEY CHANGE
+            // Process multiple images
             foreach($request->file('image_path') as $image) {
                 $uuid = Str::uuid()->toString();
                 $extension = $image->getClientOriginalExtension();
@@ -86,11 +103,71 @@ class LaporanKekerasanController extends Controller
                 $imageNames[] = $filename;
             }
             
-            // Store image names as JSON in the database - THIS IS THE KEY CHANGE
+            // Store image names as JSON in the database
             $data['image_path'] = json_encode($imageNames);
     
             $laporan = LaporanKekerasan::create($data);
 
+            // Send email notification to Kalab staff
+            $this->sendEmailNotification($laporan);
+            
+            return response()->json([
+                'message' => 'Laporan kekerasan berhasil ditambahkan',
+                'laporan' => $laporan
+            ], 201);
+        }
+    
+        return response()->json(['message' => 'Image upload failed'], 400);
+    }
+    
+    /**
+     * Validate Google reCAPTCHA v2 response
+     * 
+     * @param string $recaptchaResponse
+     * @return bool
+     */
+    private function validateRecaptcha($recaptchaResponse) 
+    {
+        if (empty($recaptchaResponse)) {
+            \Log::warning('Empty reCAPTCHA response received');
+            return false;
+        }
+        
+        // Use your reCAPTCHA v2 secret key here
+        $recaptchaSecretKey = env('RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe');
+        
+        try {
+            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => $recaptchaSecretKey,
+                'response' => $recaptchaResponse,
+                'remoteip' => request()->ip()
+            ]);
+            
+            $body = $response->json();
+            \Log::info('reCAPTCHA response: ' . json_encode($body));
+            
+            // For v2, we only need to check the success parameter
+            if (!isset($body['success']) || !$body['success']) {
+                \Log::warning('reCAPTCHA verification failed: ' . json_encode($body));
+                return false;
+            }
+            
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('reCAPTCHA verification exception: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Send email notification to Kalab staff
+     * 
+     * @param \App\Models\Pelaporan\LaporanKekerasan $laporan
+     * @return void
+     */
+    private function sendEmailNotification($laporan)
+    {
+        try {
             $kalabJabatan = Jabatan::where('name', 'Kalab')->first();
             if ($kalabJabatan) {
                 $kalabDosens = Dosen::whereHas('jabatans', function($query) use ($kalabJabatan) {
@@ -108,31 +185,36 @@ class LaporanKekerasanController extends Controller
                     });
                 }
             }
-            
-            return response()->json([
-                'message' => 'Laporan kekerasan berhasil ditambahkan',
-                'laporan' => $laporan
-            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send email notification: ' . $e->getMessage());
         }
-    
-        return response()->json(['message' => 'Image upload failed'], 400);
     }
 
     public function showDetailLaporanKekerasan($id)
     {
         $laporan = LaporanKekerasan::find($id);
         if ($laporan) {
-            // Make sure JSON fields are properly formatted as arrays
+            // Ensure JSON fields are properly formatted as arrays
+            if (isset($laporan->image_path) && is_string($laporan->image_path)) {
+                $laporan->image_path = json_decode($laporan->image_path, true) ?: [];
+            }
+            
             if (empty($laporan->terlapor)) {
                 $laporan->terlapor = [];
+            } elseif (is_string($laporan->terlapor)) {
+                $laporan->terlapor = json_decode($laporan->terlapor, true) ?: [];
             }
             
             if (empty($laporan->bukti_pelanggaran)) {
                 $laporan->bukti_pelanggaran = [];
+            } elseif (is_string($laporan->bukti_pelanggaran)) {
+                $laporan->bukti_pelanggaran = json_decode($laporan->bukti_pelanggaran, true) ?: [];
             }
             
             if (empty($laporan->saksi)) {
                 $laporan->saksi = [];
+            } elseif (is_string($laporan->saksi)) {
+                $laporan->saksi = json_decode($laporan->saksi, true) ?: [];
             }
             
             return response()->json($laporan);
@@ -157,24 +239,30 @@ class LaporanKekerasanController extends Controller
             'nama_pelapor' => 'sometimes|required',
             'nim_pelapor' => 'sometimes|required',
             'lampiran_link' => 'nullable|url',
-            // Added validations for bukti_pelanggaran
+            
+            // Validations for bukti_pelanggaran
             'bukti_pelanggaran' => 'nullable|array',
             'bukti_pelanggaran.*' => 'string',
             
-            // Added validations for terlapor
+            // Validations for terlapor
             'terlapor' => 'nullable|array',
             'terlapor.*.nama_lengkap' => 'required_with:terlapor|string|max:255',
             'terlapor.*.email' => 'nullable|email|max:255',
             'terlapor.*.nomor_telepon' => 'nullable|string|max:20',
             'terlapor.*.status_warga' => 'required_with:terlapor|in:dosen,mahasiswa,staff,lainnya',
-            'terlapor.*.unit_kerja' => 'required_with:terlapor|string|max:255',
             'terlapor.*.jenis_kelamin' => 'required_with:terlapor|in:laki-laki,perempuan',
+            'terlapor.*.unit_kerja' => 'nullable|string|max:255',
+            'terlapor.*.umur_terlapor' => 'nullable|in:<20,20-40,40<',
             
-            // Updated validations for saksi
+            // Validations for saksi
             'saksi' => 'nullable|array',
             'saksi.*.nama_lengkap' => 'required_with:saksi|string|max:255',
-            'saksi.*.email' => 'nullable|email|max:255',
-            'saksi.*.nomor_telepon' => 'nullable|string|max:20',
+            'saksi.*.email' => 'required_with:saksi|email|max:255',
+            'saksi.*.nomor_telepon' => 'required_with:saksi|string|max:20',
+            
+            // Validations for new images
+            'image_path' => 'nullable|array',
+            'image_path.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -195,21 +283,31 @@ class LaporanKekerasanController extends Controller
         if ($request->has('bukti_pelanggaran')) $laporan->bukti_pelanggaran = $request->bukti_pelanggaran;
         if ($request->has('terlapor')) $laporan->terlapor = $request->terlapor;
         if ($request->has('saksi')) $laporan->saksi = $request->saksi;
+        
+        // Update username and timestamps
+        $laporan->updated_at = now();
+        if ($request->has('username')) $laporan->username = $request->username;
 
-        // Update image if provided
+        // Update images if provided
         if ($request->hasFile('image_path')) {
-            // Remove old image if it exists
+            // Get existing images
+            $existingImages = [];
             if ($laporan->image_path) {
-                Storage::delete('public/laporankekerasan/' . $laporan->image_path);
+                $existingImages = json_decode($laporan->image_path, true) ?: [];
             }
-
-            $image = $request->file('image_path');
-            $uuid = Str::uuid()->toString();
-            $extension = $image->getClientOriginalExtension();
-            $filename = $uuid . '.' . $extension;
-            $path = $image->storeAs('public/laporankekerasan', $filename);
             
-            $laporan->image_path = $filename;
+            // Process new images
+            foreach($request->file('image_path') as $image) {
+                $uuid = Str::uuid()->toString();
+                $extension = $image->getClientOriginalExtension();
+                $filename = $uuid . '.' . $extension;
+                $image->storeAs('public/laporankekerasan', $filename);
+                
+                $existingImages[] = $filename;
+            }
+            
+            // Store updated image names
+            $laporan->image_path = json_encode($existingImages);
         }
 
         $laporan->save();
@@ -222,14 +320,30 @@ class LaporanKekerasanController extends Controller
 
     public function deleteLaporanKekerasan($id)
     {
-        $laporan = LaporanKekerasan::findOrFail($id);
+        $laporan = LaporanKekerasan::find($id);
 
         if (!$laporan) {
             return response()->json(['message' => 'laporan Kekerasan tidak ditemukan'], 404);
+        }
+        
+        // Delete associated images
+        if ($laporan->image_path) {
+            $images = json_decode($laporan->image_path, true);
+            if (is_array($images)) {
+                foreach ($images as $image) {
+                    Storage::delete('public/laporankekerasan/' . $image);
+                }
+            }
         }
     
         $laporan->delete();
     
         return response()->json(['message' => 'laporan Kekerasan berhasil dihapus']);
+    }
+    
+    public function add_laporan(Request $request)
+    {
+        // This is an alias for createLaporanKekerasan to match the Vue.js frontend
+        return $this->createLaporanKekerasan($request);
     }
 }
