@@ -11,7 +11,7 @@ class TahunAjaran extends Model
 
     protected $table = 'tahun_ajaran';
     protected $with = ['tugasAkhir', 'ujianTA'];
-    protected $fillable = ['tahun_ajaran'];
+    protected $fillable = ['tahun_ajaran', 'is_default'];
 
     public function tugasAkhir()
     {

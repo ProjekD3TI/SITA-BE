@@ -13,6 +13,7 @@ return new class extends Migration {
         Schema::create('semester', function (Blueprint $table) {
             $table->id();
             $table->string('nama_semester', 30)->unique(); // A untuk ganjil, B untuk genap
+            $table->boolean('is_default')->default(0); // 0:tidak default, 1:default
             $table->timestamps();
         });
     }

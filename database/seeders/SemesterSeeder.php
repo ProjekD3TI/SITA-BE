@@ -15,9 +15,11 @@ class SemesterSeeder extends Seeder
     {
         Semester::create([
             'nama_semester' => 'A',
+            'is_default' => 1,
         ]);
         Semester::create([
             'nama_semester' => 'B',
+            'is_default' => 0,
         ]);
     }
 }

@@ -17,6 +17,7 @@ class SemesterResource extends JsonResource
         return [
             'id' => $this->id,
             "nama_semester" => $this->nama_semester,
+            'is_default' => $this->is_default,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

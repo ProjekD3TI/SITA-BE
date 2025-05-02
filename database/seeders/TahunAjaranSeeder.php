@@ -17,15 +17,19 @@ class TahunAjaranSeeder extends Seeder
 
         TahunAjaran::create([
             'tahun_ajaran' => '2021/2022',
+            'is_default' => 0,
         ]);
         TahunAjaran::create([
             'tahun_ajaran' => '2022/2023',
+            'is_default' => 0,
         ]);
         TahunAjaran::create([
             'tahun_ajaran' => '2023/2024',
+            'is_default' => 0,
         ]);
         TahunAjaran::create([
             'tahun_ajaran' => '2024/2025',
+            'is_default' => 1,
         ]);
     }
 }

@@ -17,6 +17,7 @@ class TahunAjaranResource extends JsonResource
         return [
             'id' => $this->id,
             'tahun_ajaran' => $this->tahun_ajaran,
+            'is_default' => $this->is_default,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];

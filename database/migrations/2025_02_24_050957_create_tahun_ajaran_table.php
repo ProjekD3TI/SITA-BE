@@ -13,6 +13,7 @@ return new class extends Migration {
         Schema::create('tahun_ajaran', function (Blueprint $table) {
             $table->id();
             $table->string('tahun_ajaran', 10);
+            $table->boolean('is_default')->default(0); // 0:tidak default, 1:default
             $table->timestamps();
         });
     }

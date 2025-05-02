@@ -11,7 +11,7 @@ class Semester extends Model
 
     protected $table = 'semester';
     protected $with = ['tugasAkhir', 'ujianTA'];
-    protected $fillable = ['nama_semester'];
+    protected $fillable = ['nama_semester', 'is_default'];
 
     public function tugasAkhir()
     {

@@ -40,12 +40,13 @@ class TahunAjaranController extends Controller
     {
         try {
             $validated = $request->validate([
-                'tahun_ajaran' => 'required|string|max:10'
+                'tahun_ajaran' => 'required|string|max:10',
+                'is_default' => 'required|boolean',
             ]);
 
             $tahunAjaran = TahunAjaran::create($validated);
             return ApiResponse::success(
-                new TahunAjaran($tahunAjaran),
+                new TahunAjaranResource($tahunAjaran),
                 'Tahun ajaran berhasil ditambahkan',
                 201
             );
@@ -74,6 +75,30 @@ class TahunAjaranController extends Controller
             return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
         } catch (\Exception $e) {
             return ApiResponse::error('Data tahun ajaran gagal diubah ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function setDefault($id)
+    {
+        try {
+
+            // Reset dulu semua tahun ajaran menjadi non-default
+            TahunAjaran::query()->update(['is_default' => 0]);
+
+            // Set tahun ajaran yang dipilih menjadi default
+            $tahunAjaran = TahunAjaran::findOrFail($id);
+            $tahunAjaran->update(['is_default' => 1]);
+
+            return ApiResponse::success(
+                new TahunAjaranResource($tahunAjaran),
+                'Tahun ajaran default berhasil diubah',
+                201
+            );
+
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            return ApiResponse::error('Gagal mengganti tahun ajaran default: ' . $e->getMessage(), 500);
         }
     }
 
