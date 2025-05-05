@@ -12,12 +12,11 @@ return new class extends Migration {
     {
         Schema::create('nilai_bimbingan', function (Blueprint $table) {
             $table->id();
-            $table->integer('nilai_akhir_bimbingan');
-            $table->integer('nilai_disiplin');
-            $table->integer('nilai_komunikasi');
-            $table->integer('nilai_skill_pengetahuan');
-            $table->integer('nilai_tingkah_laku');
-            $table->text('catatan_akhir_bimbingan')->nullable();
+            $table->integer('rerata_bimbingan');
+            $table->integer('disiplin');
+            $table->integer('komunikasi');
+            $table->integer('skill_pengetahuan');
+            $table->integer('tingkah_laku');
             $table->timestamps();
         });
     }

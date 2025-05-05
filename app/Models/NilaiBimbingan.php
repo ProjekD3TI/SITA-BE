@@ -11,12 +11,11 @@ class NilaiBimbingan extends Model
 
     protected $table = 'nilai_bimbingan';
     protected $fillable = [
-        'nilai_akhir_bimbingan',
-        'nilai_disiplin',
-        'nilai_komunikasi',
-        'nilai_skill_pengetahuan',
-        'nilai_tingkah_laku',
-        'catatan_akhir_bimbingan',
+        'rerata_bimbingan',
+        'disiplin',
+        'komunikasi',
+        'skill_pengetahuan',
+        'tingkah_laku',
     ];
 
     public function tugasAkhir()

@@ -14,9 +14,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('dosen_id')->constrained('dosen')->onDelete('restrict');
             $table->foreignId('tugas_akhir_id')->constrained('tugas_akhir')->onDelete('restrict');
+            $table->foreignId('nilai_ujian_ta_id')->nullable()->constrained('nilai_ujian_ta')->onDelete('restrict');
             $table->text('revisi')->nullable();
             $table->text('catatan_semhas')->nullable();
-            $table->integer('nilai_ujian_ta')->nullable();
             $table->timestamps();
 
             // untuk menghindari duplikasi

@@ -124,6 +124,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Sistem TugasAkhir (Nilai Bimbingan)
     Route::get('/dosen/nilai-bimbingan/{id}', [NilaiBimbinganController::class, 'getNilaiBimbinganByDosen']);
     Route::post('/dosen/nilai-bimbingan/{id}', [NilaiBimbinganController::class, 'storeNilaiBimbinganByDosen']);
+    Route::put('/dosen/nilai-bimbingan/{id}/update', [NilaiBimbinganController::class, 'updateNilaiBimbinganByDosen']);
 
     // Sistem Tugas akhir (Tugas Akhir)
     //blm ditest (nilai bimbingan sudah ditest)
