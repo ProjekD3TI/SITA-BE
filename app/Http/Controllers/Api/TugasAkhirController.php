@@ -208,7 +208,7 @@ class TugasAkhirController extends Controller
     }
 
     // Endpoint untuk mengecek apakah mahasiswa sudah memiliki dosen pembimbing
-    public function cekDosenPembimbing()
+    public function cekDosenPembimbingByMahasiswa()
     {
         try {
             $mahasiswaId = Auth::id();

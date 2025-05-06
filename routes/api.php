@@ -74,6 +74,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     //request pembimbing
     Route::post('/mahasiswa/request-pembimbing/', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
+    Route::get('/mahasiswa/cek-request-pembimbing', [RequestPembimbingController::class, 'cekStatusRequestByMahasiswa']);
 
     //proposal
     Route::post('/mahasiswa/proposal/', [ProposalController::class, 'storeForMhs']);
@@ -91,7 +92,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     //Tugas Akhir
     Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirForMahasiswa']);
-    Route::get('/mahasiswa/tugas-akhir/cek-dosen-pembimbing', [TugasAkhirController::class, 'cekDosenPembimbing']);
+    Route::get('/mahasiswa/tugas-akhir/cek-dosen-pembimbing', [TugasAkhirController::class, 'cekDosenPembimbingByMahasiswa']);
 
 });
 
