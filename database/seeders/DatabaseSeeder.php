@@ -29,7 +29,14 @@ class DatabaseSeeder extends Seeder
             JabatanDosenSeeder::class,
             SemesterSeeder::class,
             RuangSeeder::class,
+            ProposalSeeder::class,
             TugasAkhirSeeder::class,
+            NilaiBimbinganSeeder::class,
+            BimbinganSeeder::class,
+            RequestPembimbingSeeder::class,
+            NilaiUjianTASeeder::class,
+            DosenPengujiSeeder::class,
+            UjianTASeeder::class,
         ]);
     }
 }
