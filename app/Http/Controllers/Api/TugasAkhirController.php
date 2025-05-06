@@ -232,4 +232,25 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
+    public function tugasAkhirAktifByMahasiswa()
+    {
+        try {
+            $mahasiswaId = Auth::id();
+
+            // Ambil data TugasAkhir berdasarkan mahasiswa_id
+            $tugasAkhir = TugasAkhir::with(['dosenPembimbing'])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1) // Hanya ambil yang aktif
+                ->first();
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+
+            return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Tugas Akhir berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
 }
