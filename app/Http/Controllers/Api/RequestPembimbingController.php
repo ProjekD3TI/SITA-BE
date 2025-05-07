@@ -160,20 +160,30 @@ class RequestPembimbingController extends Controller
         }
     }
 
-    // public function destroy($id)
-    // {
-    //     try {
-    //         $requestPembimbing = RequestPembimbing::find($id);
+    // Fungsi untuk mahasiswa
+    public function cekStatusRequestByMahasiswa()
+    {
+        try {
+            $mahasiswaId = Auth::id();
+    
+            // Ambil data RequestPembimbing berdasarkan mahasiswa_id melalui relasi TugasAkhir
+            $requestPembimbing = RequestPembimbing::whereHas('tugasAkhir', function ($query) use ($mahasiswaId) {
+                $query->where('mahasiswa_id', $mahasiswaId);
+            })->first();
+    
+            // Jika tidak ditemukan, kembalikan null untuk status_request
+            if (!$requestPembimbing) {
+                return ApiResponse::success([
+                    'status_request' => null,
+                ], 'Belum ada request pembimbing');
+            }
+    
+            return ApiResponse::success([
+                'status_request' => $requestPembimbing->status_request,
+            ], 'Request sudah direspon');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
 
-    //         if (!$requestPembimbing) {
-    //             return ApiResponse::error('Request not found', 404);
-    //         }
-
-    //         $requestPembimbing->delete();
-
-    //         return ApiResponse::success(null, 'Request deleted successfully');
-    //     } catch (Exception $e) {
-    //         return ApiResponse::error($e->getMessage(), 500);
-    //     }
-    // }
 }

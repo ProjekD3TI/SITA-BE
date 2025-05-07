@@ -206,4 +206,54 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
+    // Endpoint untuk mengecek apakah mahasiswa sudah memiliki dosen pembimbing
+    public function cekDosenPembimbingByMahasiswa()
+    {
+        try {
+            $mahasiswaId = Auth::id();
+
+            // Ambil data TugasAkhir berdasarkan mahasiswa_id
+            $tugasAkhir = TugasAkhir::with(['dosenPembimbing'])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->first();
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+
+            // Cek apakah dosen pembimbing sudah ada
+            $hasDosenPembimbing = !is_null($tugasAkhir->dosen_pembimbing_id);
+
+            return ApiResponse::success([
+                'has_dospem' => $hasDosenPembimbing,
+            ], $hasDosenPembimbing ? 'Mahasiswa sudah memiliki dosen pembimbing' : 'Mahasiswa belum memiliki dosen pembimbing');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function tugasAkhirAktifByMahasiswa()
+    {
+        try {
+            $mahasiswaId = Auth::id();
+    
+            // Ambil data TugasAkhir berdasarkan mahasiswa_id
+            $tugasAkhir = TugasAkhir::with(['dosenPembimbing'])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1) // Hanya ambil yang aktif
+                ->first();
+    
+            // Jika tidak ditemukan, kembalikan null
+            if (!$tugasAkhir) {
+                return ApiResponse::success([
+                    'tugas_akhir' => null
+                ], 'Belum ada Tugas Akhir yang aktif');
+            }
+    
+            return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Tugas Akhir berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
 }

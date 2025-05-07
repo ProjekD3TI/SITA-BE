@@ -48,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [UserController::class, 'logoutUser']);
 });
 
+Route::get('/tahun-ajaran/default', [TahunAjaranController::class, 'getDefault']);
+Route::get('/all-dosen', [DosenPengujiController::class, 'getAllDosen']);
 
 
 
@@ -74,6 +76,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     //request pembimbing
     Route::post('/mahasiswa/request-pembimbing/', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
+    Route::get('/mahasiswa/cek-request-pembimbing', [RequestPembimbingController::class, 'cekStatusRequestByMahasiswa']);
 
     //proposal
     Route::post('/mahasiswa/proposal/', [ProposalController::class, 'storeForMhs']);
@@ -91,6 +94,8 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     //Tugas Akhir
     Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirForMahasiswa']);
+    Route::get('/mahasiswa/tugas-akhir/cek-dosen-pembimbing', [TugasAkhirController::class, 'cekDosenPembimbingByMahasiswa']);
+    Route::get('/mahasiswa/tugas-akhir/aktif', [TugasAkhirController::class, 'tugasAkhirAktifByMahasiswa']);
 
 });
 
@@ -228,7 +233,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Route Tahun Ajaran
         Route::apiResource('/admin_ta/tahun-ajaran', TahunAjaranController::class);
         Route::put('admin_ta/tahun-ajaran/{id}/set-default', [TahunAjaranController::class, 'setDefault']);
-
+        
         // Route Ujian TA
         Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
         // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);

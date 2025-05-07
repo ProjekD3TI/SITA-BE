@@ -101,6 +101,27 @@ class TahunAjaranController extends Controller
             return ApiResponse::error('Gagal mengganti tahun ajaran default: ' . $e->getMessage(), 500);
         }
     }
+    
+    public function getDefault(){
+        try {
+            // Ambil data tahun ajaran aktif
+            $tahunAjaran = TahunAjaran::where('is_default', 1)
+                ->value('tahun_ajaran');
+            
+            if (!$tahunAjaran) {
+                return ApiResponse::success([
+                    'tahun_ajaran' => null
+                ], 'Belum ada tahun ajaran yang aktif');
+            }
+            
+            // Return hanya string tahun ajaran
+            return ApiResponse::success([
+                'tahun_ajaran' => $tahunAjaran
+            ], 'Data tahun ajaran berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data tahun ajaran gagal diambil: ' . $e->getMessage(), 500);
+        }
+    }
 
     public function destroy($id)
     {
