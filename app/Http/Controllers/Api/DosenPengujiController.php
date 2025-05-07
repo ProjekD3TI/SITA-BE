@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Validation\ValidationException;
 use App\Models\TugasAkhir;
 use App\Models\DosenPenguji;
+use App\Models\Dosen;
 use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
@@ -14,6 +15,20 @@ use App\Http\Resources\DosenPengujiResource;
 
 class DosenPengujiController extends Controller
 {
+    public function getAllDosen() 
+    {
+        try {
+            // Impor model Dosen jika belum diimpor
+            // Pastikan untuk menambahkan "use App\Models\Dosen;" di bagian atas file
+            $dosen = Dosen::select('id', 'name', 'nik')
+                ->orderBy('name')
+                ->get();
+            
+            return ApiResponse::success($dosen, 'Data dosen berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Data dosen gagal diambil: ' . $e->getMessage(), 500);
+        }
+    }
     public function getReadyTAforAdmin()
     {
         try {

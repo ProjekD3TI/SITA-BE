@@ -165,16 +165,19 @@ class RequestPembimbingController extends Controller
     {
         try {
             $mahasiswaId = Auth::id();
-
+    
             // Ambil data RequestPembimbing berdasarkan mahasiswa_id melalui relasi TugasAkhir
             $requestPembimbing = RequestPembimbing::whereHas('tugasAkhir', function ($query) use ($mahasiswaId) {
                 $query->where('mahasiswa_id', $mahasiswaId);
             })->first();
-
+    
+            // Jika tidak ditemukan, kembalikan null untuk status_request
             if (!$requestPembimbing) {
-                return ApiResponse::error('Request Pembimbing tidak ditemukan', 404);
+                return ApiResponse::success([
+                    'status_request' => null,
+                ], 'Belum ada request pembimbing');
             }
-
+    
             return ApiResponse::success([
                 'status_request' => $requestPembimbing->status_request,
             ], 'Request sudah direspon');

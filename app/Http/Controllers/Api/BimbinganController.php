@@ -90,21 +90,22 @@ class BimbinganController extends Controller
     {
         $mahasiswa = Auth::id();
         try {
-
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
                 ->where('status_aktif', 1)
                 ->first();
-
+    
             if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
+                return ApiResponse::success([
+                    'data' => null
+                ], 'Belum ada tugas akhir yang aktif');
             }
-
+    
             $bimbingan = Bimbingan::with(['tugasAkhir'])
                 ->where('tugas_akhir_id', $tugasAkhir->id)
                 ->get();
-
+    
             $data = BimbinganResource::collection($bimbingan);
-
+    
             return ApiResponse::success($data, 'Data bimbingan berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data bimbingan gagal diambil ' . $e->getMessage(), 500);

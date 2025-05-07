@@ -48,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [UserController::class, 'logoutUser']);
 });
 
+Route::get('/tahun-ajaran/default', [TahunAjaranController::class, 'getDefault']);
+Route::get('/all-dosen', [DosenPengujiController::class, 'getAllDosen']);
 
 
 
@@ -231,7 +233,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Route Tahun Ajaran
         Route::apiResource('/admin_ta/tahun-ajaran', TahunAjaranController::class);
         Route::put('admin_ta/tahun-ajaran/{id}/set-default', [TahunAjaranController::class, 'setDefault']);
-
+        
         // Route Ujian TA
         Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
         // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
