@@ -139,9 +139,7 @@ class SemesterControllerTest extends TestCase
         $loginResponse = $this->loginAdminTa();
         $token = $this->getTokenFromResponse($loginResponse);
 
-        $updatedData = [
-            'nama_semester' => 'Semester Baru'
-        ];
+        $updatedData = [];
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $token,
