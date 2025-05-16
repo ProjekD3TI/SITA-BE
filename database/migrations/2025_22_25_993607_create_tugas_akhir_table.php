@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->foreignId('semester_id')->default(null)->nullable()->constrained('semester')->onDelete('restrict');
             $table->foreignId('tahun_ajaran_id')->default(null)->nullable()->constrained('tahun_ajaran')->onDelete('restrict');
             $table->foreignId('nilai_bimbingan_id')->default(null)->nullable()->constrained('nilai_bimbingan')->onDelete('restrict');
+            $table->foreignId('kategori_id')->default(null)->nullable()->constrained('kategori')->onDelete('restrict');
             $table->string('judul_tugas_akhir', 255)->default(null)->nullable();
             $table->string('krs', 150)->default(null)->nullable();
             $table->string('persetujuan_pembimbing', 150)->default(null)->nullable();
