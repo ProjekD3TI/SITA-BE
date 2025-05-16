@@ -22,6 +22,10 @@ return new class extends Migration
             $table->string('nomor_laporan_kekerasan');
             $table->string('nama_pelapor');
             $table->string('nim_pelapor');
+            // Add new fields for umur_pelapor, profesi, and jenis_kelamin
+            $table->enum('umur_pelapor', ['<20', '20-40', '40<'])->nullable();
+            $table->string('profesi', 50)->nullable();
+            $table->enum('jenis_kelamin', ['laki-laki', 'perempuan'])->nullable();
             // Add json fields for terlapor and bukti_pelanggaran
             $table->json('terlapor')->nullable();
             $table->json('bukti_pelanggaran')->nullable();

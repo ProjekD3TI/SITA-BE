@@ -21,9 +21,12 @@ class LaporanKekerasan extends Model
         'nomor_laporan_kekerasan',
         'nama_pelapor',
         'nim_pelapor',
+        'umur_pelapor',      // Added field for age range
+        'profesi',           // Added field for profession
+        'jenis_kelamin',     // Added field for gender
         'bukti_pelanggaran', // Added field for evidence
-        'terlapor', // Added field for reported person
-        'saksi', // Changed to JSON field
+        'terlapor',          // Added field for reported person
+        'saksi',             // Changed to JSON field
         'lampiran_link',
     ];
 

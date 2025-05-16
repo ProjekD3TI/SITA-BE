@@ -45,6 +45,10 @@ class LaporanKekerasanController extends Controller
             'nim_pelapor' => 'required',
             'lampiran_link' => 'nullable|url',
             'agreement' => 'required|accepted',
+            // Added validation for new fields
+            'profesi' => 'required|string|max:50',
+            'jenis_kelamin' => 'required|in:laki-laki,perempuan',
+            'umur_pelapor' => 'required|in:<20,20-40,40<',
             
             // Validations for bukti_pelanggaran
             'bukti_pelanggaran' => 'nullable|array',
@@ -80,6 +84,10 @@ class LaporanKekerasanController extends Controller
             'nomor_laporan_kekerasan' => LaporanKekerasan::generateNomorLaporanKekerasan(),
             'nama_pelapor' => $request->nama_pelapor,
             'nim_pelapor' => $request->nim_pelapor,
+            // Added new fields
+            'profesi' => $request->profesi,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'umur_pelapor' => $request->umur_pelapor,
             'status' => 'unverified',
             'bukti_pelanggaran' => $request->bukti_pelanggaran,
             'terlapor' => $request->terlapor,
@@ -239,6 +247,10 @@ class LaporanKekerasanController extends Controller
             'nama_pelapor' => 'sometimes|required',
             'nim_pelapor' => 'sometimes|required',
             'lampiran_link' => 'nullable|url',
+            // Validation for the new fields
+            'profesi' => 'sometimes|required|string|max:50',
+            'jenis_kelamin' => 'sometimes|required|in:laki-laki,perempuan',
+            'umur_pelapor' => 'sometimes|required|in:<20,20-40,40<',
             
             // Validations for bukti_pelanggaran
             'bukti_pelanggaran' => 'nullable|array',
@@ -278,6 +290,11 @@ class LaporanKekerasanController extends Controller
         if ($request->has('nama_pelapor')) $laporan->nama_pelapor = $request->nama_pelapor;
         if ($request->has('nim_pelapor')) $laporan->nim_pelapor = $request->nim_pelapor;
         if ($request->has('lampiran_link')) $laporan->lampiran_link = $request->lampiran_link;
+        
+        // Update the new fields
+        if ($request->has('profesi')) $laporan->profesi = $request->profesi;
+        if ($request->has('jenis_kelamin')) $laporan->jenis_kelamin = $request->jenis_kelamin;
+        if ($request->has('umur_pelapor')) $laporan->umur_pelapor = $request->umur_pelapor;
         
         // Update bukti_pelanggaran, terlapor and saksi fields
         if ($request->has('bukti_pelanggaran')) $laporan->bukti_pelanggaran = $request->bukti_pelanggaran;
