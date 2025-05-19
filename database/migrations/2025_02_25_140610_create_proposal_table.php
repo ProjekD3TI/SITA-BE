@@ -13,8 +13,6 @@ return new class extends Migration {
         Schema::create('proposal', function (Blueprint $table) {
             $table->id();
             $table->string('judul_proposal', 255);
-            $table->string('file_proposal');
-            $table->string('file_transkrip');
             $table->tinyInteger('status_proposal')->default(0); // 0: Menunggu, 1: Diterima, 2: Ditolak
             $table->timestamp('tanggal_unggah')->useCurrent();
             $table->timestamps();

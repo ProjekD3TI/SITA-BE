@@ -68,6 +68,8 @@ class TugasAkhirController extends Controller
     public function updateTugasAkhirForMahasiswa(Request $request, $id)
     {
         try {
+            $mahasiswaId = Auth::id();
+
             // Validasi semua atribut yang tidak boleh null
             $validatedData = $request->validate([
                 'judul_tugas_akhir' => 'required|string|max:255',
@@ -78,16 +80,13 @@ class TugasAkhirController extends Controller
                 'berita_acara_semhas' => 'required|file|mimes:pdf',
                 'naskah_ta' => 'required|file|mimes:pdf',
                 'masa_perpanjangan_studi' => 'nullable|date',
-                // 'nilai_proposal' => 'required|numeric|min:0|max:100',
-                // 'nilai_bimbingan' => 'required|numeric|min:0|max:100',
-                'catatan_proposal' => 'required|string',
                 'file_transkrip' => 'required|file|mimes:pdf',
             ]);
 
             // Cari TugasAkhir milik mahasiswa dengan eager loading
             $tugasAkhir = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])
                 ->where('id', $id)
-                ->where('mahasiswa_id', $request->user()->id) // Pastikan mahasiswa memiliki record ini
+                ->where('mahasiswa_id', $mahasiswaId) // Pastikan mahasiswa memiliki record ini
                 ->first();
 
             if (!$tugasAkhir) {
@@ -101,16 +100,40 @@ class TugasAkhirController extends Controller
 
             // Perbarui data TugasAkhir
             $tugasAkhir->judul_tugas_akhir = $validatedData['judul_tugas_akhir'];
-            $tugasAkhir->krs = $request->file('krs')->store('krs');
-            $tugasAkhir->persetujuan_pembimbing = $request->file('persetujuan_pembimbing')->store('persetujuan_pembimbing');
-            $tugasAkhir->sertifikat_kompetensi = $request->file('sertifikat_kompetensi')->store('sertifikat_kompetensi');
-            $tugasAkhir->toeic = $request->file('toeic')->store('toeic');
-            $tugasAkhir->berita_acara_semhas = $request->file('berita_acara_semhas')->store('berita_acara_semhas');
-            $tugasAkhir->naskah_ta = $request->file('naskah_ta')->store('naskah_ta');
-            $tugasAkhir->masa_perpanjangan_studi = $validatedData['masa_perpanjangan_studi'];
-            $tugasAkhir->file_transkrip = $request->file('file_transkrip')->store('file_transkrip');
             $tugasAkhir->status_valid = 0; // Set status_valid menjadi 0 (menunggu validasi)
             $tugasAkhir->save();
+
+            $berkasList = [
+                'krs',
+                'persetujuan_pembimbing',
+                'sertifikat_kompetensi',
+                'toeic',
+                'berita_acara_semhas',
+                'naskah_ta',
+                'masa_perpanjangan_studi',
+                'file_transkrip'
+            ];
+
+
+            foreach ($berkasList as $berkasName) {
+                if ($request->hasFile($berkasName)) {
+                    $originalName = $request->file($berkasName)->getClientOriginalName();
+                    $filePath = $request->file($berkasName)->storeAs("tugas_akhir/{$tugasAkhir->id}", $originalName);
+
+                    $berkas = $tugasAkhir->berkas()->where('nama_berkas', $berkasName)->first();
+                    if ($berkas) {
+                        $berkas->file_path = $filePath;
+                        $berkas->status_valid = 0;
+                        $berkas->save();
+                    } else {
+                        $tugasAkhir->berkas()->create([
+                            'nama_berkas' => $berkasName,
+                            'file_path' => $filePath,
+                            'status_valid' => 0,
+                        ]);
+                    }
+                }
+            }
 
             // Kembalikan data TugasAkhir yang diperbarui menggunakan resource
             return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Tugas Akhir berhasil diperbarui dan menunggu validasi');
@@ -237,20 +260,20 @@ class TugasAkhirController extends Controller
     {
         try {
             $mahasiswaId = Auth::id();
-    
+
             // Ambil data TugasAkhir berdasarkan mahasiswa_id
             $tugasAkhir = TugasAkhir::with(['dosenPembimbing'])
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status_aktif', 1) // Hanya ambil yang aktif
                 ->first();
-    
+
             // Jika tidak ditemukan, kembalikan null
             if (!$tugasAkhir) {
                 return ApiResponse::success([
                     'tugas_akhir' => null
                 ], 'Belum ada Tugas Akhir yang aktif');
             }
-    
+
             return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Tugas Akhir berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);

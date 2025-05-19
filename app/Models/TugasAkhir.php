@@ -18,17 +18,9 @@ class TugasAkhir extends Model
         'tahun_ajaran_id',
         'nilai_bimbingan_id',
         'judul_tugas_akhir',
-        'krs',
-        'persetujuan_pembimbing',
-        'sertifikat_kompetensi',
-        'toeic',
-        'berita_acara_semhas',
-        'naskah_ta',
-        'masa_perpanjangan_studi',
+        'catatan_proposal',
         'nilai_proposal',
         'nilai_akhir',
-        'catatan_proposal',
-        'file_transkrip',
         'status_valid',
         'status_aktif'
     ];
@@ -87,5 +79,10 @@ class TugasAkhir extends Model
     public function requestPembimbing()
     {
         return $this->hasOne(RequestPembimbing::class);
+    }
+
+    public function berkas()
+    {
+        return $this->morphMany(Berkas::class, 'berkasable');
     }
 }

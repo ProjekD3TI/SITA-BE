@@ -12,8 +12,6 @@ class Proposal extends Model
     // protected $with = 'tugasAkhir';
     protected $fillable = [
         'judul_proposal',
-        'file_proposal',
-        'file_transkrip',
         'status_proposal',
         'tanggal_unggah'
     ];
@@ -21,6 +19,11 @@ class Proposal extends Model
     public function tugasAkhir()
     {
         return $this->hasOne(TugasAkhir::class);
+    }
+
+    public function berkas()
+    {
+        return $this->morphMany(Berkas::class, 'berkasable');
     }
 
 }
