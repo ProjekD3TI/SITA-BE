@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use App\Models\Ruang;
 use Illuminate\Validation\ValidationException;
+
 class RuangController extends Controller
 {
     public function index()

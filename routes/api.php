@@ -24,6 +24,7 @@ use App\Http\Controllers\Dosens\Kaprodi\KaprodiController;
 use App\Http\Controllers\Dosens\Petugas\PetugasController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminController;
 use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
+use App\Http\Controllers\Api\KategoriController;
 use App\Http\Controllers\Api\NilaiBimbinganController;
 
 /*
@@ -92,11 +93,13 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     // Nilai Bimbingan
     Route::get('/mahasiswa/nilai-bimbingan', [NilaiBimbinganController::class, 'getNilaiBimbinganByMahasiswa']);
 
-    //Tugas Akhir
+    // Tugas Akhir
     Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirForMahasiswa']);
     Route::get('/mahasiswa/tugas-akhir/cek-dosen-pembimbing', [TugasAkhirController::class, 'cekDosenPembimbingByMahasiswa']);
     Route::get('/mahasiswa/tugas-akhir/aktif', [TugasAkhirController::class, 'tugasAkhirAktifByMahasiswa']);
 
+    // Kategori
+    Route::get('/mahasiswa/kategori', [KategoriController::class, 'lihatKategoriByMahasiswa']);
 });
 
 
@@ -203,6 +206,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/tugas-akhir/{id}/update-valid-status', [TugasAkhirController::class, 'updateValidationStatusForAdmin']);
         Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTAForAdmin']);
 
+        // Kategori 
+        Route::post('/admin_ta/kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
 
         // Plotting Pembimbing
         Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeForAdmin']);
@@ -233,7 +238,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Route Tahun Ajaran
         Route::apiResource('/admin_ta/tahun-ajaran', TahunAjaranController::class);
         Route::put('admin_ta/tahun-ajaran/{id}/set-default', [TahunAjaranController::class, 'setDefault']);
-        
+
         // Route Ujian TA
         Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
         // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);

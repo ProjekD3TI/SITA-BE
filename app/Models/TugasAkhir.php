@@ -17,6 +17,7 @@ class TugasAkhir extends Model
         'dosen_pembimbing_id',
         'tahun_ajaran_id',
         'nilai_bimbingan_id',
+        'kategori_id',
         'judul_tugas_akhir',
         'catatan_proposal',
         'nilai_proposal',
@@ -63,6 +64,10 @@ class TugasAkhir extends Model
     public function nilaiBimbingan()
     {
         return $this->belongsTo(NilaiBimbingan::class, 'nilai_bimbingan_id', 'id');
+    }
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class, 'kategori_id', 'id');
     }
 
     public function dosenPenguji()
