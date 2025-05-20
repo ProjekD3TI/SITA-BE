@@ -97,6 +97,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::put('/mahasiswa/tugas-akhir/{id}/daftar', [TugasAkhirController::class, 'updateTugasAkhirForMahasiswa']);
     Route::get('/mahasiswa/tugas-akhir/cek-dosen-pembimbing', [TugasAkhirController::class, 'cekDosenPembimbingByMahasiswa']);
     Route::get('/mahasiswa/tugas-akhir/aktif', [TugasAkhirController::class, 'tugasAkhirAktifByMahasiswa']);
+    Route::get('mahasiswa/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByMahasiswa']);
 
     // Kategori
     Route::get('/mahasiswa/kategori', [KategoriController::class, 'lihatKategori']);

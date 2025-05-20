@@ -257,6 +257,42 @@ class TugasAkhirController extends Controller
         }
     }
 
+    public function setDashboardByMahasiswa()
+    {
+        try {
+
+            $mahasiswaId = Auth::id();
+
+            $tugasAkhir = TugasAkhir::with(['proposal', 'bimbingan', 'ujianTA'])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1)
+                ->first();
+
+            // Ambil bab terbesar yang sudah valid (status_verifikasi = 1)
+            $babTerbesar = $tugasAkhir->bimbingan
+                ->where('status_verifikasi', 1)
+                ->max('bab');
+
+            // Ambil ujian TA terbaru (berdasarkan tanggal_ujian paling akhir)
+            $ujianTA = $tugasAkhir->ujianTA
+                ->sortByDesc('tanggal_ujian')
+                ->first();
+            $data = [
+                'id' => $tugasAkhir->id,
+                'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir,
+                'proposal' => $tugasAkhir->proposal->status_proposal ?? null,
+                'progress_bimbingan' => $babTerbesar,
+                'bimbingan' => $tugasAkhir->bimbingan->count(),
+                'ujian_ta' => $ujianTA ? $ujianTA->tanggal_ujian : null,
+            ];
+
+            return ApiResponse::success($data, 'Data tugas akhir berhasil diambil');
+
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
     public function tabelPlottingByAdmin()
     {
         try {
