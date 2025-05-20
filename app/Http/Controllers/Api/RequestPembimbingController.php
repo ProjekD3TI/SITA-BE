@@ -82,27 +82,28 @@ class RequestPembimbingController extends Controller
         try {
             $validatedData = $request->validate([
                 'dosen_id' => 'required|integer',
+                'kategori_id' => 'required|integer',
             ]);
 
-            // Get mahasiswa_id from the logged-in user
             $mahasiswa_id = Auth::id();
 
-            // Check if the mahasiswa already has an active TugasAkhir
+            // Cek apakah mahasiswa sudah memiliki TugasAkhir aktif
             $existingTugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa_id)
                 ->where('status_aktif', 1)
                 ->first();
 
             if ($existingTugasAkhir) {
-                return ApiResponse::error('Mahasiswa already has an active TugasAkhir', 400);
+                return ApiResponse::error('Mahasiswa sudah memiliki tugas akhir yang aktif', 400);
             }
 
             // Create TugasAkhir
             $tugasAkhir = TugasAkhir::create([
                 'mahasiswa_id' => $mahasiswa_id,
+                'kategori_id' => $validatedData['kategori_id'],
                 'status_aktif' => 1,
             ]);
 
-            // Create RequestPembimbing with tugas_akhir_id from TugasAkhir
+            // Buat RequestPembimbing
             $requestPembimbing = RequestPembimbing::create([
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'dosen_id' => $validatedData['dosen_id'],
@@ -110,11 +111,11 @@ class RequestPembimbingController extends Controller
                 'tanggal_respon' => null,
             ]);
 
-            return ApiResponse::success(new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')), 'Request and Tugas Akhir created successfully', 201);
+            return ApiResponse::success(new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')), 'Request pembimbing dan Tugas Akhir berhasil dibuat', 201);
         } catch (ValidationException $e) {
-            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
+            return ApiResponse::error('Data request pembimbing gagal ditambahkan: ' . $e->getMessage(), 500);
         }
     }
 
@@ -165,19 +166,19 @@ class RequestPembimbingController extends Controller
     {
         try {
             $mahasiswaId = Auth::id();
-    
+
             // Ambil data RequestPembimbing berdasarkan mahasiswa_id melalui relasi TugasAkhir
             $requestPembimbing = RequestPembimbing::whereHas('tugasAkhir', function ($query) use ($mahasiswaId) {
                 $query->where('mahasiswa_id', $mahasiswaId);
             })->first();
-    
+
             // Jika tidak ditemukan, kembalikan null untuk status_request
             if (!$requestPembimbing) {
                 return ApiResponse::success([
                     'status_request' => null,
                 ], 'Belum ada request pembimbing');
             }
-    
+
             return ApiResponse::success([
                 'status_request' => $requestPembimbing->status_request,
             ], 'Request sudah direspon');

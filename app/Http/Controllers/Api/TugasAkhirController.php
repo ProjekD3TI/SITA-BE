@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TugasAkhirResource;
+use App\Models\Dosen;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 
@@ -251,6 +252,82 @@ class TugasAkhirController extends Controller
             return ApiResponse::success([
                 'has_dospem' => $hasDosenPembimbing,
             ], $hasDosenPembimbing ? 'Mahasiswa sudah memiliki dosen pembimbing' : 'Mahasiswa belum memiliki dosen pembimbing');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function tabelPlottingByAdmin()
+    {
+        try {
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'kategori', 'requestPembimbing'])
+                ->where('status_aktif', 1)->get();
+
+            $data = $tugasAkhir->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nim' => $item->mahasiswa->nim,
+                    'mahasiswa' => $item->mahasiswa->name,
+                    'dosen_pembimbing' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
+                    'kategori' => $item->kategori ? $item->kategori->nama_kategori : null,
+                    'request_pembimbing' => $item->requestPembimbing ? $item->requestPembimbing->status_request : null,
+                ];
+            });
+
+            return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function tabelListBimbinganByAdmin()
+    {
+        try {
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'bimbingan', 'kategori'])
+                ->where('status_aktif', 1)->get();
+
+            $data = $tugasAkhir->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nim' => $item->mahasiswa->nim,
+                    'mahasiswa' => $item->mahasiswa->name,
+                    'dosen_pembimbing' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
+                    'kategori' => $item->kategori ? $item->kategori->nama_kategori : null,
+                    'jumlah_bimbingan' => $item->bimbingan ? $item->bimbingan->count() : 0,
+                ];
+            });
+
+            return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function plottingPembimbingByAdmin($tugasAkhirId)
+    {
+        try {
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'kategori', 'tahunAjaran'])
+                ->where('status_aktif', 1)
+                ->where('id', $tugasAkhirId)
+                ->get()
+            ;
+            $daftarDosen = Dosen::select('name', 'nik', 'id')->get();
+            $data = $tugasAkhir->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nim' => $item->mahasiswa->nim,
+                    'mahasiswa' => $item->mahasiswa->name,
+                    'kategori' => $item->kategori ? $item->kategori->nama_kategori : null,
+                    'tahun_ajaran' => $item->tahunAjaran ? $item->tahunAjaran->tahun_ajaran : null,
+                ];
+            });
+
+            return ApiResponse::success([
+                [
+                    'mahasiswa' => $data,
+                    'daftar_dosen' => $daftarDosen
+                ]
+            ], 'Data Tugas Akhir berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }

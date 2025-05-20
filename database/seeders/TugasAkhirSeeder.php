@@ -19,6 +19,7 @@ class TugasAkhirSeeder extends Seeder
             'proposal_id' => 1,
             'semester_id' => 1,
             'tahun_ajaran_id' => 4,
+            'kategori_id' => 1,
             'judul_tugas_akhir' => 'Sistem Informasi Akademik',
             'status_valid' => 1,
             'status_aktif' => 1,
@@ -30,6 +31,7 @@ class TugasAkhirSeeder extends Seeder
             'proposal_id' => 2,
             'semester_id' => 2,
             'tahun_ajaran_id' => 4,
+            'kategori_id' => 2,
             'judul_tugas_akhir' => 'Sistem Tugas Akhir',
             'status_valid' => 2,
             'status_aktif' => 1,
@@ -38,6 +40,7 @@ class TugasAkhirSeeder extends Seeder
         TugasAkhir::create([
             'mahasiswa_id' => 3,
             'proposal_id' => 3,
+            'kategori_id' => 3,
             'judul_tugas_akhir' => 'Sistem Informasi Perpustakaan',
             'status_aktif' => 1,
         ]);

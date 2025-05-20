@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 class KategoriController extends Controller
 {
-    public function lihatKategoribyMahasiswa()
+    public function lihatKategori()
     {
         try {
             $kategori = Kategori::all();

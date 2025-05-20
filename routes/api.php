@@ -99,7 +99,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('/mahasiswa/tugas-akhir/aktif', [TugasAkhirController::class, 'tugasAkhirAktifByMahasiswa']);
 
     // Kategori
-    Route::get('/mahasiswa/kategori', [KategoriController::class, 'lihatKategoriByMahasiswa']);
+    Route::get('/mahasiswa/kategori', [KategoriController::class, 'lihatKategori']);
 });
 
 
@@ -205,9 +205,15 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatusForAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}/update-valid-status', [TugasAkhirController::class, 'updateValidationStatusForAdmin']);
         Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTAForAdmin']);
+        Route::get('/admin_ta/tugas-akhir/plotting', [TugasAkhirController::class, 'tabelPlottingByAdmin']);
+        Route::get('/admin_ta/tugas-akhir/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganByAdmin']);
+        Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingByAdmin']);
 
-        // Kategori 
+
+        // Kategori
         Route::post('/admin_ta/kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
+        Route::get('/admin_ta/kategori', [KategoriController::class, 'lihatKategori']);
+
 
         // Plotting Pembimbing
         Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeForAdmin']);
