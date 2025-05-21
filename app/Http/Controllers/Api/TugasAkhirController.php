@@ -293,6 +293,9 @@ class TugasAkhirController extends Controller
         }
     }
 
+
+    // Fitur Bimbingan Admin TA
+
     public function tabelPlottingByAdmin()
     {
         try {
@@ -368,6 +371,64 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
+    public function detailBimbinganByAdmin($tugasAkhirId)
+    {
+        try {
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'bimbingan', 'kategori', 'nilaiBimbingan', 'tahunAjaran'])
+                ->where('status_aktif', 1)
+                ->where('id', $tugasAkhirId)
+                ->first();
+
+
+            $data = [
+                'id' => $tugasAkhir->id,
+                'nim' => $tugasAkhir->mahasiswa->nim ?? null,
+                'nama_mahasiswa' => $tugasAkhir->mahasiswa->name ?? null,
+                'kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
+                'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
+                'dosen_pembimbing' => $tugasAkhir->dosenPembimbing->name ?? null,
+                'bimbingan' => $tugasAkhir->bimbingan ?? null,
+                'nilai_bimbingan' => $tugasAkhir->nilaiBimbingan ?? null,
+            ];
+            return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
+
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // End Fitur Bimbingan Admin TA
+
+
+    // Fitur Proposal Admin TA
+
+    public function tabelPengajuanByAdmin()
+    {
+        try {
+
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'proposal', 'proposal.berkas'])
+                ->where('status_aktif', 1)
+                ->get();
+            $data = $tugasAkhir->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nim' => $item->mahasiswa->nim,
+                    'mahasiswa' => $item->mahasiswa->name,
+                    'judul_proposal' => $item->proposal ? $item->proposal->judul_proposal : null,
+                    'status_proposal' => $item->proposal ? $item->proposal->status_proposal : null,
+                    'berkas' => $item->proposal ? $item->proposal->berkas : null,
+
+                ];
+            });
+            return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
+
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // Fitur Proposal Admin TA
 
     public function tugasAkhirAktifByMahasiswa()
     {
