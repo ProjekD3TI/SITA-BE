@@ -10,16 +10,24 @@ class AdminFactory extends Factory
 {
     protected $model = Admin::class;
 
-    public function definition() {
+    public function __construct(...$args)
+    {
+        parent::__construct(...$args);
+        $this->faker->addProvider(new \Faker\Provider\id_ID\Person($this->faker));
+    }
+
+    public function definition()
+    {
         return [
-            'name' => $this->faker->name,
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => Hash::make('password'),
+            'name' => $this->faker->name('id_ID'), // nama Indonesia
+            'email' => $this->faker->userName() . '@staff.uns.ac.id',
+            'password' => Hash::make('123123123'),
             'role' => 'admin_ta',
         ];
     }
 
-    public function superadmin() {
+    public function superadmin()
+    {
         return $this->state(function (array $attributes) {
             return [
                 'role' => 'superadmin',
@@ -27,7 +35,8 @@ class AdminFactory extends Factory
         });
     }
 
-    public function adminPengelola() {
+    public function adminPengelola()
+    {
         return $this->state(function (array $attributes) {
             return [
                 'role' => 'admin_pengelola',
