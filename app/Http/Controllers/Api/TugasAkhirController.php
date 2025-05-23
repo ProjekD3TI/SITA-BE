@@ -266,6 +266,9 @@ class TugasAkhirController extends Controller
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status_aktif', 1)
                 ->first();
+            if (!$tugasAkhir) {
+                return ApiResponse::success(null, 'Belum ada Tugas Akhir yang aktif');
+            }
 
             // Ambil bab terbesar yang sudah valid (status_verifikasi = 1)
             $babTerbesar = $tugasAkhir->bimbingan
@@ -282,13 +285,13 @@ class TugasAkhirController extends Controller
                 'proposal' => [
                     'id' => $proposal->id ?? null,
                     'status' => $tugasAkhir->proposal ? $tugasAkhir->proposal->status_proposal : null,
-                    'proposal' => $tugasAkhir->proposal ? $tugasAkhir->proposal->catatan_proposal : null,
+                    'catatan' => $tugasAkhir->proposal ? $tugasAkhir->proposal->catatan_proposal : null,
                 ],
                 'status_valid' => $tugasAkhir->status_valid,
                 'nilai_akhir' => $tugasAkhir->nilai_akhir ? $tugasAkhir->nilai_akhir : null,
                 'bimbingan' => [
-                    'total_bimbingan' => $tugasAkhir->bimbingan->count(),
-                    'progress_bimbingan' => $babTerbesar,
+                    'total_bimbingan' => $tugasAkhir->bimbingan->count() ?? null,
+                    'progress_bimbingan' => $babTerbesar ?? null,
 
                 ],
                 'tanggal_ujian' => $ujianTA ? $ujianTA->tanggal_ujian : null,
