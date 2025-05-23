@@ -262,8 +262,7 @@ class TugasAkhirController extends Controller
         try {
 
             $mahasiswaId = Auth::id();
-
-            $tugasAkhir = TugasAkhir::with(['proposal', 'bimbingan', 'ujianTA'])
+            $tugasAkhir = TugasAkhir::with(['proposal', 'bimbingan', 'ujianTA', 'RequestPembimbing'])
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status_aktif', 1)
                 ->first();
@@ -278,12 +277,27 @@ class TugasAkhirController extends Controller
                 ->sortByDesc('tanggal_ujian')
                 ->first();
             $data = [
-                'id' => $tugasAkhir->id,
-                'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir,
-                'proposal' => $tugasAkhir->proposal->status_proposal ?? null,
-                'progress_bimbingan' => $babTerbesar,
-                'bimbingan' => $tugasAkhir->bimbingan->count(),
-                'ujian_ta' => $ujianTA ? $ujianTA->tanggal_ujian : null,
+                'tugas_akhir_id' => $tugasAkhir->id,
+                'dosen_pembimbing' => $tugasAkhir->dosenPembimbing->name ?? null,
+                'proposal' => [
+                    'id' => $proposal->id ?? null,
+                    'status' => $tugasAkhir->proposal ? $tugasAkhir->proposal->status_proposal : null,
+                    'proposal' => $tugasAkhir->proposal ? $tugasAkhir->proposal->catatan_proposal : null,
+                ],
+                'status_valid' => $tugasAkhir->status_valid,
+                'nilai_akhir' => $tugasAkhir->nilai_akhir ? $tugasAkhir->nilai_akhir : null,
+                'bimbingan' => [
+                    'total_bimbingan' => $tugasAkhir->bimbingan->count(),
+                    'progress_bimbingan' => $babTerbesar,
+
+                ],
+                'tanggal_ujian' => $ujianTA ? $ujianTA->tanggal_ujian : null,
+
+                'request_pembimbing' => [
+                    'id' => $tugasAkhir->RequestPembimbing ? $tugasAkhir->RequestPembimbing->id : null,
+                    'stattus' => $tugasAkhir->RequestPembimbing ? $tugasAkhir->RequestPembimbing->status_request : null
+                ],
+
             ];
 
             return ApiResponse::success($data, 'Data tugas akhir berhasil diambil');
@@ -293,6 +307,28 @@ class TugasAkhirController extends Controller
         }
     }
 
+    public function setDashboardByDosen()
+    {
+        try {
+            $dosenId = Auth::id();
+            $tugasAkhir = TugasAkhir::with(['bimbingan'])
+                ->where('dosen_pembimbing_id', $dosenId)
+                ->where('status_aktif', 1)
+                ->get();
+            $data = $tugasAkhir->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'judul_tugas_akhir' => $item->judul_tugas_akhir,
+                    'mahasiswa' => $item->mahasiswa->name,
+                    'nim' => $item->mahasiswa->nim,
+                    'bimbingan' => $item->bimbingan->count(),
+                ];
+            });
+            return ApiResponse::success($data, 'Data tugas akhir berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
 
     // Fitur Bimbingan Admin TA
 
