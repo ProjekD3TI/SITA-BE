@@ -262,7 +262,7 @@ class TugasAkhirController extends Controller
         try {
 
             $mahasiswaId = Auth::id();
-            $tugasAkhir = TugasAkhir::with(['proposal', 'bimbingan', 'ujianTA', 'RequestPembimbing'])
+            $tugasAkhir = TugasAkhir::with(['proposal', 'bimbingan', 'ujianTA', 'requestPembimbing'])
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status_aktif', 1)
                 ->first();
@@ -297,8 +297,8 @@ class TugasAkhirController extends Controller
                 'tanggal_ujian' => $ujianTA ? $ujianTA->tanggal_ujian : null,
 
                 'request_pembimbing' => [
-                    'id' => $tugasAkhir->RequestPembimbing ? $tugasAkhir->RequestPembimbing->id : null,
-                    'stattus' => $tugasAkhir->RequestPembimbing ? $tugasAkhir->RequestPembimbing->status_request : null
+                    'id' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->id : null,
+                    'stattus' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->status_request : null
                 ],
 
             ];
@@ -314,19 +314,87 @@ class TugasAkhirController extends Controller
     {
         try {
             $dosenId = Auth::id();
-            $tugasAkhir = TugasAkhir::with(['bimbingan'])
+            $tugasAkhir = TugasAkhir::with(['bimbingan', 'ujianTA', 'requestPembimbing', 'mahasiswa'])
                 ->where('dosen_pembimbing_id', $dosenId)
                 ->where('status_aktif', 1)
                 ->get();
-            $data = $tugasAkhir->map(function ($item) {
+
+            if ($tugasAkhir->isEmpty()) {
+                return ApiResponse::success(null, 'Tidak ada tugas akhir');
+            }
+
+            $taPerBab = $tugasAkhir->map(function ($ta) {
                 return [
-                    'id' => $item->id,
-                    'judul_tugas_akhir' => $item->judul_tugas_akhir,
-                    'mahasiswa' => $item->mahasiswa->name,
-                    'nim' => $item->mahasiswa->nim,
-                    'bimbingan' => $item->bimbingan->count(),
+                    'id_ta' => $ta->id,
+                    'bab_tertinggi' => $ta->bimbingan
+                        ->where('status_verifikasi', 1)
+                        ->max('bab') ?? 0
                 ];
             });
+
+            // Kelompokkan berdasarkan bab (1-5)
+            $statistikBab = collect(range(1, 5))->map(function ($bab) use ($taPerBab) {
+                $taDiBab = $taPerBab->where('bab_tertinggi', $bab);
+                return [
+                    'bab' => $bab,
+                    'jumlah_ta' => $taDiBab->count(),
+                    'daftar_ta' => $taDiBab->values()->all()
+                ];
+            });
+
+            //jadwal ujian hari ini
+            $ujianHariIni = $tugasAkhir->filter(function ($ta) {
+                return $ta->ujianTA
+                    ->where('tanggal_ujian', now()->format('Y-m-d'))
+                    ->where('status_ujian', 1)
+                    ->isNotEmpty();
+            })->map(function ($ta) {
+                $ujian = $ta->ujianTA
+                    ->where('tanggal_ujian', now()->format('Y-m-d'))
+                    ->where('status_ujian', 1)
+                    ->first();
+
+                return [
+                    'nama_mahasiswa' => $ta->mahasiswa->name,
+                    'sesi' => $ujian->sesi->nama_sesi ?? null,
+                    'ruang' => $ujian->ruang->nama_ruang ?? null
+                ];
+            });
+
+            // permintaan bimbingan terbaru
+            $permintaanBimbingan = $tugasAkhir->map(function ($ta) use ($dosenId) {
+                return [
+                    'id_ta' => $ta->id,
+                    'nim' => $ta->mahasiswa->nim,
+                    'nama_mahasiswa' => $ta->mahasiswa->name,
+                    'kategori' => $ta->kategori->nama_kategori ?? null,
+                    'request_pembimbing' => $ta->requestPembimbing
+                        ->where('dosen_id', $dosenId)
+                        ->where('status_request', 0)
+                        ->first()
+                ];
+            })->filter(function ($item) {
+                return !is_null($item['request_pembimbing']);
+            });
+
+            $data = [
+                'doughnat_chart' => $statistikBab->pluck('jumlah_ta', 'bab'),
+                'summary_card' => [
+                    'ta_yang_dibimbing' => $tugasAkhir->count(),
+                    'ujian_terjadwal' => $tugasAkhir->sum(function ($ta) {
+                        return $ta->ujianTA->where('status_ujian', 1)->count();
+                    }),
+                    'permintaan_bimbingan' => $tugasAkhir->sum(function ($ta) use ($dosenId) {
+                        return $ta->requestPembimbing
+                            ->where('dosen_id', $dosenId)
+                            ->where('status_request', 0)
+                            ->count();
+                    }),
+                ],
+                'ujian_hari_ini' => $ujianHariIni->isEmpty() ? 'Tidak ada jadwal' : $ujianHariIni->values(),
+                'permintaan_bimbingan' => $permintaanBimbingan->isEmpty() ? 'Tidak ada permintaan' : $permintaanBimbingan->values(),
+            ];
+
             return ApiResponse::success($data, 'Data tugas akhir berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
