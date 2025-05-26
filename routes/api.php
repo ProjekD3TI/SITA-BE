@@ -74,7 +74,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/dashboard', [MahasiswaController::class, 'dashboard']);
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
-
+    // ----------------- || Sistem Informasi Tugas AKhir || ------------------------ \\
     //request pembimbing
     Route::post('/mahasiswa/request-pembimbing/', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
     Route::get('/mahasiswa/cek-request-pembimbing', [RequestPembimbingController::class, 'cekStatusRequestByMahasiswa']);
@@ -101,6 +101,8 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     // Kategori
     Route::get('/mahasiswa/kategori', [KategoriController::class, 'lihatKategori']);
+    // ----------------- || ########################### || ------------------------ \\
+
 });
 
 
@@ -120,6 +122,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 
     Route::get('/dosen/profil', [DosenController::class, 'getProfileDosen']);
     Route::put('/dosen/profil/edit', [DosenController::class, 'editProfileDosen']);
+    // ----------------- || Sistem Informasi Tugas AKhir || ------------------------ \\
 
     // Sistem Tugas-akhir (Request Pembimbing)
     Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'getByDosen']);
@@ -138,6 +141,12 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Sistem Tugas akhir (Tugas Akhir)
     //blm ditest (nilai bimbingan sudah ditest)
     Route::put('/dosen/tugas-akhir/{id}/nilai', [TugasAkhirController::class, 'memberiNilaiTAbyDosen']);
+
+    Route::get('/dosen/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByDosen']);
+
+    // ----------------- || ############################### || ------------------------ \\
+
+
 
     // Route Dosen Biasa
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Dosen'])->group(function () {

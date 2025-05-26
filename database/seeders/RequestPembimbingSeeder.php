@@ -25,7 +25,7 @@ class RequestPembimbingSeeder extends Seeder
         ]);
         RequestPembimbing::create([
             'tugas_akhir_id' => 3,
-            'dosen_id' => 3,
+            'dosen_id' => 1,
             'status_request' => 0,
         ]);
     }

@@ -16,6 +16,11 @@ class UserFactory extends Factory
      */
     protected static ?string $password;
 
+    public function __construct(...$args)
+    {
+        parent::__construct(...$args);
+        $this->faker->addProvider(new \Faker\Provider\id_ID\Person($this->faker));
+    }
     /**
      * Define the model's default state.
      *
@@ -24,11 +29,12 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'nim' => $this->faker->unique()->numerify('V34#####'),
+            'name' => $this->faker->name('id_ID'), // nama Indonesia
+            'email' => $this->faker->userName() . '@student.uns.ac.id',
+            'no_telp' => $this->faker->phoneNumber(),
+            'password' => static::$password ??= Hash::make('123123123'),
+            'status' => 1,
         ];
     }
 
