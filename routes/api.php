@@ -219,6 +219,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/tugas-akhir/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganByAdmin']);
         Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingByAdmin']);
         Route::get('/admin_ta/tugas-akhir/detail-bimbingan/{tugasAkhirId}', [TugasAkhirController::class, 'detailBimbinganByAdmin']);
+        Route::get('/admin_ta/list-plotting-pembimbing', [TugasAkhirController::class, 'tabelPlottingPengujiByAdmin']);
 
         // Kategori
         Route::post('/admin_ta/kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
@@ -234,7 +235,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/proposal/{id}/nilai-catatan', [ProposalController::class, 'updateScoreandNotesForAdmin']);
 
         // Plotting penguji
-        Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTAforAdmin']);
+        Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTAForAdmin']);
         Route::post('/admin_ta/dosen-penguji/', [DosenPengujiController::class, 'storeForAdmin']);
         Route::put('/admin_ta/dosen-penguji/{id}', [DosenPengujiController::class, 'updateForAdmin']);
 

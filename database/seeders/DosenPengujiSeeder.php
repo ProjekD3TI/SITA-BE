@@ -17,6 +17,7 @@ class DosenPengujiSeeder extends Seeder
             'dosen_id' => 2,
             'tugas_akhir_id' => 1,
             'nilai_ujian_ta_id' => 1,
+            'jabatan_penguji' => 'ketua',
             'revisi' => 'Perbaiki Bab 1',
             'catatan_semhas' => 'Perbaiki Bab 1',
         ]);
@@ -24,6 +25,7 @@ class DosenPengujiSeeder extends Seeder
             'dosen_id' => 3,
             'tugas_akhir_id' => 1,
             'nilai_ujian_ta_id' => 2,
+            'jabatan_penguji' => 'sekretaris',
             'revisi' => 'Perbaiki Bab 2',
             'catatan_semhas' => 'Perbaiki Bab 2',
         ]);
@@ -31,6 +33,7 @@ class DosenPengujiSeeder extends Seeder
             'dosen_id' => 1,
             'tugas_akhir_id' => 1,
             'nilai_ujian_ta_id' => 3,
+            'jabatan_penguji' => 'penguji',
             'revisi' => 'Perbaiki Bab 3',
             'catatan_semhas' => 'Perbaiki Bab 2',
         ]);

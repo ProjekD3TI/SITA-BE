@@ -50,7 +50,7 @@ class Dosen extends Authenticatable
     {
         return $this->belongsToMany(TugasAkhir::class, 'dosen_penguji', 'dosen_id', 'tugas_akhir_id')
             ->using(DosenPenguji::class)
-            ->withPivot(['revisi', 'catatan_semhas', 'nilai_ujian_ta'])
+            ->withPivot(['revisi', 'catatan_semhas', 'nilai_ujian_ta_id', 'jabatan_penguji'])
             ->withTimestamps();
     }
 

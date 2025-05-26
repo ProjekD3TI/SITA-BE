@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->foreignId('dosen_id')->constrained('dosen')->onDelete('restrict');
             $table->foreignId('tugas_akhir_id')->constrained('tugas_akhir')->onDelete('restrict');
             $table->foreignId('nilai_ujian_ta_id')->nullable()->constrained('nilai_ujian_ta')->onDelete('restrict');
+            $table->enum('jabatan_penguji', ['ketua', 'sekretaris', 'penguji'])->default('penguji'); // jabatan penguji: ketua, sekretaris, penguji
             $table->text('revisi')->nullable();
             $table->text('catatan_semhas')->nullable();
             $table->timestamps();

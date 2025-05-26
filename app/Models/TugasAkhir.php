@@ -77,7 +77,8 @@ class TugasAkhir extends Model
             ->withPivot([
                 'revisi',
                 'catatan_semhas',
-                'nilai_ujian_ta'
+                'nilai_ujian_ta_id',
+                'jabatan_penguji'
             ])->withTimestamps();
     }
 

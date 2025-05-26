@@ -18,6 +18,6 @@ class AdminSeeder extends Seeder
             'password' => bcrypt('123123123'),
             'role' => 'admin_ta',
         ]);
-        Admin::factory(49)->create();
+        Admin::factory(10)->create();
     }
 }

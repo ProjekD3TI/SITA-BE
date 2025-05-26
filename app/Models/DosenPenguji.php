@@ -14,6 +14,7 @@ class DosenPenguji extends Pivot
         'dosen_id',
         'tugas_akhir_id',
         'nilai_ujian_ta_id',
+        'jabatan_penguji',
         'revisi',
         'catatan_semhas',
     ];

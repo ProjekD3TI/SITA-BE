@@ -15,7 +15,7 @@ use App\Http\Resources\DosenPengujiResource;
 
 class DosenPengujiController extends Controller
 {
-    public function getAllDosen() 
+    public function getAllDosen()
     {
         try {
             // Impor model Dosen jika belum diimpor
@@ -23,13 +23,13 @@ class DosenPengujiController extends Controller
             $dosen = Dosen::select('id', 'name', 'nik')
                 ->orderBy('name')
                 ->get();
-            
+
             return ApiResponse::success($dosen, 'Data dosen berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Data dosen gagal diambil: ' . $e->getMessage(), 500);
         }
     }
-    public function getReadyTAforAdmin()
+    public function getReadyTAForAdmin()
     {
         try {
             // Cek list tugas akhir yang sudah memiliki minimal 9 bimbingan yang sudah diverifikasi (bisa lanjut ke semhas & ta)
@@ -51,11 +51,12 @@ class DosenPengujiController extends Controller
     {
         try {
             $request->validate([
-                'list_dosen_id' => 'required|array|size:3',
-                'list_dosen_id.*' => 'required|exists:dosen,id',
+                'list_dosen' => 'required|array|size:3',
+                'list_dosen.*.dosen_id' => 'required|exists:dosen,id',
+                'list_dosen.*.jabatan_penguji' => 'required|in:ketua,sekretaris,penguji',
                 'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
             ], [
-                'list_dosen_id.size' => 'Harus memilih 3 dosen!.',
+                'list_dosen.size' => 'Harus memilih 3 dosen!',
             ]);
 
             $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
@@ -69,14 +70,25 @@ class DosenPengujiController extends Controller
                 return ApiResponse::error('Maksimal 3 dosen penguji untuk tugas akhir ini!', 400);
             }
 
+            $sekretaris = collect($request->list_dosen)
+                ->firstWhere('jabatan_penguji', 'sekretaris');
+            if (!$sekretaris || $sekretaris['dosen_id'] != $tugasAkhir->dosen_pembimbing_id) {
+                return ApiResponse::error('Jabatan sekretaris harus diisi oleh dosen pembimbing.', 400);
+            }
+
             // Memastikan salah satu dosen yang dipilih adalah Dosen Pembimbing
-            if (!in_array($tugasAkhir->dosen_pembimbing_id, $request->list_dosen_id)) {
-                return ApiResponse::error('Salah satu dosen penguji harus dari dosen pembimbing', 400);
+            $listDosen = $request->input('list_dosen', []);
+            if (!is_array($listDosen)) {
+                return ApiResponse::error('Format list_dosen tidak valid.', 400);
+            }
+            $dosenIds = array_column($listDosen, 'dosen_id');
+            if (count($dosenIds) !== count(array_unique($dosenIds))) {
+                return ApiResponse::error('Tidak boleh ada dosen penguji yang sama.', 400);
             }
 
             // Cek apakah dosen yang dipilih sudah ada sebagai dosen penguji di tugas akhir yang sama
             $cekDosenPenguji = DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)
-                ->whereIn('dosen_id', $request->list_dosen_id)
+                ->whereIn('dosen_id', array_column($request->list_dosen, 'dosen_id'))
                 ->exists();
 
             if ($cekDosenPenguji) {
@@ -84,10 +96,11 @@ class DosenPengujiController extends Controller
             }
 
             $dosenPengujiData = [];
-            foreach ($request->list_dosen_id as $dosenId) {
+            foreach ($request->list_dosen as $dosen) {
                 $dosenPengujiData[] = [
-                    'dosen_id' => $dosenId,
+                    'dosen_id' => $dosen['dosen_id'],
                     'tugas_akhir_id' => $request->tugas_akhir_id,
+                    'jabatan_penguji' => $dosen['jabatan_penguji'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -114,10 +127,12 @@ class DosenPengujiController extends Controller
     {
         try {
             $request->validate([
-                'list_dosen_id' => 'required|array|size:3',
-                'list_dosen_id.*' => 'required|exists:dosen,id',
+                'list_dosen' => 'required|array|size:3',
+                'list_dosen.*.dosen_id' => 'required|exists:dosen,id',
+                'list_dosen.*.jabatan_penguji' => 'required|in:ketua,sekretaris,penguji',
+                'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
             ], [
-                'list_dosen_id.size' => 'Harus memilih 3 dosen!.',
+                'list_dosen.size' => 'Harus memilih 3 dosen!',
             ]);
 
             $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
@@ -130,20 +145,32 @@ class DosenPengujiController extends Controller
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
             }
 
-            // Ensure one of the selected dosen is the Dosen Pembimbing
-            if (!in_array($tugasAkhir->dosen_pembimbing_id, $request->list_dosen_id)) {
-                return ApiResponse::error('One of the DosenPenguji must be the Dosen Pembimbing', 400);
+            // Pastikan apakah salah satu dosen yang dipilih adalah Dosen Pembimbing
+            $listDosen = $request->input('list_dosen', []);
+            if (!is_array($listDosen)) {
+                return ApiResponse::error('Format list_dosen tidak valid.', 400);
+            }
+            $dosenIds = array_column($listDosen, 'dosen_id');
+            if (count($dosenIds) !== count(array_unique($dosenIds))) {
+                return ApiResponse::error('Tidak boleh ada dosen penguji yang sama.', 400);
             }
 
-            // Delete existing DosenPenguji records for the TugasAkhir
+            $sekretaris = collect($request->list_dosen)
+                ->firstWhere('jabatan_penguji', 'sekretaris');
+            if (!$sekretaris || $sekretaris['dosen_id'] != $tugasAkhir->dosen_pembimbing_id) {
+                return ApiResponse::error('Jabatan sekretaris harus diisi oleh dosen pembimbing.', 400);
+            }
+
+            // Hapus semua Dosen Penguji lama yang ada untuk tugas akhir ini
             DosenPenguji::where('tugas_akhir_id', $tugasAkhirId)->delete();
 
-            // Prepare new DosenPenguji data
+            // Siapkan data untuk Dosen Penguji baru
             $dosenPengujiData = [];
-            foreach ($request->list_dosen_id as $dosenId) {
+            foreach ($request->list_dosen as $dosen) {
                 $dosenPengujiData[] = [
-                    'dosen_id' => $dosenId,
+                    'dosen_id' => $dosen['dosen_id'],
                     'tugas_akhir_id' => $tugasAkhirId,
+                    'jabatan_penguji' => $dosen['jabatan_penguji'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];

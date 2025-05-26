@@ -20,7 +20,7 @@ class NilaiUjianTA extends Model
 
     public function dosenPenguji()
     {
-        return $this->hasOne(DosenPenguji::class, 'id');
+        return $this->hasOne(DosenPenguji::class, 'nilai_ujian_ta_id', 'id');
     }
 
 }

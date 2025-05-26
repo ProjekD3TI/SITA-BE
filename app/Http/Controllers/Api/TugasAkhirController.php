@@ -10,6 +10,7 @@ use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TugasAkhirResource;
 use App\Models\Dosen;
+use App\Models\StatusForm;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 
@@ -173,6 +174,30 @@ class TugasAkhirController extends Controller
         }
     }
 
+    public function tugasAkhirAktifByMahasiswa()
+    {
+        try {
+            $mahasiswaId = Auth::id();
+
+            // Ambil data TugasAkhir berdasarkan mahasiswa_id
+            $tugasAkhir = TugasAkhir::with(['dosenPembimbing'])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1) // Hanya ambil yang aktif
+                ->first();
+
+            // Jika tidak ditemukan, kembalikan null
+            if (!$tugasAkhir) {
+                return ApiResponse::success([
+                    'tugas_akhir' => null
+                ], 'Belum ada Tugas Akhir yang aktif');
+            }
+
+            return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Tugas Akhir berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
     //belum di test
     public function memberiNilaiTAbyDosen(Request $request, $id)
     {
@@ -299,12 +324,12 @@ class TugasAkhirController extends Controller
 
                 'request_pembimbing' => [
                     'id' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->id : null,
-                    'stattus' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->status_request : null
+                    'status' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->status_request : null
                 ],
 
             ];
 
-            return ApiResponse::success($data, 'Data tugas akhir berhasil diambil');
+            return ApiResponse::success($data, 'Data keperluan dashboard berhasil diambil');
 
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
@@ -399,6 +424,7 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
     // Fitur Bimbingan Admin TA
 
     public function tabelPlottingByAdmin()
@@ -506,27 +532,50 @@ class TugasAkhirController extends Controller
     // End Fitur Bimbingan Admin TA
 
 
-    public function tugasAkhirAktifByMahasiswa()
+    // Fitur Ujian TA Admin TA
+
+    public function tabelPlottingPengujiByAdmin()
     {
         try {
-            $mahasiswaId = Auth::id();
 
-            // Ambil data TugasAkhir berdasarkan mahasiswa_id
-            $tugasAkhir = TugasAkhir::with(['dosenPembimbing'])
-                ->where('mahasiswa_id', $mahasiswaId)
-                ->where('status_aktif', 1) // Hanya ambil yang aktif
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'dosenPenguji', 'proposal', 'bimbingan'])
+                ->where('status_aktif', 1)
+                ->withCount([
+                    'bimbingan as bimbingan_count' => function ($query) {
+                        $query->where('status_verifikasi', 1);
+                    }
+                ])
+                ->having('bimbingan_count', '>=', 9) // Pastikan sudah ada minimal 9 bimbingan yang diverifikasi
+                ->get();
+            $statusForm = StatusForm::where('nama_form', 'Tugas Akhir')
+                ->select('id', 'is_open')
                 ->first();
 
-            // Jika tidak ditemukan, kembalikan null
-            if (!$tugasAkhir) {
-                return ApiResponse::success([
-                    'tugas_akhir' => null
-                ], 'Belum ada Tugas Akhir yang aktif');
-            }
+            $data = $tugasAkhir->map(function ($item) {
+                return [
+                    'tugas_akhir_id' => $item->id,
+                    'mahasiswa' => [
+                        'nim' => $item->mahasiswa->nim ?? null,
+                        'name' => $item->mahasiswa->name ?? null,
+                    ],
+                    'judul_proposal' => $item->proposal->judul_proposal ?? null,
+                    'dosen_pembimbing' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
+                    'dosen_penguji' => $item->dosenPenguji && $item->dosenPenguji->count() > 2,
+                ];
+            });
 
-            return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Tugas Akhir berhasil diambil');
+            return ApiResponse::success(
+                [
+                    'status_form' => $statusForm,
+                    'list_data' => $data
+                ],
+                'List Tugas Akhir dengan minimal 9 bimbingan disetujui berhasil diambil'
+            );
+
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
+    // End Fitur Ujian TA Admin TA
 }

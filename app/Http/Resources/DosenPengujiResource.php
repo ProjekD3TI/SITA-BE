@@ -19,6 +19,7 @@ class DosenPengujiResource extends JsonResource
             'dosen_id' => $this->dosen_id,
             'tugas_akhir_id' => $this->tugas_akhir_id,
             'nilai_ujian_ta_id' => $this->nilai_ujian_ta_id,
+            'jabatan_penguji' => $this->jabatan_penguji,
             'revisi' => $this->revisi,
             'catatan_semhas' => $this->catatan_semhas,
         ];
