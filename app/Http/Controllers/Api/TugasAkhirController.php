@@ -401,35 +401,6 @@ class TugasAkhirController extends Controller
     // End Fitur Bimbingan Admin TA
 
 
-    // Fitur Proposal Admin TA
-
-    public function tabelPengajuanByAdmin()
-    {
-        try {
-
-            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'proposal', 'proposal.berkas'])
-                ->where('status_aktif', 1)
-                ->get();
-            $data = $tugasAkhir->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'nim' => $item->mahasiswa->nim,
-                    'mahasiswa' => $item->mahasiswa->name,
-                    'judul_proposal' => $item->proposal ? $item->proposal->judul_proposal : null,
-                    'status_proposal' => $item->proposal ? $item->proposal->status_proposal : null,
-                    'berkas' => $item->proposal ? $item->proposal->berkas : null,
-
-                ];
-            });
-            return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
-
-        } catch (Exception $e) {
-            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
-        }
-    }
-
-    // Fitur Proposal Admin TA
-
     public function tugasAkhirAktifByMahasiswa()
     {
         try {

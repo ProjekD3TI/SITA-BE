@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
             NilaiUjianTASeeder::class,
             DosenPengujiSeeder::class,
             UjianTASeeder::class,
-
+            StatusFormSeeder::class,
         ]);
     }
 }

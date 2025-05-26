@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\UjianTAController;
-use App\Models\Bimbingan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\SesiController;
@@ -26,6 +25,7 @@ use App\Http\Controllers\Admin\Superadmin\SuperadminController;
 use App\Http\Controllers\Admin\AdminPengelola\AdminPengelolaController;
 use App\Http\Controllers\Api\KategoriController;
 use App\Http\Controllers\Api\NilaiBimbinganController;
+use App\Http\Controllers\StatusFormController;
 
 /*
 |--------------------------------------------------------------------------
@@ -210,7 +210,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/tugas-akhir/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganByAdmin']);
         Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingByAdmin']);
         Route::get('/admin_ta/tugas-akhir/detail-bimbingan/{tugasAkhirId}', [TugasAkhirController::class, 'detailBimbinganByAdmin']);
-        Route::get('/admin_ta/tugas-akhir/proposal', [TugasAkhirController::class, 'tabelPengajuanByAdmin']);
 
         // Kategori
         Route::post('/admin_ta/kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
@@ -221,7 +220,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeForAdmin']);
 
         // Route proposal
-        Route::get('/admin_ta/proposal', [ProposalController::class, 'indexForAdmin']);
+        Route::get('/admin_ta/proposal', [ProposalController::class, 'tabelPengajuanProposalByAdmin']);
         Route::put('/admin_ta/proposal/{id}/status', [ProposalController::class, 'updateValidationStatusForAdmin']);
         Route::put('/admin_ta/proposal/{id}/nilai-catatan', [ProposalController::class, 'updateScoreandNotesForAdmin']);
 
@@ -230,6 +229,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::post('/admin_ta/dosen-penguji/', [DosenPengujiController::class, 'storeForAdmin']);
         Route::put('/admin_ta/dosen-penguji/{id}', [DosenPengujiController::class, 'updateForAdmin']);
 
+        // Status Form
+        Route::get('/admin_ta/status-form', [StatusFormController::class, 'getStatusFormByAdmin']);
+        Route::put('/admin_ta/status-form/{idForm}', [StatusFormController::class, 'updateStatusFormByAdmin']);
 
         // Route Sesi
         Route::apiResource('/admin_ta/sesi', SesiController::class);

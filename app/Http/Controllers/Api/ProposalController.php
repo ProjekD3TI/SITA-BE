@@ -8,21 +8,47 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Proposal;
 use App\Models\TugasAkhir;
 use App\Http\Resources\ProposalResource;
+use App\Models\StatusForm;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ProposalController extends Controller
 {
-    public function indexForAdmin()
+    // Fitur Proposal Admin TA
+
+    public function tabelPengajuanProposalByAdmin()
     {
         try {
-            $proposals = Proposal::all();
-            return ApiResponse::success(ProposalResource::collection($proposals));
+            $listProposal = Proposal::with(['tugasAkhir', 'tugasAkhir.mahasiswa', 'berkas'])
+                ->get();
+
+            $statusForm = StatusForm::where('nama_form', 'proposal')
+                ->select('id', 'is_open')
+                ->first();
+
+            $data = $listProposal->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nim' => $item->tugasAkhir && $item->tugasAkhir->mahasiswa ? $item->tugasAkhir->mahasiswa->nim : null,
+                    'mahasiswa' => $item->tugasAkhir && $item->tugasAkhir->mahasiswa ? $item->tugasAkhir->mahasiswa->name : null,
+                    'judul_proposal' => $item->judul_proposal ?? null,
+                    'status_proposal' => $item->status_proposal ?? null,
+                    'tanggal_pengajuan' => $item->created_at ? $item->created_at->format('d M Y') : null,
+                    'berkas' => $item->berkas ?? null,
+                ];
+            });
+            return ApiResponse::success([
+                'status_form' => $statusForm,
+                'list_proposal' => $data
+            ], 'Data list proposal berhasil diambil');
+
         } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
+    // Fitur Proposal Admin TA
 
     public function storeForMhs(Request $request)
     {
