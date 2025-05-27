@@ -325,7 +325,7 @@ class TugasAkhirController extends Controller
                 'request_pembimbing' => [
                     'id' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->id : null,
                     'status' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->status_request : null
-                   
+
                 ],
 
             ];
@@ -427,29 +427,7 @@ class TugasAkhirController extends Controller
     }
 
     //dashboard admin
-    public function setDashboardByAdmin()
-    {
-        try {
-
-            // $adminId = Auth::id();
-            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'ujianTA', 'proposal'])
-                // ->where('admin_id', $adminId)
-                ->where('status_aktif', 1)
-                ->get();
-
-            if ($tugasAkhir->isEmpty()) {
-                return ApiResponse::success(null, 'Tidak ada tugas akhir yang aktif');
-            }
-            $data = [
-                'validasi_berkas' => [
-                    'prosposal' => 'hello'
-                ]
-            ];
-            return ApiResponse::success([$data, 'Data berhasil diambil']);
-        } catch (Exception $e) {
-            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
-        }
-    }
+ 
     // Fitur Bimbingan Admin TA
 
     public function tabelPlottingByAdmin()
