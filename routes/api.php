@@ -225,8 +225,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/list-penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
 
         // Kategori
-        Route::post('/admin_ta/kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
+        Route::post('/admin_ta/tambah_kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
         Route::get('/admin_ta/kategori', [KategoriController::class, 'lihatKategori']);
+        Route::put('/admin_ta/{id}/edit_kategori', [KategoriController::class, 'editKategoriByAdmin']);
+
 
 
         // Plotting Pembimbing
@@ -268,6 +270,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Route::post('/admin_ta/ujian-ta/', [UjianTAController::class, 'store']);
         // Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
         Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyForAdmin']);
+        // Route::get('/admin_ta/dashboard', [AdminTaController::class, 'setDashboardByAdmin']);
     });
 
     // Route Admin Pengelola (inventaris)
