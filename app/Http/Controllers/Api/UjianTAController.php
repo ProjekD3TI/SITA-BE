@@ -201,8 +201,8 @@ class UjianTAController extends Controller
                     'dosen' => [
                         'id' => $dosen->id,
                         'nama' => $dosen->name,
+                        'jabatan' => $penguji->jabatan_penguji,
                     ],
-                    'jabatan' => $penguji->jabatan,
                 ];
             }
 

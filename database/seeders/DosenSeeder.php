@@ -119,7 +119,7 @@ class DosenSeeder extends Seeder
             'nik' => '0005067912',
             'status' => 1,
         ]);
-        Dosen::factory(5)->create();
+        // Dosen::factory(5)->create();
 
     }
 }

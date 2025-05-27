@@ -13,37 +13,86 @@ class TugasAkhirSeeder extends Seeder
      */
     public function run(): void
     {
+        // TugasAkhir::create([
+        //     'mahasiswa_id' => 1,
+        //     'dosen_pembimbing_id' => 1,
+        //     'proposal_id' => 1,
+        //     'semester_id' => 1,
+        //     'tahun_ajaran_id' => 4,
+        //     'kategori_id' => 1,
+        //     'judul_tugas_akhir' => 'Sistem Informasi Akademik',
+        //     'status_valid' => 1,
+        //     'status_aktif' => 1,
+        // ]);
+
+        // TugasAkhir::create([
+        //     'mahasiswa_id' => 2,
+        //     'dosen_pembimbing_id' => 2,
+        //     'proposal_id' => 2,
+        //     'semester_id' => 2,
+        //     'tahun_ajaran_id' => 4,
+        //     'kategori_id' => 2,
+        //     'judul_tugas_akhir' => 'Sistem Tugas Akhir',
+        //     'status_valid' => 2,
+        //     'status_aktif' => 1,
+        // ]);
+
+        // TugasAkhir::create([
+        //     'mahasiswa_id' => 3,
+        //     'proposal_id' => 3,
+        //     'kategori_id' => 3,
+        //     'judul_tugas_akhir' => 'Sistem Informasi Perpustakaan',
+        //     'status_aktif' => 1,
+        // ]);
+
+
+        // Raffael
         TugasAkhir::create([
             'mahasiswa_id' => 1,
-            'dosen_pembimbing_id' => 1,
+            'dosen_pembimbing_id' => 15,
             'proposal_id' => 1,
             'semester_id' => 1,
             'tahun_ajaran_id' => 4,
-            'kategori_id' => 1,
-            'judul_tugas_akhir' => 'Sistem Informasi Akademik',
+            'nilai_bimbingan_id' => 1,
+            'kategori_id' => 4,
+            'judul_tugas_akhir' => 'Simulasi Mitigasi Bencana Alam AR Finale Update',
+            'nilai_proposal' => 90,
+            'nilai_akhir' => 89,
+            'catatan_proposal' => 'Lulus dengan baik',
             'status_valid' => 1,
             'status_aktif' => 1,
         ]);
-
+        // Raihan
         TugasAkhir::create([
             'mahasiswa_id' => 2,
-            'dosen_pembimbing_id' => 2,
+            'dosen_pembimbing_id' => 1,
             'proposal_id' => 2,
-            'semester_id' => 2,
+            'semester_id' => 1,
             'tahun_ajaran_id' => 4,
-            'kategori_id' => 2,
-            'judul_tugas_akhir' => 'Sistem Tugas Akhir',
-            'status_valid' => 2,
+            'nilai_bimbingan_id' => null,
+            'kategori_id' => 4,
+            'judul_tugas_akhir' => null,
+            'nilai_proposal' => 90,
+            'nilai_akhir' => 89,
+            'catatan_proposal' => 'Lulus dengan baik',
+            'status_valid' => null,
             'status_aktif' => 1,
         ]);
-
+        // Rizqi
         TugasAkhir::create([
             'mahasiswa_id' => 3,
+            'dosen_pembimbing_id' => 2,
             'proposal_id' => 3,
-            'kategori_id' => 3,
-            'judul_tugas_akhir' => 'Sistem Informasi Perpustakaan',
+            'semester_id' => 1,
+            'tahun_ajaran_id' => 4,
+            'nilai_bimbingan_id' => null,
+            'kategori_id' => 1,
+            'judul_tugas_akhir' => null,
+            'nilai_proposal' => null,
+            'nilai_akhir' => null,
+            'catatan_proposal' => null,
+            'status_valid' => null,
             'status_aktif' => 1,
         ]);
-
     }
 }

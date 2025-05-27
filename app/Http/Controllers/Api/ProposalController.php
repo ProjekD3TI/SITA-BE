@@ -131,7 +131,8 @@ class ProposalController extends Controller
                 if ($berkasProposal) {
                     $originalName = $request->file('file_proposal')->getClientOriginalName();
                     $filePath = $request->file('file_proposal')->storeAs("private/proposal/{$proposal->id}", $originalName);
-                    $berkasProposal->file_path = "proposal/{$proposal->id}/{$originalName}";
+                    $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
+                    $berkasProposal->file_path = $privatePath;
                     $berkasProposal->status_valid = 0;
                     $berkasProposal->save();
                 }
@@ -142,7 +143,8 @@ class ProposalController extends Controller
                 if ($berkasTranskrip) {
                     $originalName = $request->file('file_transkrip')->getClientOriginalName();
                     $filePath = $request->file('file_transkrip')->storeAs("private/proposal/{$proposal->id}", $originalName);
-                    $berkasTranskrip->file_path = "proposal/{$proposal->id}/{$originalName}";
+                    $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
+                    $berkasTranskrip->file_path = $privatePath;
                     $berkasTranskrip->status_valid = 0;
                     $berkasTranskrip->save();
                 }

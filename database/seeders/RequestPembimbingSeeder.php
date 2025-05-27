@@ -13,20 +13,40 @@ class RequestPembimbingSeeder extends Seeder
      */
     public function run(): void
     {
+        // RequestPembimbing::create([
+        //     'tugas_akhir_id' => 1,
+        //     'dosen_id' => 1,
+        //     'status_request' => 1,
+        // ]);
+        // RequestPembimbing::create([
+        //     'tugas_akhir_id' => 2,
+        //     'dosen_id' => 2,
+        //     'status_request' => 1,
+        // ]);
+        // RequestPembimbing::create([
+        //     'tugas_akhir_id' => 3,
+        //     'dosen_id' => 1,
+        //     'status_request' => 0,
+        // ]);
+
+
+        // Raffael
         RequestPembimbing::create([
             'tugas_akhir_id' => 1,
-            'dosen_id' => 1,
+            'dosen_id' => 15,
             'status_request' => 1,
         ]);
+        // Raihan
         RequestPembimbing::create([
             'tugas_akhir_id' => 2,
-            'dosen_id' => 2,
+            'dosen_id' => 1,
             'status_request' => 1,
         ]);
+        // Rizqi
         RequestPembimbing::create([
             'tugas_akhir_id' => 3,
-            'dosen_id' => 1,
-            'status_request' => 0,
+            'dosen_id' => 2,
+            'status_request' => 1,
         ]);
     }
 }

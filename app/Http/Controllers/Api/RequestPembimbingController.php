@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Semester;
 use Exception;
 use App\Models\Dosen;
 use App\Models\Kategori;
@@ -105,10 +106,15 @@ class RequestPembimbingController extends Controller
                 return ApiResponse::error('Tahun ajaran default tidak ditemukan', 400);
             }
 
+            $defaultSemester = Semester::where('is_default', 1)->first();
+            if (!$defaultSemester) {
+                return ApiResponse::error('Semester default tidak ditemukan', 400);
+            }
             // Create TugasAkhir dengan tahun ajaran default
             $tugasAkhir = TugasAkhir::create([
                 'mahasiswa_id' => $mahasiswa_id,
                 'kategori_id' => $validatedData['kategori_id'],
+                'semester_id' => $defaultSemester->id,
                 'status_aktif' => 1,
                 'tahun_ajaran_id' => $defaultTahunAjaran->id,
             ]);
