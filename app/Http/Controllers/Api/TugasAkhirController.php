@@ -303,7 +303,7 @@ class TugasAkhirController extends Controller
 
             // Ambil ujian TA terbaru (berdasarkan tanggal_ujian paling akhir)
             $ujianTA = $tugasAkhir->ujianTA
-                ->sortByDesc('tanggal_ujian')
+                ->where('status_ujian', 'aktif')
                 ->first();
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id,
@@ -316,7 +316,7 @@ class TugasAkhirController extends Controller
                 'status_valid' => $tugasAkhir->status_valid,
                 'nilai_akhir' => $tugasAkhir->nilai_akhir ? $tugasAkhir->nilai_akhir : null,
                 'bimbingan' => [
-                    'total_bimbingan' => $tugasAkhir->bimbingan->count() ?? null,
+                    'total_bimbingan' => $tugasAkhir->bimbingan->where('status_verifikasi',1)-> count() ?? null,
                     'progress_bimbingan' => $babTerbesar ?? null,
 
                 ],
@@ -325,6 +325,7 @@ class TugasAkhirController extends Controller
                 'request_pembimbing' => [
                     'id' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->id : null,
                     'status' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->status_request : null
+                   
                 ],
 
             ];
@@ -425,6 +426,30 @@ class TugasAkhirController extends Controller
         }
     }
 
+    //dashboard admin
+    public function setDashboardByAdmin()
+    {
+        try {
+
+            // $adminId = Auth::id();
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'ujianTA', 'proposal'])
+                // ->where('admin_id', $adminId)
+                ->where('status_aktif', 1)
+                ->get();
+
+            if ($tugasAkhir->isEmpty()) {
+                return ApiResponse::success(null, 'Tidak ada tugas akhir yang aktif');
+            }
+            $data = [
+                'validasi_berkas' => [
+                    'prosposal' => 'hello'
+                ]
+            ];
+            return ApiResponse::success([$data, 'Data berhasil diambil']);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
     // Fitur Bimbingan Admin TA
 
     public function tabelPlottingByAdmin()
