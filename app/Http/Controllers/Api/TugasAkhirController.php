@@ -69,78 +69,136 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function updateTugasAkhirForMahasiswa(Request $request, $id)
+    public function storeUjianTAForMhs(Request $request)
     {
         try {
-            $mahasiswaId = Auth::id();
-
-            // Validasi semua atribut yang tidak boleh null
             $validatedData = $request->validate([
                 'judul_tugas_akhir' => 'required|string|max:255',
+                'naskah_ta' => 'required|file|mimes:pdf',
                 'krs' => 'required|file|mimes:pdf',
                 'persetujuan_pembimbing' => 'required|file|mimes:pdf',
+                'transkrip_nilai' => 'required|file|mimes:pdf',
                 'sertifikat_kompetensi' => 'required|file|mimes:pdf',
                 'toeic' => 'required|file|mimes:pdf',
                 'berita_acara_semhas' => 'required|file|mimes:pdf',
-                'naskah_ta' => 'required|file|mimes:pdf',
-                'masa_perpanjangan_studi' => 'nullable|date',
-                'file_transkrip' => 'required|file|mimes:pdf',
+                'surat_perpanjangan_studi' => 'nullable|file|mimes:pdf',
             ]);
 
-            // Cari TugasAkhir milik mahasiswa dengan eager loading
-            $tugasAkhir = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])
-                ->where('id', $id)
-                ->where('mahasiswa_id', $mahasiswaId) // Pastikan mahasiswa memiliki record ini
+            $mahasiswaId = Auth::id();
+            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1)
                 ->first();
 
             if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas Akhir tidak ditemukan atau unauthorized', 404);
+                return ApiResponse::error('Tugas Akhir tidak ditemukan atau tidak aktif', 404);
             }
 
-            // Tambahkan kondisi untuk status_valid
-            if (!is_null($tugasAkhir->status_valid) && !in_array($tugasAkhir->status_valid, [2])) {
-                return ApiResponse::error('Tugas Akhir tidak dapat diperbarui karena status validasi tidak sesuai', 403);
-            }
-
-            // Perbarui data TugasAkhir
+            // Simpan judul tugas akhir
             $tugasAkhir->judul_tugas_akhir = $validatedData['judul_tugas_akhir'];
-            $tugasAkhir->status_valid = 0; // Set status_valid menjadi 0 (menunggu validasi)
+            $tugasAkhir->status_valid = 0; // Set status_valid ke 0 (menunggu validasi)
             $tugasAkhir->save();
 
-            $berkasList = [
-                'krs',
-                'persetujuan_pembimbing',
-                'sertifikat_kompetensi',
-                'toeic',
-                'berita_acara_semhas',
-                'naskah_ta',
-                'masa_perpanjangan_studi',
-                'file_transkrip'
+            // Daftar nama berkas dan field request
+            $berkasMap = [
+                'Naskah Tugas Akhir' => 'naskah_ta',
+                'Scan KRS Semester Akhir' => 'krs',
+                'Bukti Persetujuan Pembimbing' => 'persetujuan_pembimbing',
+                'Transkrip Nilai Mahasiswa' => 'transkrip_nilai',
+                'Bukti Sertifikat Kompetensi' => 'sertifikat_kompetensi',
+                'Sertifikat TOEIC' => 'toeic',
+                'Berita Acara Seminar Hasil' => 'berita_acara_semhas',
+                'Surat Perpanjangan Masa Studi' => 'surat_perpanjangan_studi',
             ];
 
+            foreach ($berkasMap as $namaBerkas => $field) {
+                if ($request->hasFile($field)) {
+                    $originalName = $request->file($field)->getClientOriginalName();
+                    // Simpan ke folder private
+                    $filePath = $request->file($field)->storeAs("private/tugas_akhir/{$tugasAkhir->id}", $originalName);
+                    // Path yang disimpan di DB harus sama dengan lokasi file di storage
+                    $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$originalName}";
 
-            foreach ($berkasList as $berkasName) {
-                if ($request->hasFile($berkasName)) {
-                    $originalName = $request->file($berkasName)->getClientOriginalName();
-                    $filePath = $request->file($berkasName)->storeAs("tugas_akhir/{$tugasAkhir->id}", $originalName);
+                    $tugasAkhir->berkas()->create([
+                        'nama_berkas' => $namaBerkas,
+                        'file_path' => $privatePath,
+                        'status_valid' => 0,
+                    ]);
+                }
+            }
 
-                    $berkas = $tugasAkhir->berkas()->where('nama_berkas', $berkasName)->first();
+            return ApiResponse::success(new TugasAkhirResource($tugasAkhir->load('berkas')), 'Pendaftaran Ujian TA berhasil, menunggu validasi');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function updateUjianTAForMhs(Request $request, $id)
+    {
+        try {
+            $validatedData = $request->validate([
+                'judul_tugas_akhir' => 'required|string|max:255',
+                'naskah_ta' => 'nullable|file|mimes:pdf',
+                'krs' => 'nullable|file|mimes:pdf',
+                'persetujuan_pembimbing' => 'nullable|file|mimes:pdf',
+                'transkrip_nilai' => 'nullable|file|mimes:pdf',
+                'sertifikat_kompetensi' => 'nullable|file|mimes:pdf',
+                'toeic' => 'nullable|file|mimes:pdf',
+                'berita_acara_semhas' => 'nullable|file|mimes:pdf',
+                'surat_perpanjangan_studi' => 'nullable|file|mimes:pdf',
+            ]);
+
+            $mahasiswaId = Auth::id();
+            $tugasAkhir = TugasAkhir::with(['berkas'])
+                ->where('id', $id)
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1)
+                ->first();
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan atau tidak aktif', 404);
+            }
+
+            // Update judul tugas akhir
+            $tugasAkhir->judul_tugas_akhir = $validatedData['judul_tugas_akhir'];
+            $tugasAkhir->status_valid = 0; // Reset validasi
+            $tugasAkhir->save();
+
+            // Map nama_berkas => field request
+            $berkasMap = [
+                'Naskah Tugas Akhir' => 'naskah_ta',
+                'Scan KRS Semester Akhir' => 'krs',
+                'Bukti Persetujuan Pembimbing' => 'persetujuan_pembimbing',
+                'Transkrip Nilai Mahasiswa' => 'transkrip_nilai',
+                'Bukti Sertifikat Kompetensi' => 'sertifikat_kompetensi',
+                'Sertifikat TOEIC' => 'toeic',
+                'Berita Acara Seminar Hasil' => 'berita_acara_semhas',
+                'Surat Perpanjangan Masa Studi' => 'surat_perpanjangan_studi',
+            ];
+
+            foreach ($berkasMap as $namaBerkas => $field) {
+                if ($request->hasFile($field)) {
+                    $originalName = $request->file($field)->getClientOriginalName();
+                    $filePath = $request->file($field)->storeAs("private/tugas_akhir/{$tugasAkhir->id}", $originalName);
+                    $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$originalName}";
+
+                    $berkas = $tugasAkhir->berkas()->where('nama_berkas', $namaBerkas)->first();
                     if ($berkas) {
-                        $berkas->file_path = $filePath;
+                        $berkas->file_path = $privatePath;
                         $berkas->status_valid = 0;
                         $berkas->save();
                     } else {
                         $tugasAkhir->berkas()->create([
-                            'nama_berkas' => $berkasName,
-                            'file_path' => $filePath,
+                            'nama_berkas' => $namaBerkas,
+                            'file_path' => $privatePath,
                             'status_valid' => 0,
                         ]);
                     }
                 }
             }
 
-            // Kembalikan data TugasAkhir yang diperbarui menggunakan resource
-            return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Tugas Akhir berhasil diperbarui dan menunggu validasi');
+            return ApiResponse::success(new TugasAkhirResource($tugasAkhir->load('berkas')), 'Berkas Ujian TA berhasil diupdate');
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
@@ -310,9 +368,9 @@ class TugasAkhirController extends Controller
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'dosen_pembimbing' => $tugasAkhir->dosenPembimbing->name ?? null,
                 'proposal' => [
-                    'id' => $proposal->id ?? null,
+                    'id' => $tugasAkhir->proposal ? $tugasAkhir->id : null,
                     'status' => $tugasAkhir->proposal ? $tugasAkhir->proposal->status_proposal : null,
-                    'catatan' => $tugasAkhir->proposal ? $tugasAkhir->proposal->catatan_proposal : null,
+                    'catatan' => $tugasAkhir->proposal ? $tugasAkhir->catatan_proposal : null,
                 ],
                 'status_valid' => $tugasAkhir->status_valid,
                 'nilai_akhir' => $tugasAkhir->nilai_akhir ? $tugasAkhir->nilai_akhir : null,
@@ -725,5 +783,66 @@ class TugasAkhirController extends Controller
         }
     }
 
-    // End Fitur Ujian TA Admin TA
+    public function ujianTAForMhs()
+    {
+        try {
+            $mahasiswaId = Auth::id();
+
+            $tugasAkhir = TugasAkhir::with([
+                'dosenPembimbing:id,name',
+                'kategori:id,nama_kategori',
+                'tahunAjaran:id,tahun_ajaran',
+                'berkas',
+                'bimbingan'
+            ])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1)
+                ->first();
+
+            if (!$tugasAkhir) {
+                return ApiResponse::success(null, 'Belum ada Tugas Akhir yang aktif');
+            }
+
+            $naskahBerkas = $tugasAkhir->berkas
+                ->where('nama_berkas', 'Naskah Tugas Akhir')
+                ->map(function ($berkas) {
+                    return [
+                        'id' => $berkas->id,
+                        'nama_berkas' => $berkas->nama_berkas,
+                        'file_path' => $berkas->file_path,
+                    ];
+                })
+                ->values();
+
+            $result = [
+                'tugas_akhir' => [
+                    'id' => $tugasAkhir->id,
+                    'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir,
+                    'dosen_pembimbing' => $tugasAkhir->dosenPembimbing ? [
+                        'id' => $tugasAkhir->dosenPembimbing->id,
+                        'nama' => $tugasAkhir->dosenPembimbing->name,
+                    ] : null,
+                    'kategori_ta' => $tugasAkhir->kategori ? [
+                        'id' => $tugasAkhir->kategori->id,
+                        'nama' => $tugasAkhir->kategori->nama_kategori,
+                    ] : null,
+                    'tahun_ajaran' => $tugasAkhir->tahunAjaran ? [
+                        'id' => $tugasAkhir->tahunAjaran->id,
+                        'nama' => $tugasAkhir->tahunAjaran->tahun_ajaran,
+                    ] : null,
+                    'status_valid' => $tugasAkhir->status_valid,
+                ],
+                'bimbingan' => [
+                    'total_bimbingan' => $tugasAkhir->bimbingan
+                        ? $tugasAkhir->bimbingan->where('status_verifikasi', 1)->count()
+                        : 0,
+                ],
+                'berkas' => $naskahBerkas,
+            ];
+
+            return ApiResponse::success($result, 'Data tugas akhir berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Gagal mengambil data tugas akhir: ' . $e->getMessage(), 500);
+        }
+    }
 }

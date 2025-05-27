@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use Exception;
+use App\Models\Dosen;
+use App\Models\Kategori;
 use App\Models\TugasAkhir;
+use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\RequestPembimbing;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Resources\RequestPembimbingResource;
 use Illuminate\Validation\ValidationException;
+use App\Http\Resources\RequestPembimbingResource;
 
 
 class RequestPembimbingController extends Controller
@@ -96,11 +99,18 @@ class RequestPembimbingController extends Controller
                 return ApiResponse::error('Mahasiswa sudah memiliki tugas akhir yang aktif', 400);
             }
 
-            // Create TugasAkhir
+            // Ambil tahun ajaran default
+            $defaultTahunAjaran = TahunAjaran::where('is_default', 1)->first();
+            if (!$defaultTahunAjaran) {
+                return ApiResponse::error('Tahun ajaran default tidak ditemukan', 400);
+            }
+
+            // Create TugasAkhir dengan tahun ajaran default
             $tugasAkhir = TugasAkhir::create([
                 'mahasiswa_id' => $mahasiswa_id,
                 'kategori_id' => $validatedData['kategori_id'],
                 'status_aktif' => 1,
+                'tahun_ajaran_id' => $defaultTahunAjaran->id,
             ]);
 
             // Buat RequestPembimbing
@@ -111,7 +121,11 @@ class RequestPembimbingController extends Controller
                 'tanggal_respon' => null,
             ]);
 
-            return ApiResponse::success(new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')), 'Request pembimbing dan Tugas Akhir berhasil dibuat', 201);
+            return ApiResponse::success(
+                new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')),
+                'Request pembimbing dan Tugas Akhir berhasil dibuat',
+                201
+            );
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
@@ -184,6 +198,87 @@ class RequestPembimbingController extends Controller
             ], 'Request sudah direspon');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function requestPembimbingForMhs()
+    {
+        try {
+            $mahasiswa = Auth::id();
+
+            $tugasAkhir = TugasAkhir::with([
+                'dosenPembimbing:id,name',
+                'kategori:id,nama_kategori',
+                'requestPembimbing.dosen:id,name,nik',
+                'tahunAjaran:id,tahun_ajaran'
+            ])
+                ->where('mahasiswa_id', $mahasiswa)
+                ->where('status_aktif', 1)
+                ->select('id', 'status_aktif', 'dosen_pembimbing_id', 'kategori_id', 'tahun_ajaran_id')
+                ->first();
+
+            // Ambil semua kategori
+            $listKategori = Kategori::select('id', 'nama_kategori as name')->get();
+
+            // Ambil semua dosen
+            $listDosen = Dosen::select('id', 'name', 'nik')->get();
+
+            // Ambil tahun ajaran default
+            $defaultTahunAjaran = TahunAjaran::where('is_default', 1)
+                ->select('id', 'tahun_ajaran')
+                ->first();
+
+            $defaultTahunAjaranArr = $defaultTahunAjaran
+                ? [
+                    'id' => $defaultTahunAjaran->id,
+                    'tahun_ajaran' => $defaultTahunAjaran->tahun_ajaran,
+                ]
+                : null;
+
+            // Jika tidak ada tugas akhir aktif, kembalikan data kosong/null
+            if (!$tugasAkhir) {
+                return ApiResponse::success([
+                    'tugas_akhir' => null,
+                    'list_kategori' => $listKategori,
+                    'list_dosen' => $listDosen,
+                    'default_tahun_ajaran' => $defaultTahunAjaranArr,
+                ], 'Belum ada tugas akhir aktif');
+            }
+
+            $result = [
+                'tugas_akhir' => [
+                    'id' => $tugasAkhir->id,
+                    'status_active' => $tugasAkhir->status_aktif,
+                    'dosen_pembimbing' => $tugasAkhir->dosenPembimbing ? [
+                        'id' => $tugasAkhir->dosenPembimbing->id,
+                        'nama' => $tugasAkhir->dosenPembimbing->name,
+                    ] : null,
+                    'kategori' => $tugasAkhir->kategori ? [
+                        'id' => $tugasAkhir->kategori->id,
+                        'nama' => $tugasAkhir->kategori->nama_kategori,
+                    ] : null,
+                    'request_pembimbing' => $tugasAkhir->requestPembimbing ? [
+                        'id' => $tugasAkhir->requestPembimbing->id,
+                        'status_request' => $tugasAkhir->requestPembimbing->status_request,
+                        'dosen' => $tugasAkhir->requestPembimbing->dosen ? [
+                            'id' => $tugasAkhir->requestPembimbing->dosen->id,
+                            'nama' => $tugasAkhir->requestPembimbing->dosen->name,
+                            'nik' => $tugasAkhir->requestPembimbing->dosen->nik,
+                        ] : null,
+                    ] : null,
+                    'tahun_ajaran' => $tugasAkhir->tahunAjaran ? [
+                        'id' => $tugasAkhir->tahunAjaran->id,
+                        'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran,
+                    ] : null,
+                ],
+                'list_kategori' => $listKategori,
+                'list_dosen' => $listDosen,
+                'default_tahun_ajaran' => $defaultTahunAjaranArr,
+            ];
+
+            return ApiResponse::success($result, 'Data permintaan pembimbing berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Gagal mengambil data permintaan pembimbing: ' . $e->getMessage(), 500);
         }
     }
 

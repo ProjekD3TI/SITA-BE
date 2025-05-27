@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Dosen;
+use App\Models\Kategori;
 use App\Models\Bimbingan;
 use App\Models\TugasAkhir;
+use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\BimbinganResource;
 use App\Http\Resources\TugasAkhirResource;
+use Illuminate\Validation\ValidationException;
 
 class BimbinganController extends Controller
 {
@@ -194,7 +197,7 @@ class BimbinganController extends Controller
         }
     }
 
-    public function showBimbinganByMahasiswa($id)
+    public function showBimbinganForMahasiswa()
     {
         try {
             $mahasiswa = Auth::id();
@@ -202,20 +205,29 @@ class BimbinganController extends Controller
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
                 ->where('status_aktif', 1)
                 ->select('id')
-                ->firstOrFail();
+                ->first();
 
-            $bimbingan = Bimbingan::with('tugasAkhir')
-                ->where('id', $id)
-                ->where('tugas_akhir_id', $tugasAkhir->id)
-                ->firstOrFail();
+            if (!$tugasAkhir) {
+                return ApiResponse::success([], 'Belum ada tugas akhir yang aktif');
+            }
 
-            return ApiResponse::success(
-                new BimbinganResource($bimbingan),
-                'Detail bimbingan berhasil diambil'
-            );
+            $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
+                ->orderBy('tanggal_bimbingan', 'asc')
+                ->get(['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
 
+            $result = $bimbinganList->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'tanggal_bimbingan' => $item->tanggal_bimbingan,
+                    'bab' => $item->bab,
+                    'catatan' => $item->catatan,
+                    'status_verifikasi' => $item->status_verifikasi,
+                ];
+            });
+
+            return ApiResponse::success($result, 'Daftar bimbingan berhasil diambil');
         } catch (\Exception $e) {
-            return ApiResponse::error('Detail bimbingan gagal diambil: ' . $e->getMessage(), 500);
+            return ApiResponse::error('Daftar bimbingan gagal diambil: ' . $e->getMessage(), 500);
         }
     }
 

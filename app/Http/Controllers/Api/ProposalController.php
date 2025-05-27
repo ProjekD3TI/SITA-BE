@@ -78,21 +78,28 @@ class ProposalController extends Controller
                 'judul_proposal' => $validatedData['judul_proposal'],
             ]);
 
-            // Simpan file proposal dan transkrip
+            $tugasAkhir->proposal_id = $proposal->id;
+            $tugasAkhir->save();
+
+            // Simpan file proposal ke private
             $originalName = $request->file('file_proposal')->getClientOriginalName();
-            $filePath = $request->file('file_proposal')->storeAs("proposal/{$proposal->id}", $originalName);
+            $filePath = $request->file('file_proposal')->storeAs("private/proposal/{$proposal->id}", $originalName);
+            $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
 
             $proposal->berkas()->create([
-                'nama_berkas' => 'file_proposal',
-                'file_path' => $filePath,
+                'nama_berkas' => 'Naskah Proposal Tugas Akhir',
+                'file_path' => $privatePath,
                 'status_valid' => 0,
             ]);
+
+            // Simpan file transkrip ke private
             $originalName = $request->file('file_transkrip')->getClientOriginalName();
-            $filePath = $request->file('file_transkrip')->storeAs("proposal/{$proposal->id}", $originalName);
+            $filePath = $request->file('file_transkrip')->storeAs("private/proposal/{$proposal->id}", $originalName);
+            $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
 
             $proposal->berkas()->create([
-                'nama_berkas' => 'file_transkrip',
-                'file_path' => $filePath,
+                'nama_berkas' => 'Transkrip Nilai Mahasiswa',
+                'file_path' => $privatePath,
                 'status_valid' => 0,
             ]);
 
@@ -120,22 +127,23 @@ class ProposalController extends Controller
 
             // Update berkas proposal jika ada file baru
             if ($request->hasFile('file_proposal')) {
-                $berkasProposal = $proposal->berkas()->where('nama_berkas', 'file_proposal')->first();
+                $berkasProposal = $proposal->berkas()->where('nama_berkas', 'Naskah Proposal Tugas Akhir')->first();
                 if ($berkasProposal) {
                     $originalName = $request->file('file_proposal')->getClientOriginalName();
-                    $berkasProposal->file_path = $request->file('file_proposal')->storeAs("proposal/{$proposal->id}", $originalName);
-                    $berkasProposal->status_valid = 0; // Saat update, set status_valid ke 0
+                    $filePath = $request->file('file_proposal')->storeAs("private/proposal/{$proposal->id}", $originalName);
+                    $berkasProposal->file_path = "proposal/{$proposal->id}/{$originalName}";
+                    $berkasProposal->status_valid = 0;
                     $berkasProposal->save();
                 }
             }
 
-            // Update berkas transkrip jika ada file baru
             if ($request->hasFile('file_transkrip')) {
-                $berkasTranskrip = $proposal->berkas()->where('nama_berkas', 'file_transkrip')->first();
+                $berkasTranskrip = $proposal->berkas()->where('nama_berkas', 'Transkrip Nilai Mahasiswa')->first();
                 if ($berkasTranskrip) {
                     $originalName = $request->file('file_transkrip')->getClientOriginalName();
-                    $berkasTranskrip->file_path = $request->file('file_transkrip')->storeAs("proposal/{$proposal->id}", $originalName);
-                    $berkasTranskrip->status_valid = 0; // Saat update, set status_valid ke 0
+                    $filePath = $request->file('file_transkrip')->storeAs("private/proposal/{$proposal->id}", $originalName);
+                    $berkasTranskrip->file_path = "proposal/{$proposal->id}/{$originalName}";
+                    $berkasTranskrip->status_valid = 0;
                     $berkasTranskrip->save();
                 }
             }
@@ -162,17 +170,6 @@ class ProposalController extends Controller
             // Update the status_proposal
             $proposal->status_proposal = $validatedData['status_proposal'];
             $proposal->save();
-
-            // Check if the student has an active TugasAkhir
-            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $request->user()->id)
-                ->where('status_aktif', 1)
-                ->first();
-
-            // If status_proposal is 1 (accepted), update the TugasAkhir with the proposal_id
-            if ($validatedData['status_proposal'] == 1) {
-                $tugasAkhir->proposal_id = $proposal->id;
-                $tugasAkhir->save();
-            }
 
             return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir')), 'Status proposal berhasil diperbarui');
         } catch (ValidationException $e) {
@@ -211,6 +208,74 @@ class ProposalController extends Controller
             return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
+        }
+    }
+
+
+    public function proposalForMhs(Request $request)
+    {
+        try {
+            $mahasiswaId = $request->user()->id;
+
+            // Ambil tugas akhir aktif beserta relasi yang diperlukan
+            $tugasAkhir = TugasAkhir::with([
+                'dosenPembimbing:id,name',
+                'kategori:id,nama_kategori',
+                'tahunAjaran:id,tahun_ajaran',
+                'proposal.berkas'
+            ])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1)
+                ->first();
+
+            if (!$tugasAkhir) {
+                // Kembalikan data kosong/null agar FE bisa handle
+                return ApiResponse::success([
+                    'tugas_akhir' => null,
+                    'proposal' => null,
+                ], 'Belum ada tugas akhir aktif');
+            }
+
+            $proposal = $tugasAkhir->proposal;
+
+            $result = [
+                'tugas_akhir' => [
+                    'id' => $tugasAkhir->id,
+                    'dosen_pembimbing' => $tugasAkhir->dosenPembimbing ? [
+                        'id' => $tugasAkhir->dosenPembimbing->id,
+                        'nama' => $tugasAkhir->dosenPembimbing->name,
+                    ] : null,
+                    'kategori_ta' => $tugasAkhir->kategori ? [
+                        'id' => $tugasAkhir->kategori->id,
+                        'nama' => $tugasAkhir->kategori->nama_kategori,
+                    ] : null,
+                    'tahun_ajaran' => $tugasAkhir->tahunAjaran ? [
+                        'id' => $tugasAkhir->tahunAjaran->id,
+                        'nama' => $tugasAkhir->tahunAjaran->tahun_ajaran,
+                    ] : null,
+                    'proposal_id' => $tugasAkhir->proposal_id,
+                    'nilai_proposal' => $tugasAkhir->nilai_proposal,
+                    'catatan_proposal' => $tugasAkhir->catatan_proposal,
+                ],
+                'proposal' => $proposal ? [
+                    'id' => $proposal->id,
+                    'judul_proposal' => $proposal->judul_proposal,
+                    'status_valid' => $proposal->status_proposal,
+                    'berkas' => $proposal->berkas->map(function ($berkas) {
+                        return [
+                            'id' => $berkas->id,
+                            'nama_berkas' => $berkas->nama_berkas,
+                            'file_path' => $berkas->file_path,
+                            'download_url' => route('berkas.download', ['berkas' => $berkas->id]),
+                            'status_valid' => $berkas->status_valid,
+                        ];
+                    })->values(),
+                ] : null,
+            ];
+
+            return ApiResponse::success($result, 'Data proposal berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Gagal mengambil data proposal: ' . $e->getMessage(), 500);
         }
     }
 }
