@@ -20,6 +20,6 @@ class NilaiBimbingan extends Model
 
     public function tugasAkhir()
     {
-        return $this->hasOne(TugasAkhir::class, 'id');
+        return $this->hasOne(TugasAkhir::class);
     }
 }

@@ -22,7 +22,7 @@ class DosenPengujiSeeder extends Seeder
             'catatan_semhas' => 'Perbaiki Bab 1',
         ]);
         DosenPenguji::create([
-            'dosen_id' => 3,
+            'dosen_id' => 1,
             'tugas_akhir_id' => 1,
             'nilai_ujian_ta_id' => 2,
             'jabatan_penguji' => 'sekretaris',
@@ -30,7 +30,7 @@ class DosenPengujiSeeder extends Seeder
             'catatan_semhas' => 'Perbaiki Bab 2',
         ]);
         DosenPenguji::create([
-            'dosen_id' => 1,
+            'dosen_id' => 3,
             'tugas_akhir_id' => 1,
             'nilai_ujian_ta_id' => 3,
             'jabatan_penguji' => 'penguji',
