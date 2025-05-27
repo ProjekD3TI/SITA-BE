@@ -222,8 +222,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/list-plotting-pembimbing', [TugasAkhirController::class, 'tabelPlottingPengujiByAdmin']);
 
         // Kategori
-        Route::post('/admin_ta/kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
+        Route::post('/admin_ta/tambah_kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
         Route::get('/admin_ta/kategori', [KategoriController::class, 'lihatKategori']);
+        Route::put('/admin_ta/{id}/edit_kategori', [KategoriController::class, 'editKategoriByAdmin']);
+
 
 
         // Plotting Pembimbing

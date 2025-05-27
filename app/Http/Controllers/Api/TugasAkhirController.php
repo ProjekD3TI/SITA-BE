@@ -426,8 +426,6 @@ class TugasAkhirController extends Controller
         }
     }
 
-    //dashboard admin
- 
     // Fitur Bimbingan Admin TA
 
     public function tabelPlottingByAdmin()
