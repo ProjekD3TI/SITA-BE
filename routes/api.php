@@ -246,7 +246,13 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Kategori
         Route::post('/admin_ta/tambah-kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
         Route::get('/admin_ta/kategori', [KategoriController::class, 'lihatKategori']);
-        Route::put('/admin_ta/edit-kategori/{id}', [KategoriController::class, 'editKategoriByAdmin']);
+        Route::put('/admin_ta/{id}/edit_kategori', [KategoriController::class, 'editKategoriByAdmin']);
+
+
+
+        // Plotting Pembimbing
+        Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeForAdmin']);
+        Route::put('/admin_ta/request-pembimbing/{id}', [RequestPembimbingController::class, 'updateForAdmin']);
 
         // Route proposal
         Route::get('/admin_ta/proposal', [ProposalController::class, 'tabelPengajuanProposalByAdmin']);
