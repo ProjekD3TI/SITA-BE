@@ -26,6 +26,7 @@ class TugasAkhirSeeder extends Seeder
             'nilai_proposal' => 90,
             'nilai_akhir' => 89,
             'catatan_proposal' => 'Lulus dengan baik',
+            'status_kelulusan' => 1,
             'status_valid' => 1,
             'status_aktif' => 1,
         ]);

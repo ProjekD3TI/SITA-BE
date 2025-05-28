@@ -809,7 +809,7 @@ class TugasAkhirController extends Controller
                 'ujianTA'
             ])
                 ->where('status_aktif', 1)
-                ->where('status_valid', 1) // Hanya ambil yang sudah validasi
+                ->whereNotNull('status_kelulusan')
                 ->get();
 
             Carbon::setLocale('id');
@@ -818,16 +818,18 @@ class TugasAkhirController extends Controller
                 return [
                     'tugas_akhir_id' => $item->id,
                     'mahasiswa' => [
+                        'mahasiswa_id' => $item->mahasiswa->id,
                         'nim' => $item->mahasiswa->nim ?? null,
                         'name' => $item->mahasiswa->name ?? null,
                     ],
                     'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
+                    'status_kelulusan' => $item->status_kelulusan,
                     'dosen_pembimbing' => [
-                        'id' => $item->dosenPembimbing ? $item->dosenPembimbing->id : null,
+                        'dosen_pembimbing_id' => $item->dosenPembimbing ? $item->dosenPembimbing->id : null,
                         'name' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
                     ],
                     'ujian_ta' => $ujianTA ? [
-                        'id' => $ujianTA->id,
+                        'ujian_ta_id' => $ujianTA->id,
                         'tanggal_ujian' => $ujianTA->tanggal_ujian
                             ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
                             : null,
@@ -839,16 +841,19 @@ class TugasAkhirController extends Controller
                     'dosen_penguji' => $item->dosenPenguji
                         ? $item->dosenPenguji->map(function ($penguji) {
                             return [
-                                'id' => $penguji->id,
+                                'dosen_penguji_id' => $penguji->id,
                                 'name' => $penguji->name,
                                 'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
                             ];
                         })->values()
                         : [],
+
+                    'berita_acara' => null,
+                    'catatan_revisi' => null,
                 ];
             });
 
-            return ApiResponse::success($data, 'List Tugas Akhir yang siap untuk dijadwalkan berhasil diambil');
+            return ApiResponse::success($data, 'List Tugas Akhir yang sudah memiliki berita acara berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
