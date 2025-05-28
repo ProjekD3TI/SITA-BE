@@ -241,9 +241,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
 
         // Kategori
-        Route::post('/admin_ta/tambah_kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
+        Route::post('/admin_ta/tambah-kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
         Route::get('/admin_ta/kategori', [KategoriController::class, 'lihatKategori']);
-        Route::put('/admin_ta/{id}/edit_kategori', [KategoriController::class, 'editKategoriByAdmin']);
+        Route::put('/admin_ta/edit-kategori/{id}', [KategoriController::class, 'editKategoriByAdmin']);
 
         // Route proposal
         Route::get('/admin_ta/proposal', [ProposalController::class, 'tabelPengajuanProposalByAdmin']);
