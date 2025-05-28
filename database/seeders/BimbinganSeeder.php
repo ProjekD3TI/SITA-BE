@@ -13,6 +13,82 @@ class BimbinganSeeder extends Seeder
      */
     public function run(): void
     {
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 1 selesai',
+        //     'bab' => 1,
+        //     'status_verifikasi' => 1,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 1 revisi',
+        //     'bab' => 1,
+        //     'status_verifikasi' => 1,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 2 selesai',
+        //     'bab' => 2,
+        //     'status_verifikasi' => 1,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 2 revisi',
+        //     'bab' => 2,
+        //     'status_verifikasi' => 1,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 3 selesai',
+        //     'bab' => 3,
+        //     'status_verifikasi' => 1,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 3 revisi',
+        //     'bab' => 3,
+        //     'status_verifikasi' => 1,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 4 selesai',
+        //     'bab' => 4,
+        //     'status_verifikasi' => 1,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 4 revisi',
+        //     'bab' => 4,
+        //     'status_verifikasi' => 1,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+        // Bimbingan::create([
+        //     'tugas_akhir_id' => 1,
+        //     'catatan' => 'Bab 5 selesai',
+        //     'bab' => 5,
+        //     'status_verifikasi' => 0,
+        //     'tanggal_bimbingan' => now(),
+        // ]);
+
+        // Raffael
         Bimbingan::create([
             'tugas_akhir_id' => 1,
             'catatan' => 'Bab 1 selesai',
@@ -20,16 +96,6 @@ class BimbinganSeeder extends Seeder
             'status_verifikasi' => 1,
             'tanggal_bimbingan' => now(),
         ]);
-
-        Bimbingan::create([
-            'tugas_akhir_id' => 1,
-            'catatan' => 'Bab 1 revisi',
-            'bab' => 1,
-            'status_verifikasi' => 1,
-            'tanggal_bimbingan' => now(),
-        ]);
-
-
         Bimbingan::create([
             'tugas_akhir_id' => 1,
             'catatan' => 'Bab 2 selesai',
@@ -37,15 +103,6 @@ class BimbinganSeeder extends Seeder
             'status_verifikasi' => 1,
             'tanggal_bimbingan' => now(),
         ]);
-
-        Bimbingan::create([
-            'tugas_akhir_id' => 1,
-            'catatan' => 'Bab 2 revisi',
-            'bab' => 2,
-            'status_verifikasi' => 1,
-            'tanggal_bimbingan' => now(),
-        ]);
-
         Bimbingan::create([
             'tugas_akhir_id' => 1,
             'catatan' => 'Bab 3 selesai',
@@ -53,16 +110,27 @@ class BimbinganSeeder extends Seeder
             'status_verifikasi' => 1,
             'tanggal_bimbingan' => now(),
         ]);
-
-
         Bimbingan::create([
             'tugas_akhir_id' => 1,
-            'catatan' => 'Bab 3 revisi',
-            'bab' => 3,
+            'catatan' => 'Bab 4 dalam perbaikan',
+            'bab' => 4,
             'status_verifikasi' => 1,
             'tanggal_bimbingan' => now(),
         ]);
-
+        Bimbingan::create([
+            'tugas_akhir_id' => 1,
+            'catatan' => 'Bab 4 dalam perbaikan',
+            'bab' => 4,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 1,
+            'catatan' => 'Bab 4 dalam perbaikan',
+            'bab' => 4,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
         Bimbingan::create([
             'tugas_akhir_id' => 1,
             'catatan' => 'Bab 4 selesai',
@@ -70,24 +138,108 @@ class BimbinganSeeder extends Seeder
             'status_verifikasi' => 1,
             'tanggal_bimbingan' => now(),
         ]);
-
-
         Bimbingan::create([
             'tugas_akhir_id' => 1,
-            'catatan' => 'Bab 4 revisi',
-            'bab' => 4,
+            'catatan' => 'Bab 5 dalam perbaikan',
+            'bab' => 5,
             'status_verifikasi' => 1,
             'tanggal_bimbingan' => now(),
         ]);
-
+        Bimbingan::create([
+            'tugas_akhir_id' => 1,
+            'catatan' => 'Bab 5 dalam perbaikan',
+            'bab' => 5,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
         Bimbingan::create([
             'tugas_akhir_id' => 1,
             'catatan' => 'Bab 5 selesai',
             'bab' => 5,
-            'status_verifikasi' => 0,
+            'status_verifikasi' => 1,
             'tanggal_bimbingan' => now(),
         ]);
 
 
+        // Raihan
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 1 selesai',
+            'bab' => 1,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 2 selesai',
+            'bab' => 2,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 3 selesai',
+            'bab' => 3,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 4 dalam perbaikan',
+            'bab' => 4,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 4 dalam perbaikan',
+            'bab' => 4,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 4 dalam perbaikan',
+            'bab' => 4,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 4 selesai',
+            'bab' => 4,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 5 dalam perbaikan',
+            'bab' => 5,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 5 dalam perbaikan',
+            'bab' => 5,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+        Bimbingan::create([
+            'tugas_akhir_id' => 2,
+            'catatan' => 'Bab 5 selesai',
+            'bab' => 5,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
+
+        // Rizqi
+        Bimbingan::create([
+            'tugas_akhir_id' => 3,
+            'catatan' => 'Andri nGAWII',
+            'bab' => 1,
+            'status_verifikasi' => 1,
+            'tanggal_bimbingan' => now(),
+        ]);
     }
 }

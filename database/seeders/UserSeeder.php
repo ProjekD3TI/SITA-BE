@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
                 'status' => 1,
             ],
             [
-                'nim' => 'V3423075',
+                'nim' => 'V3423077',
                 'name' => 'Rizqi Andri Wijaya',
                 'email' => 'rizqi@student.uns.ac.id',
                 'no_telp' => '081234567890',
@@ -41,7 +41,7 @@ class UserSeeder extends Seeder
                 'status' => 1,
             ],
             [
-                'nim' => 'V3423077',
+                'nim' => 'V3423079',
                 'name' => 'Satria Kusuma Mahardika',
                 'email' => 'dika@student.uns.ac.id',
                 'no_telp' => '081234567890',
@@ -57,7 +57,7 @@ class UserSeeder extends Seeder
                 'status' => 1,
             ],
         ]);
-        User::factory(40)->create();
+        // User::factory(40)->create();
 
     }
 }

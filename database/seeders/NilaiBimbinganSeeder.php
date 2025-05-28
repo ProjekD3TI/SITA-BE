@@ -13,6 +13,8 @@ class NilaiBimbinganSeeder extends Seeder
      */
     public function run(): void
     {
+
+        //Raffael
         NilaiBimbingan::create([
             'rerata_bimbingan' => 85,
             'disiplin' => 90,
@@ -21,12 +23,12 @@ class NilaiBimbinganSeeder extends Seeder
             'tingkah_laku' => 82,
         ]);
 
-        NilaiBimbingan::create([
-            'rerata_bimbingan' => 78,
-            'disiplin' => 85,
-            'komunikasi' => 75,
-            'skill_pengetahuan' => 80,
-            'tingkah_laku' => 78,
-        ]);
+        // NilaiBimbingan::create([
+        //     'rerata_bimbingan' => 78,
+        //     'disiplin' => 85,
+        //     'komunikasi' => 75,
+        //     'skill_pengetahuan' => 80,
+        //     'tingkah_laku' => 78,
+        // ]);
     }
 }

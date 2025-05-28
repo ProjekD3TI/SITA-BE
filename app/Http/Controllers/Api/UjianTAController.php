@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Dosen;
+use App\Models\UjianTA;
+use App\Models\TugasAkhir;
+use App\Models\DosenPenguji;
+use Illuminate\Http\Request;
+use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UjianTAResource;
 use App\Http\Resources\TugasAkhirResource;
-use Illuminate\Http\Request;
-use App\Http\Responses\ApiResponse;
-use App\Models\DosenPenguji;
-use App\Models\TugasAkhir;
-use App\Models\UjianTA;
 use Illuminate\Validation\ValidationException;
 
 
@@ -25,7 +26,7 @@ class UjianTAController extends Controller
                 ->where('status_valid', 1)
                 ->whereDoesntHave('ujianTA')
                 ->get();
-    
+
             // Gunakan Resource untuk memformat data
             return ApiResponse::success(TugasAkhirResource::collection($calonPesertaUjian), 'Data tugas akhir yang siap ujian berhasil diambil');
         } catch (\Exception $e) {
@@ -42,7 +43,7 @@ class UjianTAController extends Controller
                 ->join('ruang', 'ujian_ta.ruang_id', '=', 'ruang.id')
                 ->join('sesi', 'ujian_ta.sesi_id', '=', 'sesi.id')
                 ->paginate(10);
-            
+
             return ApiResponse::success($listUjianTA, 'Data ujian TA berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data ujian TA gagal diambil: ' . $e->getMessage(), 500);
@@ -164,7 +165,69 @@ class UjianTAController extends Controller
         } catch (\Exception $e) {
             return ApiResponse::error('Data ujian TA gagal diubah: ' . $e->getMessage(), 500);
         }
+    }
+    public function jadwalUjianForMhs()
+    {
+        try {
+            $mahasiswaId = auth()->id();
 
+            // Ambil tugas akhir aktif milik mahasiswa
+            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswaId)
+                ->where('status_aktif', 1)
+                ->first();
 
+            if (!$tugasAkhir) {
+                return ApiResponse::success(null, 'Belum ada Tugas Akhir aktif');
+            }
+
+            // Ambil ujian TA beserta relasi
+            $ujianTA = UjianTA::with([
+                'ruang:id,nama_ruang',
+                'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
+            ])
+                ->where('tugas_akhir_id', $tugasAkhir->id)
+                ->first();
+
+            if (!$ujianTA) {
+                return ApiResponse::success(null, 'Belum ada jadwal ujian TA');
+            }
+
+            // Ambil dosen penguji dari tabel pivot
+            $dosenPengujiPivot = DosenPenguji::where('tugas_akhir_id', $tugasAkhir->id)->get();
+            $dosenPenguji = [];
+            foreach ($dosenPengujiPivot as $penguji) {
+                $dosen = Dosen::find($penguji->dosen_id);
+                $dosenPenguji[] = [
+                    'dosen' => [
+                        'id' => $dosen->id,
+                        'nama' => $dosen->name,
+                        'jabatan' => $penguji->jabatan_penguji,
+                    ],
+                ];
+            }
+
+            $result = [
+                'ujian_ta' => [
+                    'tugas_akhir' => $ujianTA->tugas_akhir_id,
+                    'id' => $ujianTA->id,
+                    'ruang' => $ujianTA->ruang ? [
+                        'id' => $ujianTA->ruang->id,
+                        'nama' => $ujianTA->ruang->nama_ruang,
+                    ] : null,
+                    'tanggal' => $ujianTA->tanggal_ujian,
+                    'sesi' => $ujianTA->sesi ? [
+                        'id' => $ujianTA->sesi->id,
+                        'nama' => $ujianTA->sesi->nama_sesi,
+                        'waktu_mulai' => $ujianTA->sesi->waktu_mulai,
+                        'waktu_selesai' => $ujianTA->sesi->waktu_selesai,
+                    ] : null,
+                ],
+                'dosen_penguji' => $dosenPenguji,
+            ];
+
+            return ApiResponse::success($result, 'Data ujian TA berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Gagal mengambil data ujian TA: ' . $e->getMessage(), 500);
+        }
     }
 }
