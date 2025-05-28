@@ -69,7 +69,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function storeUjianTAForMhs(Request $request)
+    public function storeUjianTAForMahasiswa(Request $request)
     {
         try {
             $validatedData = $request->validate([
@@ -134,7 +134,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function updateUjianTAForMhs(Request $request, $id)
+    public function updateUjianTAForMahasiswa(Request $request, $id)
     {
         try {
             $validatedData = $request->validate([
@@ -854,7 +854,10 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function ujianTAForMhs()
+    // End Fitur Ujian TA Admin TA
+
+
+    public function ujianTAForMahasiswa()
     {
         try {
             $mahasiswaId = Auth::id();

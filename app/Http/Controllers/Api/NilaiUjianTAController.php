@@ -9,11 +9,12 @@ use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 
 class NilaiUjianTAController extends Controller
 {
-    public function getNilaiUjianForMhs()
+    public function getNilaiUjianForMahasiswa()
     {
         $mahasiswaId = Auth::id();
 

@@ -11,6 +11,7 @@ use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UjianTAResource;
 use App\Http\Resources\TugasAkhirResource;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 
@@ -36,7 +37,7 @@ class UjianTAController extends Controller
     public function index()
     {
         try {
-            $listUjianTA = \DB::table('ujian_ta')
+            $listUjianTA = DB::table('ujian_ta')
                 ->select('ujian_ta.id', 'ujian_ta.tugas_akhir_id', 'ujian_ta.tanggal_ujian', 'ujian_ta.ruang_id', 'ujian_ta.sesi_id')
                 ->join('tugas_akhir', 'ujian_ta.tugas_akhir_id', '=', 'tugas_akhir.id')
                 ->join('mahasiswa', 'tugas_akhir.mahasiswa_id', '=', 'mahasiswa.id')
@@ -49,7 +50,6 @@ class UjianTAController extends Controller
             return ApiResponse::error('Data ujian TA gagal diambil: ' . $e->getMessage(), 500);
         }
     }
-
 
     public function store(Request $request)
     {
@@ -166,7 +166,7 @@ class UjianTAController extends Controller
             return ApiResponse::error('Data ujian TA gagal diubah: ' . $e->getMessage(), 500);
         }
     }
-    public function jadwalUjianForMhs()
+    public function jadwalUjianForMahasiswa()
     {
         try {
             $mahasiswaId = auth()->id();

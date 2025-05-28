@@ -147,7 +147,7 @@ class RequestPembimbingController extends Controller
         }
     }
 
-    public function requestPembimbingForMhs()
+    public function requestPembimbingForMahasiswa()
     {
         try {
             $mahasiswa = Auth::id();

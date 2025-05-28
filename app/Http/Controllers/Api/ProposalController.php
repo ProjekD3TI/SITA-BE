@@ -50,7 +50,7 @@ class ProposalController extends Controller
 
     // Fitur Proposal Admin TA
 
-    public function storeForMhs(Request $request)
+    public function storeForMahasiswa(Request $request)
     {
         try {
             $validatedData = $request->validate([
@@ -111,7 +111,7 @@ class ProposalController extends Controller
         }
     }
 
-    public function updateForMhs(Request $request, $id)
+    public function updateForMahasiswa(Request $request, $id)
     {
         try {
             $validatedData = $request->validate([
@@ -214,7 +214,7 @@ class ProposalController extends Controller
     }
 
 
-    public function proposalForMhs(Request $request)
+    public function proposalForMahasiswa(Request $request)
     {
         try {
             $mahasiswaId = $request->user()->id;

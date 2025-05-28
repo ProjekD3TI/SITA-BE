@@ -13,20 +13,6 @@ class ProposalSeeder extends Seeder
      */
     public function run(): void
     {
-        // Proposal::create([
-        //     'judul_proposal' => 'Sistem Informasi Akademik',
-        //     'status_proposal' => 1,
-        // ]);
-
-        // Proposal::create([
-        //     'judul_proposal' => 'Sistem Tugas Akhir',
-        //     'status_proposal' => 1,
-        // ]);
-
-        // Proposal::create([
-        //     'judul_proposal' => 'Sistem Informasi Perpustakaan',
-        //     'status_proposal' => 1,
-        // ]);
 
         // Raffael
         Proposal::create([

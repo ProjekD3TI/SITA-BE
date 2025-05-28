@@ -14,12 +14,15 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\BimbinganResource;
 use App\Http\Resources\TugasAkhirResource;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class BimbinganController extends Controller
 {
 
+
     public function getTugasAkhirByDosen()
     {
+
         $dosenId = Auth::id();
 
         try {
@@ -86,32 +89,6 @@ class BimbinganController extends Controller
             return ApiResponse::error('Validasi gagal ' . $e->getMessage(), 422);
         } catch (\Exception $e) {
             return ApiResponse::error('Status verifikasi gagal diubah ' . $e->getMessage(), 500);
-        }
-    }
-
-    public function getBimbinganByMahasiswa()
-    {
-        $mahasiswa = Auth::id();
-        try {
-            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
-                ->where('status_aktif', 1)
-                ->first();
-
-            if (!$tugasAkhir) {
-                return ApiResponse::success([
-                    'data' => null
-                ], 'Belum ada tugas akhir yang aktif');
-            }
-
-            $bimbingan = Bimbingan::with(['tugasAkhir'])
-                ->where('tugas_akhir_id', $tugasAkhir->id)
-                ->get();
-
-            $data = BimbinganResource::collection($bimbingan);
-
-            return ApiResponse::success($data, 'Data bimbingan berhasil diambil');
-        } catch (\Exception $e) {
-            return ApiResponse::error('Data bimbingan gagal diambil ' . $e->getMessage(), 500);
         }
     }
 
@@ -200,6 +177,7 @@ class BimbinganController extends Controller
     public function showBimbinganForMahasiswa()
     {
         try {
+            Carbon::setLocale('id');
             $mahasiswa = Auth::id();
 
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
@@ -218,7 +196,9 @@ class BimbinganController extends Controller
             $result = $bimbinganList->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'tanggal_bimbingan' => $item->tanggal_bimbingan,
+                    'tanggal_bimbingan' => $item->tanggal_bimbingan
+                        ? Carbon::parse($item->tanggal_bimbingan)->translatedFormat('l, d F Y')
+                        : null,
                     'bab' => $item->bab,
                     'catatan' => $item->catatan,
                     'status_verifikasi' => $item->status_verifikasi,

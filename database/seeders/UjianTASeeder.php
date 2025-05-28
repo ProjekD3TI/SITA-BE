@@ -13,15 +13,6 @@ class UjianTASeeder extends Seeder
      */
     public function run(): void
     {
-        // UjianTA::create([
-        //     'tugas_akhir_id' => 1,
-        //     'tanggal_ujian' => '2025-10-01',
-        //     'ruang_id' => 1,
-        //     'sesi_id' => 1,
-        //     'semester_id' => 1,
-        //     'tahun_ajaran_id' => 1,
-        //     'status_ujian' => 'aktif',
-        // ]);
 
         // Raffael
         UjianTA::create([

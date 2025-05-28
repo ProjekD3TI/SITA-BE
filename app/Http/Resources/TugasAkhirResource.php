@@ -45,6 +45,7 @@ class TugasAkhirResource extends JsonResource
             'nilai_akhir' => $this->nilai_akhir,
             'catatan_proposal' => $this->catatan_proposal,
             'file_transkrip' => $fileTranskrip ? Storage::url($fileTranskrip->file_path) : null,
+            'status_kelulusan' => $this->status_kelulusan,
             'status_valid' => $this->status_valid,
             'status_aktif' => $this->status_aktif,
             'created_at' => $this->created_at,

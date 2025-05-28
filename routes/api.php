@@ -83,16 +83,15 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('/mahasiswa/cek-request-pembimbing', [RequestPembimbingController::class, 'cekStatusRequestByMahasiswa']);
 
     //proposal
-    Route::get('/mahasiswa/proposal', [ProposalController::class, 'proposalForMhs']);
+    Route::get('/mahasiswa/proposal', [ProposalController::class, 'proposalForMahasiswa']);
     Route::get('/berkas/{berkas}/download', [BerkasController::class, 'downloadBerkas'])->name('berkas.download'); //buat download/preview berkas proposal/tugas-akhir
 
-    Route::post('/mahasiswa/proposal/', [ProposalController::class, 'storeForMhs']);
-    Route::post('/mahasiswa/proposal/{id}', [ProposalController::class, 'updateForMhs']);
+    Route::post('/mahasiswa/proposal/', [ProposalController::class, 'storeForMahasiswa']);
+    Route::post('/mahasiswa/proposal/{id}', [ProposalController::class, 'updateForMahasiswa']);
 
     // Bimbingan
-    Route::get('/mahasiswa/bimbingan/request-pembimbing', [RequestPembimbingController::class, 'requestPembimbingForMhs']);
+    Route::get('/mahasiswa/bimbingan/request-pembimbing', [RequestPembimbingController::class, 'requestPembimbingForMahasiswa']);
 
-    Route::get('/mahasiswa/bimbingan', [BimbinganController::class, 'getBimbinganByMahasiswa']);
     Route::get('/mahasiswa/bimbingan/list-bimbingan', [BimbinganController::class, 'showBimbinganForMahasiswa']);
     Route::post('/mahasiswa/bimbingan/', [BimbinganController::class, 'storeBimbinganByMahasiswa']);
     Route::put('/mahasiswa/bimbingan/{id}', [BimbinganController::class, 'updateBimbinganByMahasiswa']);
@@ -102,15 +101,15 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('/mahasiswa/nilai-bimbingan', [NilaiBimbinganController::class, 'getNilaiBimbinganByMahasiswa']);
 
     // Ujian Tugas Akhir
-    Route::get('/mahasiswa/ujian-ta', [TugasAkhirController::class, 'ujianTAForMhs']);
-    Route::get('/mahasiswa/ujian-ta/jadwal-ujian', [UjianTAController::class, 'jadwalUjianForMhs']);
+    Route::get('/mahasiswa/ujian-ta', [TugasAkhirController::class, 'ujianTAForMahasiswa']);
+    Route::get('/mahasiswa/ujian-ta/jadwal-ujian', [UjianTAController::class, 'jadwalUjianForMahasiswa']);
 
-    Route::get('/mahasiswa/ujian-ta/nilai-ujian', [NilaiUjianTAController::class, 'getNilaiUjianForMhs']);
+    Route::get('/mahasiswa/ujian-ta/nilai-ujian', [NilaiUjianTAController::class, 'getNilaiUjianForMahasiswa']);
 
-    Route::get('/mahasiswa/berkas/ujian-ta', [BerkasController::class, 'getBerkasTugasAkhirForMhs']);
+    Route::get('/mahasiswa/berkas/ujian-ta', [BerkasController::class, 'getBerkasTugasAkhirForMahasiswa']);
 
-    Route::post('/mahasiswa/tugas-akhir/daftar', [TugasAkhirController::class, 'storeUjianTAForMhs']);
-    Route::post('/mahasiswa/tugas-akhir/{id}/update', [TugasAkhirController::class, 'updateUjianTAForMhs']);
+    Route::post('/mahasiswa/tugas-akhir/daftar', [TugasAkhirController::class, 'storeUjianTAForMahasiswa']);
+    Route::post('/mahasiswa/tugas-akhir/{id}/update', [TugasAkhirController::class, 'updateUjianTAForMahasiswa']);
     Route::get('/mahasiswa/tugas-akhir/cek-dosen-pembimbing', [TugasAkhirController::class, 'cekDosenPembimbingByMahasiswa']);
     Route::get('/mahasiswa/tugas-akhir/aktif', [TugasAkhirController::class, 'tugasAkhirAktifByMahasiswa']);
     Route::get('mahasiswa/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByMahasiswa']);

@@ -22,6 +22,7 @@ class TugasAkhir extends Model
         'catatan_proposal',
         'nilai_proposal',
         'nilai_akhir',
+        'status_kelulusan',
         'status_valid',
         'status_aktif'
     ];
