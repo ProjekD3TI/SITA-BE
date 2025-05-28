@@ -15,7 +15,13 @@ class KategoriController extends Controller
     {
         try {
             $kategori = Kategori::all();
-            $data = KategoriResource::collection($kategori);
+            $data = $kategori->map(function ($item) {
+                return [
+
+                    'id' => $item->id,
+                    'nama_kategori' => $item->nama_kategori,
+                ];
+            });
             return ApiResponse::success($data, "Data berhasil diambil");
         } catch (\Exception $e) {
             //throw $th;
