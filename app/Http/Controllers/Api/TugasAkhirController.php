@@ -317,7 +317,7 @@ class TugasAkhirController extends Controller
                 'status_valid' => $tugasAkhir->status_valid,
                 'nilai_akhir' => $tugasAkhir->nilai_akhir ? $tugasAkhir->nilai_akhir : null,
                 'bimbingan' => [
-                    'total_bimbingan' => $tugasAkhir->bimbingan->where('status_verifikasi',1)-> count() ?? null,
+                    'total_bimbingan' => $tugasAkhir->bimbingan->where('status_verifikasi', 1)->count() ?? null,
                     'progress_bimbingan' => $babTerbesar ?? null,
 
                 ],
@@ -426,6 +426,32 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
+    // Fitur Plotting dosen pembimbing TA
+
+    public function putPlottingPembimbingByAdmin(Request $request, $tugasAkhirId)
+    {
+        try {
+            $validatedData = $request->validate([
+                'dosen_pembimbing_id' => 'required|exists:dosen,id',
+            ]);
+
+            // Cek apakah Tugas Akhir dengan ID tersebut ada
+            $tugasAkhir = TugasAkhir::findOrFail($tugasAkhirId);
+
+            // Update dosen pembimbing
+            $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_pembimbing_id'];
+            $tugasAkhir->save();
+
+            return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Dosen pembimbing berhasil diupdate');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // End Fitur Plotting dosen pembimbing TA
 
     // Fitur Bimbingan Admin TA (belum menggunakan select, kurang paginate)
 
@@ -715,11 +741,56 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
-
     public function tabelBeritaAcaraByAdmin()
     {
         try {
+            $tugasAkhir = TugasAkhir::with([
+                'mahasiswa:id,nim,name',
+                'dosenPembimbing:id,name',
+                'dosenPenguji:id,name',
+                'ujianTA'
+            ])
+                ->where('status_aktif', 1)
+                ->where('status_valid', 1) // Hanya ambil yang sudah validasi
+                ->get();
 
+            Carbon::setLocale('id');
+            $data = $tugasAkhir->map(function ($item) {
+                $ujianTA = $item->ujianTA->where('status_ujian', 'aktif')->first();
+                return [
+                    'tugas_akhir_id' => $item->id,
+                    'mahasiswa' => [
+                        'nim' => $item->mahasiswa->nim ?? null,
+                        'name' => $item->mahasiswa->name ?? null,
+                    ],
+                    'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
+                    'dosen_pembimbing' => [
+                        'id' => $item->dosenPembimbing ? $item->dosenPembimbing->id : null,
+                        'name' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
+                    ],
+                    'ujian_ta' => $ujianTA ? [
+                        'id' => $ujianTA->id,
+                        'tanggal_ujian' => $ujianTA->tanggal_ujian
+                            ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
+                            : null,
+                        'waktu_mulai' => $ujianTA->sesi ? $ujianTA->sesi->waktu_mulai : null,
+                        'waktu_selesai' => $ujianTA->sesi ? $ujianTA->sesi->waktu_selesai : null,
+                        'ruang' => $ujianTA->ruang ? $ujianTA->ruang->nama_ruang : null,
+                        'status_ujian' => $ujianTA->status_ujian
+                    ] : [],
+                    'dosen_penguji' => $item->dosenPenguji
+                        ? $item->dosenPenguji->map(function ($penguji) {
+                            return [
+                                'id' => $penguji->id,
+                                'name' => $penguji->name,
+                                'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
+                            ];
+                        })->values()
+                        : [],
+                ];
+            });
+
+            return ApiResponse::success($data, 'List Tugas Akhir yang siap untuk dijadwalkan berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }

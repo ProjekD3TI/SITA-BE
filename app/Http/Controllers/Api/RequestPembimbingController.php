@@ -16,66 +16,6 @@ use Illuminate\Validation\ValidationException;
 
 class RequestPembimbingController extends Controller
 {
-    // public function index()
-    // {
-    //     try {
-    //         // Eager loading relationships
-    //         $requests = RequestPembimbing::with(['tugasAkhir', 'dosen'])->get();
-    //         return ApiResponse::success(RequestPembimbingResource::collection($requests));
-    //     } catch (Exception $e) {
-    //         return ApiResponse::error($e->getMessage(), 500);
-    //     }
-    // }
-
-
-    public function getByDosen()
-    {
-        $dosenId = Auth::user()->id;
-        try {
-            // Eager loading relationships
-            $requests = RequestPembimbing::with(['tugasAkhir', 'dosen'])
-                ->where('dosen_id', $dosenId)
-                ->get();
-            return ApiResponse::success(RequestPembimbingResource::collection($requests));
-        } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
-        }
-    }
-
-    public function storeForAdmin(Request $request)
-    {
-        try {
-            $validatedData = $request->validate([
-                'tugas_akhir_id' => 'required|integer',
-                'dosen_id' => 'required|integer',
-            ]);
-
-            // Lazy eager loading
-            $tugasAkhir = TugasAkhir::with(['proposal'])->find($validatedData['tugas_akhir_id']);
-            if ($tugasAkhir->dosen_pembimbing_id != null) {
-                return ApiResponse::error('Mahasiswa already has an Pembimbing', 400);
-            }
-
-            $requestPembimbing = RequestPembimbing::create([
-                'tugas_akhir_id' => $validatedData['tugas_akhir_id'],
-                'dosen_id' => $validatedData['dosen_id'],
-                'tanggal_respon' => null,
-                'status_request' => 1,
-            ]);
-
-            // Update dosen_pembimbing_id in TugasAkhir
-            if ($tugasAkhir) {
-                $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_id'];
-                $tugasAkhir->save();
-            }
-
-            return ApiResponse::success(new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')), 'Request and Tugas Akhir created successfully', 201);
-        } catch (ValidationException $e) {
-            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
-        } catch (Exception $e) {
-            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
-        }
-    }
 
     public function storeWithTugasAkhir(Request $request)
     {
