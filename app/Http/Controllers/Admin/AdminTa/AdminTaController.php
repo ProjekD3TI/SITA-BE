@@ -53,7 +53,7 @@ class AdminTaController extends Controller
                 ->values();
             $data = [
                 'validasi_berkas' => [
-                    'prosposal' => [
+                    'proposal' => [
                         'total' => $proposal->count() ?? null,
                         'valid' => $proposal->where('status_proposal', 1)->count() ?? null,
                         'menunggu' => $proposal->where('status_proposal', 0)->count() ?? null,
