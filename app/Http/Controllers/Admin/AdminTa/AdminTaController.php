@@ -59,7 +59,7 @@ class AdminTaController extends Controller
                         'menunggu' => $proposal->where('status_proposal', 0)->count() ?? null,
                     ],
                     'ujian_tugas_akhir' => [
-                        'total' => $tugasAkhir->count() ?? null,
+                        'total' => $tugasAkhir->where('status_valid', '!=', null)->count() ?? null,
                         'valid' => $tugasAkhir->where('status_valid', 1)->count() ?? null,
                         'menunggu' => $tugasAkhir->where('status_valid', '0')->count() ?? null,
                     ],
@@ -69,8 +69,8 @@ class AdminTaController extends Controller
                     'ujian_terjadwal' => $tanggal_ujian->count() ?? null,
                     'mahasiswa_tugas_akhir' => $tugasAkhir->count() ?? null,
                 ],
-                'tabel_validasi_berkas_sempro' => $tableValidasi ?? null,
-                'tabel_validasi_berkas_ujian' => $tabelUjian ?? null,
+                'tabel_validasi_berkas_sempro' => $tableValidasi->take(5) ?? null,
+                'tabel_validasi_berkas_ujian' => $tabelUjian->take(5) ?? null,
 
             ];
             return ApiResponse::success($data, 'Data berhasil diambil');
