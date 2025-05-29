@@ -248,8 +248,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/kategori', [KategoriController::class, 'lihatKategori']);
         Route::put('/admin_ta/edit-kategori/{id}', [KategoriController::class, 'editKategoriByAdmin']);
 
-
-
         // Plotting Pembimbing
         Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeForAdmin']);
         Route::put('/admin_ta/request-pembimbing/{id}', [RequestPembimbingController::class, 'updateForAdmin']);
