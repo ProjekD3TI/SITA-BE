@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\RequestPembimbing;
 use Exception;
-use Carbon\Carbon;
-use App\Models\Dosen;
-use App\Models\StatusForm;
 use App\Models\TugasAkhir;
 use Illuminate\Http\Request;
-use App\Models\RequestPembimbing;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Resources\BimbinganResource;
 use App\Http\Resources\TugasAkhirResource;
-use App\Http\Resources\NilaiBimbinganResource;
+use App\Models\Dosen;
+use App\Models\StatusForm;
+use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 
 class TugasAkhirController extends Controller
@@ -402,23 +400,48 @@ class TugasAkhirController extends Controller
     {
         try {
             $dosenId = Auth::id();
-            $tugasAkhir = TugasAkhir::with(['bimbingan', 'ujianTA', 'requestPembimbing', 'mahasiswa', 'kategori'])
+            $tugasAkhir = TugasAkhir::with([
+                'bimbingan',
+                'ujianTA',
+                'requestPembimbing',
+                'mahasiswa:id,nim,name',
+                'kategori:id,nama_kategori',
+            ])
                 ->where('dosen_pembimbing_id', $dosenId)
                 ->where('status_aktif', 1)
                 ->get();
-            $requestPembimbing = RequestPembimbing::with(['tugasAkhir.mahasiswa', 'tugasAkhir.kategori'])->get();
+
+            $requestPembimbing = RequestPembimbing::with(['tugasAkhir.mahasiswa', 'tugasAkhir.kategori'])
+                ->where('status_request', 0)
+                ->where('dosen_id', $dosenId)
+                ->orderBy('tanggal_request', 'asc')
+                ->limit(5)
+                ->get();
+
+            $tablePermintaanBimbingan = $requestPembimbing
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'tugas_akhir_id' => $item->tugas_akhir_id,
+                        'dosen_id' => $item->dosen_id,
+                        'status_request' => $item->status_request,
+                        'nama_mahasiswa' => $item->tugasAkhir->mahasiswa->name ?? null,
+                        'nim_mahasiswa' => $item->tugasAkhir->mahasiswa->nim ?? null,
+                        'kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
+                    ];
+                });
 
             if ($tugasAkhir->isEmpty()) {
                 return ApiResponse::success(null, 'Tidak ada tugas akhir');
             }
 
             // Sekarang $tugasAkhir adalah collection, map() aman digunakan
-            $taPerBab = $tugasAkhir->map(function ($ta) {
+            $taPerBab = $tugasAkhir->map(function ($item) {
                 return [
-                    'id_ta' => $ta->id,
-                    'bab_tertinggi' => $ta->bimbingan
+                    'id_ta' => $item->id,
+                    'bab_tertinggi' => $item->bimbingan
                         ->where('status_verifikasi', 1)
-                        ->max('bab') ?? 0
+                        ->max('bab')
                 ];
             });
 
@@ -441,7 +464,7 @@ class TugasAkhirController extends Controller
                         return [
                             'tanggal_ujian' => $ujian->tanggal_ujian,
                             'nama_mahasiswa' => $ta->mahasiswa->name,
-                            'waktu' => date('H:i', strtotime($ujian->sesi->waktu_mulai)),
+                            'waktu' => $ujian->sesi ? date('H:i', strtotime($ujian->sesi->waktu_mulai)) : null,
                             'sesi' => $ujian->sesi->nama_sesi ?? null,
                             'ruang' => $ujian->ruang->nama_ruang ?? null
                         ];
@@ -449,33 +472,14 @@ class TugasAkhirController extends Controller
             });
 
 
-            $tablePermintaanBimbingan = $requestPembimbing
-                ->where('status_request', 0)
-                ->map(function ($item) {
-                    return [
-                        'id' => $item->id,
-                        'tugas_akhir_id' => $item->tugas_akhir_id,
-                        'dosen_id' => $item->dosen_id,
-                        'status_request' => $item->status_request,
-
-                        'nama_mahasiswa' => $item->tugasAkhir->mahasiswa->name ?? null,
-                        'nim_mahasiswa' => $item->tugasAkhir->mahasiswa->nim ?? null,
-                        'kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
-                    ];
-                });
             $data = [
                 'doughnat_chart' => $statistikBab->pluck('jumlah_ta', 'bab') ?? null,
                 'summary_card' => [
                     'ta_yang_dibimbing' => $tugasAkhir->count() ?? null,
                     'ujian_terjadwal' => $tugasAkhir->sum(function ($ta) {
-                        return $ta->ujianTA->where('status_ujian', 1)->count() ?? null;
+                        return $ta->ujianTA->where('status_ujian', 'aktif')->count() ?? null;
                     }),
-                    'permintaan_bimbingan' => $tugasAkhir->sum(function ($ta) use ($dosenId) {
-                        return $ta->requestPembimbing
-                            ->where('dosen_id', $dosenId)
-                            ->where('status_request', 0)
-                            ->count() ?? null;
-                    }),
+                    'permintaan_bimbingan' => $tablePermintaanBimbingan->count() ?? null,
                 ],
                 'ujian_hari_ini' => $ujianHariIni ?? null,
                 'permintaan_bimbingan' => $tablePermintaanBimbingan->values() ?? null,
@@ -515,13 +519,19 @@ class TugasAkhirController extends Controller
 
     // Fitur Bimbingan Admin TA (belum menggunakan select, kurang paginate)
 
-    public function tabelPlottingByAdmin()
+    public function tabelPlottingByAdmin(Request $request)
     {
         try {
-            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'kategori', 'requestPembimbing'])
-                ->where('status_aktif', 1)->get();
+            $tugasAkhir = TugasAkhir::with([
+                'mahasiswa',
+                'dosenPembimbing',
+                'kategori',
+                'requestPembimbing'
+            ])
+                ->where('status_aktif', 1)
+                ->paginate(10);
 
-            $data = $tugasAkhir->map(function ($item) {
+            $data = collect($tugasAkhir->items())->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
                     'nim' => $item->mahasiswa->nim,
@@ -532,7 +542,17 @@ class TugasAkhirController extends Controller
                 ];
             });
 
-            return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
+            $result = [
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $tugasAkhir->currentPage(),
+                    'last_page' => $tugasAkhir->lastPage(),
+                    'per_page' => $tugasAkhir->perPage(),
+                    'total' => $tugasAkhir->total(),
+                ],
+            ];
+
+            return ApiResponse::success($result, 'Data list plotting berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
@@ -542,17 +562,14 @@ class TugasAkhirController extends Controller
     {
         try {
             $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'bimbingan', 'kategori'])
-                ->where('status_aktif', 1)
-                ->whereNotNull('dosen_pembimbing_id') // hanya yang sudah punya dosen pembimbing
-                ->orderBy('id', 'asc') // urutkan berdasarkan id ascending
-                ->get();
+                ->where('status_aktif', 1)->get();
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'nim' => $item->mahasiswa->nim,
                     'mahasiswa' => $item->mahasiswa->name,
-                    'dosen_pembimbing' => $item->dosenPembimbing->name,
+                    'dosen_pembimbing' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
                     'kategori' => $item->kategori ? $item->kategori->nama_kategori : null,
                     'jumlah_bimbingan' => $item->bimbingan ? $item->bimbingan->count() : 0,
                 ];
@@ -567,13 +584,12 @@ class TugasAkhirController extends Controller
     public function plottingPembimbingByAdmin($tugasAkhirId)
     {
         try {
-            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'kategori', 'tahunAjaran', 'dosenPembimbing'])
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'kategori', 'tahunAjaran'])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
-                ->get();
-
+                ->get()
+            ;
             $daftarDosen = Dosen::select('name', 'nik', 'id')->get();
-
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'id' => $item->id,
@@ -581,12 +597,6 @@ class TugasAkhirController extends Controller
                     'mahasiswa' => $item->mahasiswa->name,
                     'kategori' => $item->kategori ? $item->kategori->nama_kategori : null,
                     'tahun_ajaran' => $item->tahunAjaran ? $item->tahunAjaran->tahun_ajaran : null,
-                    'dosen_pembimbing' => $item->dosenPembimbing
-                        ? [
-                            'id' => $item->dosenPembimbing->id,
-                            'name' => $item->dosenPembimbing->name
-                        ]
-                        : null,
                 ];
             });
 
@@ -601,21 +611,14 @@ class TugasAkhirController extends Controller
         }
     }
 
-
     public function detailBimbinganByAdmin($tugasAkhirId)
     {
         try {
-            $tugasAkhir = TugasAkhir::with([
-                'mahasiswa',
-                'dosenPembimbing',
-                'bimbingan',
-                'kategori',
-                'nilaiBimbingan',
-                'tahunAjaran'
-            ])
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'bimbingan', 'kategori', 'nilaiBimbingan', 'tahunAjaran'])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->first();
+
 
             $data = [
                 'id' => $tugasAkhir->id,
@@ -624,12 +627,11 @@ class TugasAkhirController extends Controller
                 'kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
                 'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
                 'dosen_pembimbing' => $tugasAkhir->dosenPembimbing->name ?? null,
-                'bimbingan' => BimbinganResource::collection($tugasAkhir->bimbingan),
-                'nilai_bimbingan' => $tugasAkhir->nilaiBimbingan
-                ? new NilaiBimbinganResource($tugasAkhir->nilaiBimbingan)
-                : null,
+                'bimbingan' => $tugasAkhir->bimbingan ?? null,
+                'nilai_bimbingan' => $tugasAkhir->nilaiBimbingan ?? null,
             ];
             return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
+
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
