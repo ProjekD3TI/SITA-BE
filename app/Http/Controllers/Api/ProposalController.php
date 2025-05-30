@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use Exception;
+use Carbon\Carbon;
 use App\Models\Kategori;
 use App\Models\Proposal;
 use App\Models\StatusForm;
@@ -32,6 +33,8 @@ class ProposalController extends Controller
             $listKategori = Kategori::select('id', 'nama_kategori')->get();
 
             $data = $listProposal->map(function ($item) {
+                Carbon::setLocale('id');
+
                 return [
                     'id' => $item->id,
                     'nim' => $item->tugasAkhir && $item->tugasAkhir->mahasiswa ? $item->tugasAkhir->mahasiswa->nim : null,
@@ -43,7 +46,10 @@ class ProposalController extends Controller
                     ] : null,
                     'nilai_proposal' => $item->tugasAkhir ? $item->tugasAkhir->nilai_proposal : null,
                     'status_proposal' => $item->status_proposal ?? null,
-                    'tanggal_pengajuan' => $item->created_at ? $item->created_at->format('d M Y') : null,
+                    'catatan_perbaikan' => $item->catatan_perbaikan ?? null,
+                    'tanggal_pengajuan' => $item->tanggal_unggah
+                        ? Carbon::parse($item->tanggal_unggah)->translatedFormat('l, d F Y')
+                        : null,
                     'berkas' => $item->berkas ? $item->berkas->map(function ($berkas) {
                         return [
                             'id' => $berkas->id,
@@ -219,7 +225,7 @@ class ProposalController extends Controller
                 }
             }
 
-                    // Jika ada upload ulang file, set status_proposal ke 0 (menunggu validasi)
+            // Jika ada upload ulang file, set status_proposal ke 0 (menunggu validasi)
             if ($isUpload) {
                 $proposal->status_proposal = 0;
             }
@@ -366,7 +372,7 @@ class ProposalController extends Controller
             ];
 
             return ApiResponse::success($result, 'Data proposal berhasil diambil');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponse::error('Gagal mengambil data proposal: ' . $e->getMessage(), 500);
         }
     }

@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('judul_proposal', 255);
             $table->tinyInteger('status_proposal')->default(0); // 0: Menunggu, 1: Diterima, 2: Ditolak
+            $table->text('catatan_perbaikan')->nullable();
             $table->timestamp('tanggal_unggah')->useCurrent();
             $table->timestamps();
         });

@@ -153,9 +153,14 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::post('/dosen/nilai-bimbingan/{id}', [NilaiBimbinganController::class, 'storeNilaiBimbinganByDosen']);
     Route::put('/dosen/nilai-bimbingan/{id}/update', [NilaiBimbinganController::class, 'updateNilaiBimbinganByDosen']);
 
+    // Sistem Tugas-akhir (Nilai Ujian TA)
+    Route::post('/dosen/nilai-ujian-ta/', [NilaiUjianTAController::class, 'storeNilaiByDosenPenguji']);
+    Route::put('/dosen/nilai-ujian-ta/{tugasAkhirId}', [NilaiUjianTAController::class, 'updateNilaiByDosenPenguji']);
+
     // Sistem Tugas akhir (Tugas Akhir)
     //blm ditest (nilai bimbingan sudah ditest)
     Route::put('/dosen/tugas-akhir/{id}/nilai', [TugasAkhirController::class, 'memberiNilaiTAbyDosen']);
+    Route::put('/dosen/status-kelulusan/{tugas_akhir_id}', [TugasAkhirController::class, 'updateStatusKelulusanByDosenPengujiKetua']);
 
     Route::get('/dosen/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByDosen']);
 

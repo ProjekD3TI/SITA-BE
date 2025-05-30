@@ -18,17 +18,20 @@ class ProposalSeeder extends Seeder
         Proposal::create([
             'judul_proposal' => 'Simulasi Mitigasi Bencana Alam AR Update',
             'status_proposal' => 1,
+            'catatan_perbaikan' => 'Kesalahan pada penulisan judul sudah diperbaiki.',
         ]);
 
         // Raihan
         Proposal::create([
             'judul_proposal' => 'Sistem Informasi Tugas Akhir Update',
             'status_proposal' => 1,
+            'catatan_perbaikan' => 'Sudah diperbaiki sesuai dengan masukan dari dosen pembimbing.',
         ]);
 
         Proposal::create([
             'judul_proposal' => 'Pancing Ikan Otomatis',
             'status_proposal' => 1,
+            'catatan_perbaikan' => 'Sudah diperbaiki sesuai dengan masukan dari dosen pembimbing.',
         ]);
     }
 }

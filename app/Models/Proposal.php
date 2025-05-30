@@ -13,6 +13,7 @@ class Proposal extends Model
     protected $fillable = [
         'judul_proposal',
         'status_proposal',
+        'catatan_perbaikan',
         'tanggal_unggah'
     ];
 

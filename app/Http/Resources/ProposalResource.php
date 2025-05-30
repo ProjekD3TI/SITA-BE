@@ -24,6 +24,7 @@ class ProposalResource extends JsonResource
             'file_proposal' => $fileProposal ? Storage::url($fileProposal->file_path) : null,
             'file_transkrip' => $fileTranskrip ? Storage::url($fileTranskrip->file_path) : null,
             'status_proposal' => $this->status_proposal,
+            'catatan_perbaikan' => $this->catatan_perbaikan,
             'tanggal_unggah' => $this->tanggal_unggah,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at

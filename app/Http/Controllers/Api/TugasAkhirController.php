@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Resources\BimbinganResource;
-use App\Models\RequestPembimbing;
+
 use Exception;
-use App\Models\TugasAkhir;
-use Illuminate\Http\Request;
-use App\Http\Responses\ApiResponse;
-use App\Http\Controllers\Controller;
-use App\Http\Resources\NilaiBimbinganResource;
-use App\Http\Resources\TugasAkhirResource;
+use Carbon\Carbon;
 use App\Models\Dosen;
 use App\Models\StatusForm;
-use Carbon\Carbon;
-use Illuminate\Validation\ValidationException;
+use App\Models\TugasAkhir;
+use Illuminate\Http\Request;
+use App\Models\RequestPembimbing;
+use App\Http\Responses\ApiResponse;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\BimbinganResource;
+use App\Http\Resources\NilaiBimbinganResource;
+use App\Http\Resources\TugasAkhirResource;
+use Illuminate\Validation\ValidationException;
 
 
 class TugasAkhirController extends Controller
@@ -571,14 +572,17 @@ class TugasAkhirController extends Controller
     {
         try {
             $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'bimbingan', 'kategori'])
-                ->where('status_aktif', 1)->get();
+                ->where('status_aktif', 1)
+                ->whereNotNull('dosen_pembimbing_id') // hanya yang sudah punya dosen pembimbing
+                ->orderBy('id', 'asc') // urutkan berdasarkan id ascending
+                ->get();
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'nim' => $item->mahasiswa->nim,
                     'mahasiswa' => $item->mahasiswa->name,
-                    'dosen_pembimbing' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
+                    'dosen_pembimbing' => $item->dosenPembimbing->name,
                     'kategori' => $item->kategori ? $item->kategori->nama_kategori : null,
                     'jumlah_bimbingan' => $item->bimbingan ? $item->bimbingan->count() : 0,
                 ];
@@ -593,11 +597,11 @@ class TugasAkhirController extends Controller
     public function plottingPembimbingByAdmin($tugasAkhirId)
     {
         try {
-            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'kategori', 'tahunAjaran'])
+            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'kategori', 'tahunAjaran', 'dosenPembimbing'])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
-                ->get()
-            ;
+                ->get();
+
             $daftarDosen = Dosen::select('name', 'nik', 'id')->get();
             $data = $tugasAkhir->map(function ($item) {
                 return [
@@ -606,6 +610,12 @@ class TugasAkhirController extends Controller
                     'mahasiswa' => $item->mahasiswa->name,
                     'kategori' => $item->kategori ? $item->kategori->nama_kategori : null,
                     'tahun_ajaran' => $item->tahunAjaran ? $item->tahunAjaran->tahun_ajaran : null,
+                    'dosen_pembimbing' => $item->dosenPembimbing
+                        ? [
+                            'id' => $item->dosenPembimbing->id,
+                            'name' => $item->dosenPembimbing->name
+                        ]
+                        : null,
                 ];
             });
 
@@ -623,7 +633,14 @@ class TugasAkhirController extends Controller
     public function detailBimbinganByAdmin($tugasAkhirId)
     {
         try {
-            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'bimbingan', 'kategori', 'nilaiBimbingan', 'tahunAjaran'])
+            $tugasAkhir = TugasAkhir::with([
+                'mahasiswa',
+                'dosenPembimbing',
+                'bimbingan',
+                'kategori',
+                'nilaiBimbingan',
+                'tahunAjaran'
+            ])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->first();
@@ -953,8 +970,46 @@ class TugasAkhirController extends Controller
             ];
 
             return ApiResponse::success($result, 'Data tugas akhir berhasil diambil');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponse::error('Gagal mengambil data tugas akhir: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // Dosen Penguji
+    public function updateStatusKelulusanByDosenPengujiKetua(Request $request, $tugasAkhirId)
+    {
+        try {
+            $request->validate([
+                'status_kelulusan' => 'required|in:1,2,3,4'
+            ]);
+
+            $dosenId = Auth::id();
+            $tugasAkhir = TugasAkhir::with(['dosenPenguji'])
+                ->where('id', $tugasAkhirId)
+                ->first();
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+            // Cek apakah dosen yang sedang login adalah ketua penguji
+            $isKetua = $tugasAkhir->dosenPenguji
+                ->filter(function ($penguji) use ($dosenId) {
+                    return $penguji->id == $dosenId && ($penguji->pivot->jabatan_penguji ?? null) === 'ketua';
+                })
+                ->isNotEmpty();
+            if (!$isKetua) {
+                return ApiResponse::error('Anda bukan ketua penguji pada tugas akhir ini.', 403);
+            }
+
+            $tugasAkhir->status_kelulusan = $request->status_kelulusan;
+            $tugasAkhir->save();
+
+            return ApiResponse::success(
+                new TugasAkhirResource($tugasAkhir),
+                'Status kelulusan berhasil diubah'
+            );
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
 }
