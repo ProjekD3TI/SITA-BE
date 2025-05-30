@@ -28,6 +28,7 @@ class PeminjamanBhp extends Model
         'jumlah_kembali_bagus', 
         'jumlah_kembali_rusak', 
         'keterangan_pengembalian',
+        'created_by',
     ];
     public function notifications()
     {

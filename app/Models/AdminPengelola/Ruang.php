@@ -22,4 +22,8 @@ class Ruang extends Model
     public function fotos() {
         return $this->hasMany(Foto::class, 'id_ruang');
     }
+    public function gedung()
+    {
+        return $this->belongsTo(Gedung::class, 'id_gedung', 'id_gedung');
+    }
 }

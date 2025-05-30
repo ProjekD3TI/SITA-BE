@@ -12,21 +12,16 @@ class PeminjamanInventaris extends Model
     protected $primaryKey = 'id_peminjaman_inventaris';
 
     protected $fillable = [
-        'id_inventaris', 
         'id_peminjam', 
         'tipe_peminjam', //mahasiswa, dosen
-        'kegunaan', 
-        'status_peminjaman',  //sedang dipinjam, sudah dikembalikan
+        'status_peminjaman',  //Selesai,  Dipinjam, dikembalikan sebagian
         'nama_peminjam',
         'ni_peminjam',
         'no_telp', 
         'tanggal_pinjam', 
-        'tanggal_kembali',  
-        'catatan_pengembalian',  
-        'kondisi_akhir_pengembalian',  // baik, rusak, hilang
+        'kegunaan', 
         'referensi', 
-        // 'penanggung_jawab', 
-        // 'no_reservasi',
+        'created_by',
     ];
     public static function generateNoReservasi() {
         $terbaru = self::orderBy('created_at', 'desc')->first();
@@ -40,6 +35,12 @@ class PeminjamanInventaris extends Model
     
         return $noReservasi;
     }
+
+    public function detailPeminjamanInventaris()
+    {
+        return $this->hasMany(DetailPeminjamanInventaris::class, 'id_peminjaman_inventaris', 'id_peminjaman_inventaris');
+    }
+    
     public function notifications()
     {
         return $this->morphMany(Notification::class, 'notifiable');

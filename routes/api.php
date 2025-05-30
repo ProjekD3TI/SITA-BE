@@ -221,8 +221,12 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::delete('/admin_pengelola/ruang/{id}', [RuangController::class, 'deleteRuang']);
 
         // get untuk keperluan peminajman 
+        Route::get('/admin_pengelola/get_bhp', [AdminPengelolaController::class, 'showBhp']); //status = 1
+        // Route::get('/admin_pengelola/bhp/{id}', [AdminPengelolaController::class, 'getBhpById']);
         Route::get('/admin_pengelola/mahasiswa', [AdminPengelolaController::class, 'getMahasiswa']); //status = 1
+        Route::get('/admin_pengelola/mahasiswa/{id}', [AdminPengelolaController::class, 'getMahasiswaById']);
         Route::get('/admin_pengelola/dosen', [AdminPengelolaController::class, 'getDosen']); //status = 1
+        Route::get('/admin_pengelola/dosen/{id}', [AdminPengelolaController::class, 'getDosenById']);
         Route::get('/admin_pengelola/get_inventaris', [AdminPengelolaController::class, 'getInventaris']); //kondisi baik klo yang atas seluruh inventaris
 
 
@@ -231,18 +235,18 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::post('/admin_pengelola/peminjaman_bhp/create', [PeminjamanBhpController::class, 'createPeminjamanBhp']);
         Route::get('/admin_pengelola/peminjaman_bhp/{id}', [PeminjamanBhpController::class, 'findPeminjamanBhp']);
         Route::put('/admin_pengelola/peminjaman_bhp/edit/{id}', [PeminjamanBhpController::class, 'editPeminjamanBhp']);
-        // Route::delete('/admin_pengelola/peminjaman_bhp/{id}', [PeminjamanBhpController::class, 'deletePeminjamanBhp']);
-        Route::post('/admin_pengelola/peminjaman_bhp/return/{id}', [PeminjamanBhpController::class, 'returnPeminjamanBhp']);
+        Route::put('/admin_pengelola/peminjaman_bhp/return/{id}', [PeminjamanBhpController::class, 'returnPeminjamanBhp']);
+        Route::delete('/admin_pengelola/peminjaman_bhp/{id}', [PeminjamanBhpController::class, 'deletePeminjamanBhp']);
 
         // Peminjaman Inventaris
-        Route::get('/admin_pengelola/peminjaman_inventaris', [PeminjamanInventarisController::class, 'showPeminjamanInventaris']);
+                
+        Route::get('/admin_pengelola/peminjaman_inventaris', [PeminjamanInventarisController::class, 'grupPeminjamanInventaris']);
         Route::post('/admin_pengelola/peminjaman_inventaris/create', [PeminjamanInventarisController::class, 'createPeminjamanInventaris']);
-        Route::put('/admin_pengelola/peminjaman_inventaris/edit/{id}', [PeminjamanInventarisController::class, 'editPeminjamanInventaris']); //edit delete blom
+        Route::get('/admin_pengelola/peminjaman_inventaris/{id}', [PeminjamanInventarisController::class, 'getDetailPeminjaman']);
+        Route::put('/admin_pengelola/peminjaman_inventaris/edit/{id}', [PeminjamanInventarisController::class, 'editPeminjamanInventaris']);
+        Route::put('/admin_pengelola/peminjaman_inventaris/pengembalian/{id}', [PeminjamanInventarisController::class, 'pengembalianPeminjamanInventaris']);
         Route::delete('/admin_pengelola/peminjaman_inventaris/{id}', [PeminjamanInventarisController::class, 'deletePeminjamanInventaris']);
         
-        Route::get('/admin_pengelola/peminjaman_inventaris/grouped', [PeminjamanInventarisController::class, 'getPeminjamanGrouped']);
-        Route::get('/admin_pengelola/peminjaman_inventaris/reference/{referensi}', [PeminjamanInventarisController::class, 'getPeminjamanByReference']);
-        Route::post('/admin_pengelola/peminjaman_inventaris/return', [PeminjamanInventarisController::class, 'pengembalianInventaris']);
         
     });
 });
