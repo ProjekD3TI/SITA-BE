@@ -21,42 +21,91 @@ use App\Http\Resources\RequestPembimbingResource;
 class RequestPembimbingController extends Controller
 {
 
-    public function updateForAdmin(Request $request, $id)
-{
-    try {
-        $validatedData = $request->validate([
-            'dosen_id' => 'required|integer',
-        ]);
+    public function storeForAdmin(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'tugas_akhir_id' => 'required|integer|exists:tugas_akhir,id',
+                'dosen_id' => 'required|integer',
+            ]);
 
-        // Cari request pembimbing
-        $requestPembimbing = RequestPembimbing::with(['tugasAkhir', 'dosen'])->find($id);
-        if (!$requestPembimbing) {
-            return ApiResponse::error('Request pembimbing tidak ditemukan', 404);
-        }
+            // Cek apakah tugas akhir ada
+            $tugasAkhir = TugasAkhir::find($validatedData['tugas_akhir_id']);
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
+            }
 
-        // Update dosen_id pada request pembimbing
-        $requestPembimbing->dosen_id = $validatedData['dosen_id'];
-        $requestPembimbing->status_request = 1; // status approved
-        $requestPembimbing->tanggal_respon = now();
-        $requestPembimbing->save();
-
-        // Update juga dosen_pembimbing_id pada TugasAkhir terkait
-        $tugasAkhir = $requestPembimbing->tugasAkhir;
-        if ($tugasAkhir) {
+            // Langsung update dosen pembimbing di tugas akhir
             $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_id'];
             $tugasAkhir->save();
-        }
 
-        return ApiResponse::success(
-            new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')),
-            'Request pembimbing berhasil diupdate'
-        );
-    } catch (ValidationException $e) {
-        return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
-    } catch (Exception $e) {
-        return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
+            // Cek apakah sudah ada request pembimbing untuk tugas akhir ini
+            $existingRequest = RequestPembimbing::where('tugas_akhir_id', $validatedData['tugas_akhir_id'])->first();
+
+            // Jika sudah ada, update statusnya menjadi approved
+            if ($existingRequest) {
+                $existingRequest->dosen_id = $validatedData['dosen_id'];
+                $existingRequest->status_request = 1; // Approved
+                $existingRequest->tanggal_respon = now();
+                $existingRequest->save();
+            }
+
+            // Return tugas akhir dengan relasi dosen pembimbing
+            $tugasAkhir->load('dosenPembimbing');
+
+            return ApiResponse::success([
+                'tugas_akhir' => [
+                    'id' => $tugasAkhir->id,
+                    'dosen_pembimbing' => [
+                        'id' => $tugasAkhir->dosenPembimbing->id,
+                        'name' => $tugasAkhir->dosenPembimbing->name,
+                    ]
+                ]
+            ], 'Dosen pembimbing berhasil ditetapkan', 200);
+
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
     }
-}
+
+    public function updateForAdmin(Request $request, $id)
+    {
+        try {
+            $validatedData = $request->validate([
+                'dosen_id' => 'required|integer',
+            ]);
+
+            // Cari request pembimbing
+            $requestPembimbing = RequestPembimbing::with(['tugasAkhir', 'dosen'])->find($id);
+            if (!$requestPembimbing) {
+                return ApiResponse::error('Request pembimbing tidak ditemukan', 404);
+            }
+
+            // Update dosen_id pada request pembimbing
+            $requestPembimbing->dosen_id = $validatedData['dosen_id'];
+            $requestPembimbing->status_request = 1; // status approved
+            $requestPembimbing->tanggal_respon = now();
+            $requestPembimbing->save();
+
+            // Update juga dosen_pembimbing_id pada TugasAkhir terkait
+            $tugasAkhir = $requestPembimbing->tugasAkhir;
+            if ($tugasAkhir) {
+                $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_id'];
+                $tugasAkhir->save();
+            }
+
+            return ApiResponse::success(
+                new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')),
+                'Request pembimbing berhasil diupdate'
+            );
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
+        }
+    }
 
     public function storeWithTugasAkhir(Request $request)
     {
@@ -260,7 +309,7 @@ class RequestPembimbingController extends Controller
             ];
 
             return ApiResponse::success($result, 'Data permintaan pembimbing berhasil diambil');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponse::error('Gagal mengambil data permintaan pembimbing: ' . $e->getMessage(), 500);
         }
     }
