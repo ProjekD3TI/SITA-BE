@@ -17,7 +17,7 @@ class Berkas extends Model
         'status_valid',
     ];
 
-    public function parent()
+    public function berkasable()
     {
         return $this->morphTo();
     }

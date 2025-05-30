@@ -463,23 +463,44 @@ class TugasAkhirController extends Controller
                     ->map(function ($ujian) use ($ta) {
                         return [
                             'tanggal_ujian' => $ujian->tanggal_ujian,
-                            'nama_mahasiswa' => $ta->mahasiswa->name,
-                            'waktu' => $ujian->sesi ? date('H:i', strtotime($ujian->sesi->waktu_mulai)) : null,
+                            'nama' => $ta->mahasiswa->name,
+                            'waktu' => date('H:i', strtotime($ujian->sesi->waktu_mulai)),
                             'sesi' => $ujian->sesi->nama_sesi ?? null,
                             'ruang' => $ujian->ruang->nama_ruang ?? null
                         ];
                     });
             });
+            $ujianTerjadwal = $tugasAkhir->sum(function ($ta) {
+                return $ta->ujianTA
+                    ->where('status_ujian', 'aktif')
+                    ->count();
+            });
 
+            $jumlahReqPembimbing = $requestPembimbing
+                ->where('status_request', 0)
+                ->where('dosen_id', $dosenId)
+                ->count();
 
+            $tablePermintaanBimbingan = $requestPembimbing
+                ->where('status_request', 0)
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'tugas_akhir_id' => $item->tugas_akhir_id,
+                        'dosen_id' => $item->dosen_id,
+                        'status_request' => $item->status_request,
+
+                        'nama' => $item->tugasAkhir->mahasiswa->name ?? null,
+                        'nim' => $item->tugasAkhir->mahasiswa->nim ?? null,
+                        'kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
+                    ];
+                });
             $data = [
                 'doughnat_chart' => $statistikBab->pluck('jumlah_ta', 'bab') ?? null,
                 'summary_card' => [
                     'ta_yang_dibimbing' => $tugasAkhir->count() ?? null,
-                    'ujian_terjadwal' => $tugasAkhir->sum(function ($ta) {
-                        return $ta->ujianTA->where('status_ujian', 'aktif')->count() ?? null;
-                    }),
-                    'permintaan_bimbingan' => $tablePermintaanBimbingan->count() ?? null,
+                    'ujian_terjadwal' => $ujianTerjadwal ?? null,
+                    'permintaan_bimbingan' => $jumlahReqPembimbing ?? null,
                 ],
                 'ujian_hari_ini' => $ujianHariIni ?? null,
                 'permintaan_bimbingan' => $tablePermintaanBimbingan->values() ?? null,
@@ -627,8 +648,10 @@ class TugasAkhirController extends Controller
                 'kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
                 'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
                 'dosen_pembimbing' => $tugasAkhir->dosenPembimbing->name ?? null,
-                'bimbingan' => $tugasAkhir->bimbingan ?? null,
-                'nilai_bimbingan' => $tugasAkhir->nilaiBimbingan ?? null,
+                'bimbingan' => BimbinganResource::collection($tugasAkhir->bimbingan),
+                'nilai_bimbingan' => $tugasAkhir->nilaiBimbingan
+                    ? new NilaiBimbinganResource($tugasAkhir->nilaiBimbingan)
+                    : null,
             ];
             return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
 

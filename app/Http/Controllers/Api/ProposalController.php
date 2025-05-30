@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use Exception;
+use App\Models\Kategori;
+use App\Models\Proposal;
+use App\Models\StatusForm;
+use App\Models\TugasAkhir;
 use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
-use App\Models\Proposal;
-use App\Models\TugasAkhir;
-use App\Http\Resources\ProposalResource;
-use App\Models\StatusForm;
-use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\ProposalResource;
 use Illuminate\Validation\ValidationException;
 
 class ProposalController extends Controller
 {
     // Fitur Proposal Admin TA
 
-    public function tabelPengajuanProposalByAdmin()
+    public function tabelProposalByAdmin()
     {
         try {
             $listProposal = Proposal::with(['tugasAkhir', 'tugasAkhir.mahasiswa', 'berkas'])
@@ -27,22 +28,88 @@ class ProposalController extends Controller
                 ->select('id', 'is_open')
                 ->first();
 
+            // Ambil semua kategori
+            $listKategori = Kategori::select('id', 'nama_kategori')->get();
+
             $data = $listProposal->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'nim' => $item->tugasAkhir && $item->tugasAkhir->mahasiswa ? $item->tugasAkhir->mahasiswa->nim : null,
                     'mahasiswa' => $item->tugasAkhir && $item->tugasAkhir->mahasiswa ? $item->tugasAkhir->mahasiswa->name : null,
                     'judul_proposal' => $item->judul_proposal ?? null,
+                    'kategori_ta' => $item->tugasAkhir && $item->tugasAkhir->kategori ? [
+                        'id' => $item->tugasAkhir->kategori->id,
+                        'nama_kategori' => $item->tugasAkhir->kategori->nama_kategori,
+                    ] : null,
+                    'nilai_proposal' => $item->tugasAkhir ? $item->tugasAkhir->nilai_proposal : null,
                     'status_proposal' => $item->status_proposal ?? null,
                     'tanggal_pengajuan' => $item->created_at ? $item->created_at->format('d M Y') : null,
-                    'berkas' => $item->berkas ?? null,
+                    'berkas' => $item->berkas ? $item->berkas->map(function ($berkas) {
+                        return [
+                            'id' => $berkas->id,
+                            'nama_berkas' => $berkas->nama_berkas,
+                            'file_path' => $berkas->file_path,
+                            'download_url' => route('berkas.download', ['berkas' => $berkas->id]),
+                            'status_valid' => $berkas->status_valid,
+                        ];
+                    })->values() : [],
                 ];
             });
+
             return ApiResponse::success([
                 'status_form' => $statusForm,
-                'list_proposal' => $data
-            ], 'Data list proposal berhasil diambil');
+                'list_proposal' => $data,
+                'list_kategori' => $listKategori,
+            ], 'Data list proposal & kategori berhasil diambil');
 
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function showProposalByAdmin($id)
+    {
+        try {
+            $proposal = Proposal::with(['tugasAkhir.mahasiswa', 'berkas'])->find($id);
+
+            if (!$proposal) {
+                return ApiResponse::error('Proposal tidak ditemukan untuk ID tersebut', 404);
+            }
+
+            $item = [
+                'id' => $proposal->id,
+                'tugas_akhir_id' => $proposal->tugasAkhir ? $proposal->tugasAkhir->id : null,
+                'nim' => $proposal->tugasAkhir && $proposal->tugasAkhir->mahasiswa ? $proposal->tugasAkhir->mahasiswa->nim : null,
+                'mahasiswa' => $proposal->tugasAkhir && $proposal->tugasAkhir->mahasiswa ? $proposal->tugasAkhir->mahasiswa->name : null,
+                'dosen_pembimbing' => $proposal->tugasAkhir && $proposal->tugasAkhir->dosenPembimbing ? [
+                    'id' => $proposal->tugasAkhir->dosenPembimbing->id,
+                    'nama' => $proposal->tugasAkhir->dosenPembimbing->name,
+                ] : null,
+                'judul_proposal' => $proposal->judul_proposal ?? null,
+                'kategori_ta' => $proposal->tugasAkhir && $proposal->tugasAkhir->kategori ? [
+                    'id' => $proposal->tugasAkhir->kategori->id,
+                    'nama_kategori' => $proposal->tugasAkhir->kategori->nama_kategori,
+                ] : null,
+                'tahun_ajaran' => $proposal->tugasAkhir && $proposal->tugasAkhir->tahunAjaran ? [
+                    'id' => $proposal->tugasAkhir->tahunAjaran->id,
+                    'tahun_ajaran' => $proposal->tugasAkhir->tahunAjaran->tahun_ajaran,
+                ] : null,
+                'nilai_proposal' => $proposal->tugasAkhir ? $proposal->tugasAkhir->nilai_proposal : null,
+                'catatan_proposal' => $proposal->tugasAkhir ? $proposal->tugasAkhir->catatan_proposal : null,
+                'status_proposal' => $proposal->status_proposal ?? null,
+                'tanggal_pengajuan' => $proposal->created_at ? $proposal->created_at->format('d M Y') : null,
+                'berkas' => $proposal->berkas ? $proposal->berkas->map(function ($berkas) {
+                    return [
+                        'id' => $berkas->id,
+                        'nama_berkas' => $berkas->nama_berkas,
+                        'file_path' => $berkas->file_path,
+                        'download_url' => route('berkas.download', ['berkas' => $berkas->id]),
+                        'status_valid' => $berkas->status_valid,
+                    ];
+                })->values() : [],
+            ];
+
+            return ApiResponse::success($item, 'Data proposal berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
@@ -123,7 +190,7 @@ class ProposalController extends Controller
             $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
 
             $proposal->judul_proposal = $validatedData['judul_proposal'];
-            $proposal->save();
+            $isUpload = false;
 
             // Update berkas proposal jika ada file baru
             if ($request->hasFile('file_proposal')) {
@@ -135,6 +202,7 @@ class ProposalController extends Controller
                     $berkasProposal->file_path = $privatePath;
                     $berkasProposal->status_valid = 0;
                     $berkasProposal->save();
+                    $isUpload = true;
                 }
             }
 
@@ -147,8 +215,16 @@ class ProposalController extends Controller
                     $berkasTranskrip->file_path = $privatePath;
                     $berkasTranskrip->status_valid = 0;
                     $berkasTranskrip->save();
+                    $isUpload = true;
                 }
             }
+
+                    // Jika ada upload ulang file, set status_proposal ke 0 (menunggu validasi)
+            if ($isUpload) {
+                $proposal->status_proposal = 0;
+            }
+
+            $proposal->save();
 
             return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir', 'berkas')), 'Proposal berhasil diubah');
         } catch (ValidationException $e) {
@@ -161,27 +237,41 @@ class ProposalController extends Controller
     public function updateValidationStatusForAdmin(Request $request, $id)
     {
         try {
-            // Validate the request
+            // Validasi: array status_valid_berkas harus ada dan berisi 2 item (hanya 1 atau 2)
             $validatedData = $request->validate([
-                'status_proposal' => 'required|in:1,2',
+                'status_valid_berkas' => 'required|array|size:2',
+                'status_valid_berkas.*' => 'required|in:1,2',
             ]);
 
-            // Find the proposal by ID with eager loading
-            $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
+            $proposal = Proposal::with(['berkas'])->findOrFail($id);
 
-            // Update the status_proposal
-            $proposal->status_proposal = $validatedData['status_proposal'];
+            // Update status_valid pada masing-masing berkas
+            $berkasList = $proposal->berkas;
+            foreach ($berkasList as $i => $berkas) {
+                // urutan status_valid_berkas harus sesuai urutan berkas di FE
+                $berkas->status_valid = $validatedData['status_valid_berkas'][$i];
+                $berkas->save();
+            }
+
+            // Cek status proposal berdasarkan status_valid semua berkas
+            $statusList = $validatedData['status_valid_berkas'];
+            if (in_array(2, $statusList)) {
+                $proposal->status_proposal = 2; // Ditolak
+            } elseif (count(array_unique($statusList)) === 1 && $statusList[0] == 1) {
+                $proposal->status_proposal = 1; // Diterima
+            }
+            // Tidak boleh ada status 0, karena sudah divalidasi di atas
+
             $proposal->save();
 
-            return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir')), 'Status proposal berhasil diperbarui');
+            return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir', 'berkas')), 'Status proposal & berkas berhasil diperbarui');
         } catch (ValidationException $e) {
             return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
             return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
     }
-
-    public function updateScoreandNotesForAdmin(Request $request, $id)
+    public function updateNilaidanCatatanForAdmin(Request $request, $id)
     {
         try {
             // Validate the request
