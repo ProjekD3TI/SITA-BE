@@ -111,14 +111,14 @@ class BerkasSeeder extends Seeder
             'berkasable_type' => 'App\Models\Proposal',
             'berkasable_id' => 3,
             'nama_berkas' => 'Naskah Proposal Tugas Akhir',
-            'file_path' => '/private/proposal/2/Naskah_Proposal_TA_Riqzi_V3423077.pdf',
+            'file_path' => '/private/proposal/3/Naskah_Proposal_TA_Rizqi_V3423077.pdf',
             'status_valid' => 1,
         ]);
         Berkas::create([
             'berkasable_type' => 'App\Models\Proposal',
             'berkasable_id' => 3,
             'nama_berkas' => 'Transkrip Nilai Mahasiswa',
-            'file_path' => '/private/proposal/2/Transkrip_Nilai_Rizqi_V3423077.pdf',
+            'file_path' => '/private/proposal/3/Transkrip_Nilai_Rizqi_V3423077.pdf',
             'status_valid' => 1,
         ]);
     }

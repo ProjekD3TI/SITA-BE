@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/tahun-ajaran/default', [TahunAjaranController::class, 'getDefault']);
 Route::get('/all-dosen', [DosenPengujiController::class, 'getAllDosen']);
+Route::get('/berkas/{berkas}/download', [BerkasController::class, 'downloadBerkas'])->name('berkas.download'); //buat download/preview berkas proposal/tugas-akhir
 
 
 
@@ -84,7 +85,6 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     //proposal
     Route::get('/mahasiswa/proposal', [ProposalController::class, 'proposalForMahasiswa']);
-    Route::get('/berkas/{berkas}/download', [BerkasController::class, 'downloadBerkas'])->name('berkas.download'); //buat download/preview berkas proposal/tugas-akhir
 
     Route::post('/mahasiswa/proposal/', [ProposalController::class, 'storeForMahasiswa']);
     Route::post('/mahasiswa/proposal/{id}', [ProposalController::class, 'updateForMahasiswa']);
@@ -253,9 +253,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/request-pembimbing/{id}', [RequestPembimbingController::class, 'updateForAdmin']);
 
         // Route proposal
-        Route::get('/admin_ta/proposal', [ProposalController::class, 'tabelPengajuanProposalByAdmin']);
+        Route::get('/admin_ta/proposal', [ProposalController::class, 'tabelProposalByAdmin']);
+        Route::get('/admin_ta/proposal/show/{id}', [ProposalController::class, 'showProposalByAdmin']);
         Route::put('/admin_ta/proposal/{id}/status', [ProposalController::class, 'updateValidationStatusForAdmin']);
-        Route::put('/admin_ta/proposal/{id}/nilai-catatan', [ProposalController::class, 'updateScoreandNotesForAdmin']);
+        Route::put('/admin_ta/proposal/{id}/nilai-catatan', [ProposalController::class, 'updateNilaidanCatatanForAdmin']);
+
 
         // Plotting penguji
         Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTAForAdmin']);
