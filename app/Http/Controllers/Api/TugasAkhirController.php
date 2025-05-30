@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Resources\BimbinganResource;
 use App\Models\RequestPembimbing;
 use Exception;
 use App\Models\TugasAkhir;
 use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\NilaiBimbinganResource;
 use App\Http\Resources\TugasAkhirResource;
 use App\Models\Dosen;
 use App\Models\StatusForm;
@@ -425,8 +427,8 @@ class TugasAkhirController extends Controller
                         'tugas_akhir_id' => $item->tugas_akhir_id,
                         'dosen_id' => $item->dosen_id,
                         'status_request' => $item->status_request,
-                        'nama_mahasiswa' => $item->tugasAkhir->mahasiswa->name ?? null,
-                        'nim_mahasiswa' => $item->tugasAkhir->mahasiswa->nim ?? null,
+                        'nama' => $item->tugasAkhir->mahasiswa->name ?? null,
+                        'nim' => $item->tugasAkhir->mahasiswa->nim ?? null,
                         'kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
                     ];
                 });
@@ -481,20 +483,6 @@ class TugasAkhirController extends Controller
                 ->where('dosen_id', $dosenId)
                 ->count();
 
-            $tablePermintaanBimbingan = $requestPembimbing
-                ->where('status_request', 0)
-                ->map(function ($item) {
-                    return [
-                        'id' => $item->id,
-                        'tugas_akhir_id' => $item->tugas_akhir_id,
-                        'dosen_id' => $item->dosen_id,
-                        'status_request' => $item->status_request,
-
-                        'nama' => $item->tugasAkhir->mahasiswa->name ?? null,
-                        'nim' => $item->tugasAkhir->mahasiswa->nim ?? null,
-                        'kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
-                    ];
-                });
             $data = [
                 'doughnat_chart' => $statistikBab->pluck('jumlah_ta', 'bab') ?? null,
                 'summary_card' => [
