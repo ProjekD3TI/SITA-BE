@@ -69,54 +69,7 @@ class RequestPembimbingController extends Controller
     }
 }
 
-    public function storeForAdmin(Request $request)
-    {
-        try {
-            $validatedData = $request->validate([
-                'tugas_akhir_id' => 'required|integer|exists:tugas_akhir,id',
-                'dosen_id' => 'required|integer',
-            ]);
 
-            // Cek apakah tugas akhir ada
-            $tugasAkhir = TugasAkhir::find($validatedData['tugas_akhir_id']);
-            if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
-            }
-
-            // Langsung update dosen pembimbing di tugas akhir
-            $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_id'];
-            $tugasAkhir->save();
-
-            // Cek apakah sudah ada request pembimbing untuk tugas akhir ini
-            $existingRequest = RequestPembimbing::where('tugas_akhir_id', $validatedData['tugas_akhir_id'])->first();
-
-            // Jika sudah ada, update statusnya menjadi approved
-            if ($existingRequest) {
-                $existingRequest->dosen_id = $validatedData['dosen_id'];
-                $existingRequest->status_request = 1; // Approved
-                $existingRequest->tanggal_respon = now();
-                $existingRequest->save();
-            }
-
-            // Return tugas akhir dengan relasi dosen pembimbing
-            $tugasAkhir->load('dosenPembimbing');
-
-            return ApiResponse::success([
-                'tugas_akhir' => [
-                    'id' => $tugasAkhir->id,
-                    'dosen_pembimbing' => [
-                        'id' => $tugasAkhir->dosenPembimbing->id,
-                        'name' => $tugasAkhir->dosenPembimbing->name,
-                    ]
-                ]
-            ], 'Dosen pembimbing berhasil ditetapkan', 200);
-
-        } catch (ValidationException $e) {
-            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
-        } catch (Exception $e) {
-            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
-        }
-    }
 
     public function updateForAdmin(Request $request, $id)
     {

@@ -539,7 +539,7 @@ class TugasAkhirController extends Controller
                 'requestPembimbing'
             ])
                 ->where('status_aktif', 1)
-                ->paginate(10);
+                ->paginate(2);
 
             $data = collect($tugasAkhir->items())->map(function ($item) {
                 return [
@@ -575,7 +575,7 @@ class TugasAkhirController extends Controller
                 ->where('status_aktif', 1)
                 ->whereNotNull('dosen_pembimbing_id') // hanya yang sudah punya dosen pembimbing
                 ->orderBy('id', 'asc') // urutkan berdasarkan id ascending
-                ->paginate(10);
+                ->paginate(2);
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
