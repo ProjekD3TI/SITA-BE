@@ -345,6 +345,8 @@ class TugasAkhirController extends Controller
         }
     }
 
+    // ========================== FITUR DASHBOARD ==========================
+
     public function setDashboardByMahasiswa()
     {
         try {
@@ -501,7 +503,12 @@ class TugasAkhirController extends Controller
         }
     }
 
-    // Fitur Plotting dosen pembimbing TA
+    // ========================== END FITUR DASHBOARD ==========================
+
+
+    // ========================== FITUR ADMIN ==========================
+
+    // Fitur Bimbingan (Plotting dosen pembimbing & List Bimbingan)
 
     public function putPlottingPembimbingByAdmin(Request $request, $tugasAkhirId)
     {
@@ -524,10 +531,6 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
-
-    // End Fitur Plotting dosen pembimbing TA
-
-    // Fitur Bimbingan Admin TA (belum menggunakan select, kurang paginate)
 
     public function tabelPlottingByAdmin(Request $request)
     {
@@ -568,14 +571,34 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function tabelListBimbinganByAdmin()
+    public function tabelListBimbinganByAdmin(Request $request)
     {
         try {
-            $tugasAkhir = TugasAkhir::with(['mahasiswa', 'dosenPembimbing', 'bimbingan', 'kategori'])
+            $query = TugasAkhir::with([
+                'mahasiswa',
+                'dosenPembimbing',
+                'bimbingan',
+                'kategori'
+            ])
                 ->where('status_aktif', 1)
-                ->whereNotNull('dosen_pembimbing_id') // hanya yang sudah punya dosen pembimbing
-                ->orderBy('id', 'asc') // urutkan berdasarkan id ascending
-                ->paginate(10);
+                ->whereNotNull('dosen_pembimbing_id'); // hanya yang sudah punya dosen pembimbing
+            // ->orderBy('id', 'asc') // urutkan berdasarkan id ascending
+            // ->paginate(10);
+
+            if ($request->search) {
+                $query->whereHas('mahasiswa', function ($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->search . '%')
+                        ->orWhere('nim', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            if ($request->kategori) {
+                $query->whereHas('kategori', function ($q) use ($request) {
+                    $q->where('nama_kategori', 'like', '%' . $request->kategori . '%');
+                });
+            }
+
+            $tugasAkhir = $query->orderBy('id', 'asc')->paginate(10);
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
@@ -675,10 +698,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    // End Fitur Bimbingan Admin TA
-
-
-    // Fitur Ujian TA Admin TA (sudah menggunakan select, kurang paginate)
+    // Fitur Ujian TA Admin TA (Plotting Penguji & List Pendaftar Ujian & Penjadwalan Ujian & Berita Acara )
 
     public function tabelPlottingPengujiByAdmin()
     {
@@ -957,8 +977,10 @@ class TugasAkhirController extends Controller
         }
     }
 
-    // End Fitur Ujian TA Admin TA
+    // ========================== END FITUR ADMIN ==========================
 
+
+    // ========================== FITUR MAHASISWA ==========================
 
     public function ujianTAForMahasiswa()
     {
@@ -1023,7 +1045,70 @@ class TugasAkhirController extends Controller
         }
     }
 
-    // Dosen Penguji
+    // ========================== END FITUR MAHASISWA ==========================
+
+
+    // ========================== FITUR DOSEN ==========================
+
+    public function tabelUjianTAForDosen()
+    {
+        try {
+            $dosenId = Auth::id();
+            $tugasAkhir = TugasAkhir::with([
+                'mahasiswa:id,nim,name',
+                'ujianTA.sesi',
+                'ujianTA.ruang'
+            ])
+                ->where('status_aktif', 1)
+                ->whereHas('dosenPenguji', function ($q) use ($dosenId) {
+                    $q->where('dosen_id', $dosenId);
+                })
+                ->whereHas('ujianTA', function ($q) {
+                    $q->where('status_ujian', 'aktif');
+                })
+                ->paginate(10);
+
+            $data = collect($tugasAkhir->items())->map(function ($item) {
+                Carbon::setLocale('id');
+                $ujianTA = $item->ujianTA->where('status_ujian', 'aktif')->first();
+                return [
+                    'tugas_akhir_id' => $item->id,
+                    'mahasiswa' => [
+                        'mahasiswa_id' => $item->mahasiswa->id ?? null,
+                        'nim' => $item->mahasiswa->nim ?? null,
+                        'name' => $item->mahasiswa->name ?? null,
+                    ],
+                    'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
+                    'tanggal_ujian' => $ujianTA && $ujianTA->tanggal_ujian
+                        ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
+                        : null,
+                    'sesi' => [
+                        'sesi_id' => $ujianTA && $ujianTA->sesi ? $ujianTA->sesi->id : null,
+                        'nama_sesi' => $ujianTA && $ujianTA->sesi ? $ujianTA->sesi->nama_sesi : null,
+                        'waktu_mulai' => $ujianTA && $ujianTA->sesi ? date('H:i', strtotime($ujianTA->sesi->waktu_mulai)) : null,
+                        'waktu_selesai' => $ujianTA && $ujianTA->sesi ? date('H:i', strtotime($ujianTA->sesi->waktu_selesai)) : null,
+                    ],
+                    // 'sesi' => $ujianTA && $ujianTA->sesi ? $ujianTA->sesi->nama_sesi : null,
+                    'ruang' => $ujianTA && $ujianTA->ruang ? $ujianTA->ruang->nama_ruang : null,
+                ];
+            });
+
+            $result = [
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $tugasAkhir->currentPage(),
+                    'last_page' => $tugasAkhir->lastPage(),
+                    'per_page' => $tugasAkhir->perPage(),
+                    'total' => $tugasAkhir->total(),
+                ],
+            ];
+
+            return ApiResponse::success($result, 'List Ujian TA yang diujikan berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
     public function updateStatusKelulusanByDosenPengujiKetua(Request $request, $tugasAkhirId)
     {
         try {
@@ -1060,4 +1145,6 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
+    // ========================== END FITUR DOSEN ==========================
 }

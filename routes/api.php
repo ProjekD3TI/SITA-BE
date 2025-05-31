@@ -140,13 +140,13 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // ----------------- || Sistem Informasi Tugas AKhir || ------------------------ \\
 
     // Sistem Tugas-akhir (Request Pembimbing)
-    Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'getByDosen']);
+    Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'tabelRequestPembimbingForDosen']);
     Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalForDosen']);
 
     // Sistem TugasAkhir (Bimbingan)
-    Route::get('/dosen/bimbingan/', [BimbinganController::class, 'getTugasAkhirByDosen']);
-    Route::get('/dosen/bimbingan/{id}', [BimbinganController::class, 'getBimbinganByTugasAkhir']);
-    Route::put('/dosen/bimbingan/{id}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
+    Route::get('/dosen/bimbingan/', [BimbinganController::class, 'tabelListDibimbingForDosen']);
+    Route::get('/dosen/bimbingan/{tugasAkhirId}', [BimbinganController::class, 'tabelDetailBimbinganForDosen']);
+    Route::put('/dosen/bimbingan/{bimbinganId}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
 
     // Sistem TugasAkhir (Nilai Bimbingan)
     Route::get('/dosen/nilai-bimbingan/{id}', [NilaiBimbinganController::class, 'getNilaiBimbinganByDosen']);
@@ -156,6 +156,9 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Sistem Tugas-akhir (Nilai Ujian TA)
     Route::post('/dosen/nilai-ujian-ta/', [NilaiUjianTAController::class, 'storeNilaiByDosenPenguji']);
     Route::put('/dosen/nilai-ujian-ta/{tugasAkhirId}', [NilaiUjianTAController::class, 'updateNilaiByDosenPenguji']);
+
+    // Ujian Tugas Akhir
+    Route::get('/dosen/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
 
     // Sistem Tugas akhir (Tugas Akhir)
     //blm ditest (nilai bimbingan sudah ditest)
