@@ -102,6 +102,7 @@ class ProposalController extends Controller
                 ] : null,
                 'nilai_proposal' => $proposal->tugasAkhir ? $proposal->tugasAkhir->nilai_proposal : null,
                 'catatan_proposal' => $proposal->tugasAkhir ? $proposal->tugasAkhir->catatan_proposal : null,
+                'catatan_perbaikan' => $proposal->catatan_perbaikan ?? null, // <-- Tambahkan baris ini
                 'status_proposal' => $proposal->status_proposal ?? null,
                 'tanggal_pengajuan' => $proposal->created_at ? $proposal->created_at->format('d M Y') : null,
                 'berkas' => $proposal->berkas ? $proposal->berkas->map(function ($berkas) {
@@ -247,6 +248,7 @@ class ProposalController extends Controller
             $validatedData = $request->validate([
                 'status_valid_berkas' => 'required|array|size:2',
                 'status_valid_berkas.*' => 'required|in:1,2',
+                'catatan_perbaikan' => 'nullable|string', // Tambahkan validasi catatan_perbaikan
             ]);
 
             $proposal = Proposal::with(['berkas'])->findOrFail($id);
@@ -268,6 +270,11 @@ class ProposalController extends Controller
             }
             // Tidak boleh ada status 0, karena sudah divalidasi di atas
 
+            // Tambahkan update catatan_perbaikan jika ada
+            if (array_key_exists('catatan_perbaikan', $validatedData)) {
+                $proposal->catatan_perbaikan = $validatedData['catatan_perbaikan'];
+            }
+
             $proposal->save();
 
             return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir', 'berkas')), 'Status proposal & berkas berhasil diperbarui');
@@ -277,6 +284,7 @@ class ProposalController extends Controller
             return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
     }
+
     public function updateNilaidanCatatanForAdmin(Request $request, $id)
     {
         try {
@@ -311,69 +319,70 @@ class ProposalController extends Controller
 
 
     public function proposalForMahasiswa(Request $request)
-    {
-        try {
-            $mahasiswaId = $request->user()->id;
+{
+    try {
+        $mahasiswaId = $request->user()->id;
 
-            // Ambil tugas akhir aktif beserta relasi yang diperlukan
-            $tugasAkhir = TugasAkhir::with([
-                'dosenPembimbing:id,name',
-                'kategori:id,nama_kategori',
-                'tahunAjaran:id,tahun_ajaran',
-                'proposal.berkas'
-            ])
-                ->where('mahasiswa_id', $mahasiswaId)
-                ->where('status_aktif', 1)
-                ->first();
+        // Ambil tugas akhir aktif beserta relasi yang diperlukan
+        $tugasAkhir = TugasAkhir::with([
+            'dosenPembimbing:id,name',
+            'kategori:id,nama_kategori',
+            'tahunAjaran:id,tahun_ajaran',
+            'proposal.berkas'
+        ])
+            ->where('mahasiswa_id', $mahasiswaId)
+            ->where('status_aktif', 1)
+            ->first();
 
-            if (!$tugasAkhir) {
-                // Kembalikan data kosong/null agar FE bisa handle
-                return ApiResponse::success([
-                    'tugas_akhir' => null,
-                    'proposal' => null,
-                ], 'Belum ada tugas akhir aktif');
-            }
-
-            $proposal = $tugasAkhir->proposal;
-
-            $result = [
-                'tugas_akhir' => [
-                    'id' => $tugasAkhir->id,
-                    'dosen_pembimbing' => $tugasAkhir->dosenPembimbing ? [
-                        'id' => $tugasAkhir->dosenPembimbing->id,
-                        'nama' => $tugasAkhir->dosenPembimbing->name,
-                    ] : null,
-                    'kategori_ta' => $tugasAkhir->kategori ? [
-                        'id' => $tugasAkhir->kategori->id,
-                        'nama' => $tugasAkhir->kategori->nama_kategori,
-                    ] : null,
-                    'tahun_ajaran' => $tugasAkhir->tahunAjaran ? [
-                        'id' => $tugasAkhir->tahunAjaran->id,
-                        'nama' => $tugasAkhir->tahunAjaran->tahun_ajaran,
-                    ] : null,
-                    'proposal_id' => $tugasAkhir->proposal_id,
-                    'nilai_proposal' => $tugasAkhir->nilai_proposal,
-                    'catatan_proposal' => $tugasAkhir->catatan_proposal,
-                ],
-                'proposal' => $proposal ? [
-                    'id' => $proposal->id,
-                    'judul_proposal' => $proposal->judul_proposal,
-                    'status_valid' => $proposal->status_proposal,
-                    'berkas' => $proposal->berkas->map(function ($berkas) {
-                        return [
-                            'id' => $berkas->id,
-                            'nama_berkas' => $berkas->nama_berkas,
-                            'file_path' => $berkas->file_path,
-                            'download_url' => route('berkas.download', ['berkas' => $berkas->id]),
-                            'status_valid' => $berkas->status_valid,
-                        ];
-                    })->values(),
-                ] : null,
-            ];
-
-            return ApiResponse::success($result, 'Data proposal berhasil diambil');
-        } catch (Exception $e) {
-            return ApiResponse::error('Gagal mengambil data proposal: ' . $e->getMessage(), 500);
+        if (!$tugasAkhir) {
+            // Kembalikan data kosong/null agar FE bisa handle
+            return ApiResponse::success([
+                'tugas_akhir' => null,
+                'proposal' => null,
+            ], 'Belum ada tugas akhir aktif');
         }
+
+        $proposal = $tugasAkhir->proposal;
+
+        $result = [
+            'tugas_akhir' => [
+                'id' => $tugasAkhir->id,
+                'dosen_pembimbing' => $tugasAkhir->dosenPembimbing ? [
+                    'id' => $tugasAkhir->dosenPembimbing->id,
+                    'nama' => $tugasAkhir->dosenPembimbing->name,
+                ] : null,
+                'kategori_ta' => $tugasAkhir->kategori ? [
+                    'id' => $tugasAkhir->kategori->id,
+                    'nama' => $tugasAkhir->kategori->nama_kategori,
+                ] : null,
+                'tahun_ajaran' => $tugasAkhir->tahunAjaran ? [
+                    'id' => $tugasAkhir->tahunAjaran->id,
+                    'nama' => $tugasAkhir->tahunAjaran->tahun_ajaran,
+                ] : null,
+                'proposal_id' => $tugasAkhir->proposal_id,
+                'nilai_proposal' => $tugasAkhir->nilai_proposal,
+                'catatan_proposal' => $tugasAkhir->catatan_proposal,
+            ],
+            'proposal' => $proposal ? [
+                'id' => $proposal->id,
+                'judul_proposal' => $proposal->judul_proposal,
+                'status_valid' => $proposal->status_proposal,
+                'catatan_perbaikan' => $proposal->catatan_perbaikan, // <-- Tambahkan ini
+                'berkas' => $proposal->berkas->map(function ($berkas) {
+                    return [
+                        'id' => $berkas->id,
+                        'nama_berkas' => $berkas->nama_berkas,
+                        'file_path' => $berkas->file_path,
+                        'download_url' => route('berkas.download', ['berkas' => $berkas->id]),
+                        'status_valid' => $berkas->status_valid,
+                    ];
+                })->values(),
+            ] : null,
+        ];
+
+        return ApiResponse::success($result, 'Data proposal berhasil diambil');
+    } catch (Exception $e) {
+        return ApiResponse::error('Gagal mengambil data proposal: ' . $e->getMessage(), 500);
     }
+}
 }
