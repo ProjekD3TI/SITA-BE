@@ -80,7 +80,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
     // ----------------- || Sistem Informasi Tugas AKhir || ------------------------ \\
     //request pembimbing
-    Route::post('/mahasiswa/request-pembimbing/', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
+    Route::post('/mahasiswa/request-pembimbing', [RequestPembimbingController::class, 'storeWithTugasAkhir']);
     Route::get('/mahasiswa/cek-request-pembimbing', [RequestPembimbingController::class, 'cekStatusRequestByMahasiswa']);
 
     //proposal
