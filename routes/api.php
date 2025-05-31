@@ -166,6 +166,8 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::put('/dosen/status-kelulusan/{tugas_akhir_id}', [TugasAkhirController::class, 'updateStatusKelulusanByDosenPengujiKetua']);
 
     Route::get('/dosen/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByDosen']);
+    // Kategori
+    Route::get('/dosen/kategori', [KategoriController::class, 'lihatKategori']);
 
     // ----------------- || ############################### || ------------------------ \\
 
@@ -190,8 +192,6 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Petugas'])->group(function () {
         Route::get('/petugas/dashboard', [PetugasController::class, 'dashboard']);
     });
-
-
 });
 
 
