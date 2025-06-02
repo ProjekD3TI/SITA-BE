@@ -119,7 +119,7 @@ class DosenPengujiController extends Controller
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error('Data sesi gagal ditambahkan: ' . $e->getMessage(), 500);
+            return ApiResponse::error('Data plotting penguji gagal ditambahkan: ' . $e->getMessage(), 500);
         }
     }
 
@@ -130,12 +130,11 @@ class DosenPengujiController extends Controller
                 'list_dosen' => 'required|array|size:3',
                 'list_dosen.*.dosen_id' => 'required|exists:dosen,id',
                 'list_dosen.*.jabatan_penguji' => 'required|in:ketua,sekretaris,penguji',
-                'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
             ], [
                 'list_dosen.size' => 'Harus memilih 3 dosen!',
             ]);
 
-            $tugasAkhir = TugasAkhir::findOrFail($request->tugas_akhir_id);
+            $tugasAkhir = TugasAkhir::findOrFail($tugasAkhirId);
 
             if (!$tugasAkhir->proposal_id) {
                 return ApiResponse::error('Tugas Akhir harus memiliki proposal terlebih dahulu sebelum menambahkan dosen penguji', 400);
@@ -186,7 +185,7 @@ class DosenPengujiController extends Controller
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error('Data sesi gagal diperbarui: ' . $e->getMessage(), 500);
+            return ApiResponse::error('Data plotting penguji gagal diperbarui: ' . $e->getMessage(), 500);
         }
     }
 }

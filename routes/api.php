@@ -102,9 +102,10 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     // Ujian Tugas Akhir
     Route::get('/mahasiswa/ujian-ta', [TugasAkhirController::class, 'ujianTAForMahasiswa']);
-    Route::get('/mahasiswa/ujian-ta/jadwal-ujian', [UjianTAController::class, 'jadwalUjianForMahasiswa']);
+    Route::get('/admin_ta/list-penjadwalan-ujian', [UjianTAController::class, 'jadwalUjianForMahasiswa']);
 
     Route::get('/mahasiswa/ujian-ta/nilai-ujian', [NilaiUjianTAController::class, 'getNilaiUjianForMahasiswa']);
+    Route::get('/mahasiswa/ujian-ta/jadwal-ujian', [UjianTAController::class, 'jadwalUjianForMahasiswa']);
 
     Route::get('/mahasiswa/berkas/ujian-ta', [BerkasController::class, 'getBerkasTugasAkhirForMahasiswa']);
 
@@ -242,14 +243,17 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/tugas-akhir/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganByAdmin']);
         Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingByAdmin']);
         Route::get('/admin_ta/tugas-akhir/detail-bimbingan/{tugasAkhirId}', [TugasAkhirController::class, 'detailBimbinganByAdmin']);
-        Route::get('/admin_ta/list-plotting-pembimbing', [TugasAkhirController::class, 'tabelPlottingPengujiByAdmin']);
-        Route::get('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiByAdmin']);
+        Route::get('/admin_ta/list-plotting-penguji', [TugasAkhirController::class, 'tabelPlottingPengujiByAdmin']);
+        Route::get('/admin_ta/plotting-penguji/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiByAdmin']);
         Route::get('/admin_ta/list-pendaftar-ujian', [TugasAkhirController::class, 'tabelPendaftarUjianByAdmin']);
+        Route::get('/admin_ta/pendaftar-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPendaftarUjianByAdmin']);
+        Route::put('/admin_ta/pendaftar-ujian/{tugasAkhirId}/status', [TugasAkhirController::class, 'validationBerkasForAdmin']);
         Route::get('/admin_ta/list-penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
+        Route::get('/admin_ta/penjadwalan-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPenjadwalanUjianByAdmin']);
         Route::put('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
 
         // Berita Acara Semhas
-        Route::get('/admin_ta/berita-acara-semhas', [TugasAkhirController::class, 'tabelBeritaAcaraByAdmin']);
+        // Route::get('/admin_ta/list-berita-acara', [TugasAkhirController::class, 'tabelBeritaAcaraByAdmin']);
 
         // Kategori
         Route::post('/admin_ta/tambah-kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
@@ -293,11 +297,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('admin_ta/tahun-ajaran/{id}/set-default', [TahunAjaranController::class, 'setDefault']);
 
         // Route Ujian TA
-        Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
         // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
-        // Route::post('/admin_ta/ujian-ta/', [UjianTAController::class, 'store']);
-        // Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
-        Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyForAdmin']);
+        // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
+        Route::post('/admin_ta/ujian-ta/', [UjianTAController::class, 'store']);
+        Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
+        // Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyForAdmin']);
         // Route::get('/admin_ta/dashboard', [AdminTaController::class, 'setDashboardByAdmin']);
     });
 

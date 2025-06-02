@@ -591,14 +591,23 @@ class TugasAkhirController extends Controller
                         ->orWhere('nim', 'like', '%' . $request->search . '%');
                 });
             }
-
             if ($request->kategori) {
-                $query->whereHas('kategori', function ($q) use ($request) {
-                    $q->where('nama_kategori', 'like', '%' . $request->kategori . '%');
+                $kategoriList = explode(',', $request->kategori);
+                $query->whereHas('kategori', function ($q) use ($kategoriList) {
+                    $q->where(function ($subQuery) use ($kategoriList) {
+                        foreach ($kategoriList as $index => $kategori) {
+                            $kategori = trim($kategori);
+                            if ($index === 0) {
+                                $subQuery->where('nama_kategori', 'like', '%' . $kategori . '%');
+                            } else {
+                                $subQuery->orWhere('nama_kategori', 'like', '%' . $kategori . '%');
+                            }
+                        }
+                    });
                 });
             }
 
-            $tugasAkhir = $query->orderBy('id', 'asc')->paginate(10);
+            $tugasAkhir = $query->orderBy('id', 'asc')->paginate(2);
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
@@ -626,6 +635,9 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
+
+
+
 
     public function plottingPembimbingByAdmin($tugasAkhirId)
     {
@@ -720,9 +732,6 @@ class TugasAkhirController extends Controller
                 ->having('bimbingan_count', '>=', 9)
                 ->paginate(10);
 
-            $statusForm = StatusForm::where('nama_form', 'Tugas Akhir')
-                ->select('id', 'is_open')
-                ->first();
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
@@ -746,7 +755,6 @@ class TugasAkhirController extends Controller
             });
 
             $result = [
-                'status_form' => $statusForm,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
@@ -774,14 +782,29 @@ class TugasAkhirController extends Controller
                 'dosenPembimbing:id,name,nik',
                 'proposal:id,judul_proposal',
                 'tahunAjaran:id,tahun_ajaran',
-                'kategori:id,nama_kategori'
+                'kategori:id,nama_kategori',
+                'dosenPenguji:id,name,nik' // tambahkan relasi dosenPenguji
             ])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->first();
+
             $daftarDosen = Dosen::select('id', 'name', 'nik')->get();
+
+            // Ambil dosen penguji, jika ada
+            $dosenPenguji = $tugasAkhir && $tugasAkhir->dosenPenguji
+                ? $tugasAkhir->dosenPenguji->map(function ($penguji) {
+                    return [
+                        'id' => $penguji->id,
+                        'name' => $penguji->name,
+                        'nik' => $penguji->nik,
+                        'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
+                    ];
+                })->values()
+                : [];
+
             $data = [
-                'tugas_akhir_id' => $tugasAkhir->id,
+                'tugas_akhir_id' => $tugasAkhir->id ?? null,
                 'mahasiswa' => [
                     'nim' => $tugasAkhir->mahasiswa->nim ?? null,
                     'name' => $tugasAkhir->mahasiswa->name ?? null,
@@ -794,8 +817,10 @@ class TugasAkhirController extends Controller
                 ],
                 'kategori' => $tugasAkhir->kategori ? $tugasAkhir->kategori->nama_kategori : null,
                 'tahun_ajaran' => $tugasAkhir->tahunAjaran ? $tugasAkhir->tahunAjaran->tahun_ajaran : null,
+                'dosen_penguji' => $dosenPenguji, // <-- tambahkan ini
                 'daftar_dosen' => $daftarDosen
             ];
+
             return ApiResponse::success($data, 'Data untuk plotting penguji berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
@@ -814,6 +839,11 @@ class TugasAkhirController extends Controller
                 ->paginate(10)
             ;
 
+            $statusForm = StatusForm::where('nama_form', 'Tugas Akhir')
+                ->select('id', 'is_open')
+                ->first();
+
+
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
@@ -824,10 +854,20 @@ class TugasAkhirController extends Controller
                     'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
                     'dosen_pembimbing' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
                     'status_valid' => $item->status_valid,
+                    'berkas' => $item->berkas ? $item->berkas->map(function ($berkas) {
+                        return [
+                            'id' => $berkas->id,
+                            'nama_berkas' => $berkas->nama_berkas,
+                            'file_path' => $berkas->file_path,
+                            'download_url' => route('berkas.download', ['berkas' => $berkas->id]),
+                            'status_valid' => $berkas->status_valid,
+                        ];
+                    })->values() : [],
                 ];
             });
 
             $result = [
+                'status_form' => $statusForm,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
@@ -840,6 +880,112 @@ class TugasAkhirController extends Controller
             return ApiResponse::success($result, 'List Tugas Akhir yang mendaftar ujian berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function showPendaftarUjianByAdmin($tugasAkhirId)
+    {
+        try {
+            $tugasAkhir = TugasAkhir::with([
+                'mahasiswa:id,nim,name',
+                'dosenPembimbing:id,name',
+                'dosenPenguji:id,name',
+                'ujianTA'
+            ])
+                ->where('status_aktif', 1)
+                ->where('id', $tugasAkhirId)
+                ->first();
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+
+            $data = [
+                'tugas_akhir_id' => $tugasAkhir->id,
+                'mahasiswa' => [
+                    'nim' => $tugasAkhir->mahasiswa->nim ?? null,
+                    'name' => $tugasAkhir->mahasiswa->name ?? null,
+                ],
+                'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir ?? null,
+                'kategori' => $tugasAkhir->kategori ? $tugasAkhir->kategori->nama_kategori : null,
+                'tahun_ajaran' => $tugasAkhir->tahunAjaran ? $tugasAkhir->tahunAjaran->tahun_ajaran : null,
+                'status_valid' => $tugasAkhir->status_valid,
+                'berkas' => $tugasAkhir->berkas ? $tugasAkhir->berkas->map(function ($berkas) {
+                    return [
+                        'id' => $berkas->id,
+                        'nama_berkas' => $berkas->nama_berkas,
+                        'file_path' => $berkas->file_path,
+                        'download_url' => route('berkas.download', ['berkas' => $berkas->id]),
+                        'status_valid' => $berkas->status_valid,
+                    ];
+                })->values() : [],
+            ];
+            return ApiResponse::success($data, 'Detail Tugas Akhir berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function validationBerkasForAdmin(Request $request, $id)
+    {
+        try {
+            $tugasAkhir = TugasAkhir::with(['berkas'])->findOrFail($id);
+
+            // Ambil semua nama berkas yang ada di DB untuk tugas akhir ini
+            $berkasList = $tugasAkhir->berkas->pluck('nama_berkas')->toArray();
+
+            // Daftar nama berkas wajib
+            $berkasWajib = [
+                'Naskah Tugas Akhir',
+                'Scan KRS Semester Akhir',
+                'Bukti Persetujuan Pembimbing',
+                'Transkrip Nilai Mahasiswa',
+                'Bukti Sertifikat Kompetensi',
+                'Sertifikat TOEIC',
+                'Berita Acara Seminar Hasil',
+            ];
+            $berkasOpsional = 'Surat Perpanjangan Masa Studi';
+
+            // Hitung jumlah berkas yang harus divalidasi
+            $jumlahWajib = count($berkasWajib);
+            $adaOpsional = in_array($berkasOpsional, $berkasList);
+            $jumlahBerkas = $jumlahWajib + ($adaOpsional ? 1 : 0);
+
+            // Validasi array status_valid_berkas harus sesuai jumlah berkas yang ada
+            $validatedData = $request->validate([
+                'status_valid_berkas' => "required|array|size:$jumlahBerkas",
+                'status_valid_berkas.*' => 'required|in:1,2',
+                // 'catatan_perbaikan' => 'nullable|string',
+            ]);
+
+            // Update status_valid pada masing-masing berkas sesuai urutan di DB
+            foreach ($tugasAkhir->berkas as $i => $berkas) {
+                if ($i < $jumlahBerkas) {
+                    $berkas->status_valid = $validatedData['status_valid_berkas'][$i];
+                    $berkas->save();
+                }
+            }
+
+            // Cek status_valid tugas akhir berdasarkan status_valid semua berkas yang divalidasi
+            $statusList = array_slice($validatedData['status_valid_berkas'], 0, $jumlahBerkas);
+            if (in_array(2, $statusList)) {
+                $tugasAkhir->status_valid = 2; // Ditolak
+            } elseif (count(array_unique($statusList)) === 1 && $statusList[0] == 1) {
+                $tugasAkhir->status_valid = 1; // Diterima
+            }
+
+            // // Tambahkan update catatan_perbaikan jika ada
+            // if (array_key_exists('catatan_perbaikan', $validatedData)) {
+            //     $tugasAkhir->catatan_perbaikan = $validatedData['catatan_perbaikan'];
+            // }
+
+            $tugasAkhir->save();
+
+            return ApiResponse::success(new TugasAkhirResource($tugasAkhir->load('berkas')), 'Status tugas akhir & berkas berhasil diperbarui');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
         }
     }
 
@@ -866,6 +1012,7 @@ class TugasAkhirController extends Controller
                         'name' => $item->mahasiswa->name ?? null,
                     ],
                     'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
+                    'status_kelulusan' => $item->status_kelulusan,
                     'dosen_pembimbing' => [
                         'id' => $item->dosenPembimbing->id ?? null,
                         'name' => $item->dosenPembimbing->name ?? null,
@@ -907,7 +1054,8 @@ class TugasAkhirController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
-    public function tabelBeritaAcaraByAdmin()
+
+    public function showPenjadwalanUjianByAdmin($tugasAkhirId)
     {
         try {
             $tugasAkhir = TugasAkhir::with([
@@ -917,67 +1065,57 @@ class TugasAkhirController extends Controller
                 'ujianTA'
             ])
                 ->where('status_aktif', 1)
-                ->whereNotNull('status_kelulusan')
-                ->paginate(10);
+                ->where('id', $tugasAkhirId)
+                ->first();
 
-            Carbon::setLocale('id');
-            $data = $tugasAkhir->map(function ($item) {
-                $ujianTA = $item->ujianTA->where('status_ujian', 'aktif')->first();
-                return [
-                    'tugas_akhir_id' => $item->id,
-                    'mahasiswa' => [
-                        'mahasiswa_id' => $item->mahasiswa->id,
-                        'nim' => $item->mahasiswa->nim ?? null,
-                        'name' => $item->mahasiswa->name ?? null,
-                    ],
-                    'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
-                    'status_kelulusan' => $item->status_kelulusan,
-                    'dosen_pembimbing' => [
-                        'dosen_pembimbing_id' => $item->dosenPembimbing ? $item->dosenPembimbing->id : null,
-                        'name' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
-                    ],
-                    'ujian_ta' => $ujianTA ? [
-                        'ujian_ta_id' => $ujianTA->id,
-                        'tanggal_ujian' => $ujianTA->tanggal_ujian
-                            ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
-                            : null,
-                        'waktu_mulai' => $ujianTA->sesi ? $ujianTA->sesi->waktu_mulai : null,
-                        'waktu_selesai' => $ujianTA->sesi ? $ujianTA->sesi->waktu_selesai : null,
-                        'ruang' => $ujianTA->ruang ? $ujianTA->ruang->nama_ruang : null,
-                        'status_ujian' => $ujianTA->status_ujian
-                    ] : [],
-                    'dosen_penguji' => $item->dosenPenguji
-                        ? $item->dosenPenguji->map(function ($penguji) {
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+
+            $ujianTA = $tugasAkhir->ujianTA->where('status_ujian', 'aktif')->first();
+
+            $data = [
+                'tugas_akhir_id' => $tugasAkhir->id,
+                'mahasiswa' => [
+                    'nim' => $tugasAkhir->mahasiswa->nim ?? null,
+                    'name' => $tugasAkhir->mahasiswa->name ?? null,
+                ],
+                'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir ?? null,
+                'kategori' => $tugasAkhir->kategori ? $tugasAkhir->kategori->nama_kategori : null,
+                'tahun_ajaran' => $tugasAkhir->tahunAjaran ? $tugasAkhir->tahunAjaran->tahun_ajaran : null,
+                'status_kelulusan' => $tugasAkhir->status_kelulusan,
+                'dosen_pembimbing' => [
+                    'id' => $tugasAkhir->dosenPembimbing->id ?? null,
+                    'name' => $tugasAkhir->dosenPembimbing->name ?? null,
+                ],
+                'ujian_ta' => $ujianTA ? [
+                    'id' => $ujianTA->id,
+                    'tanggal_ujian' => $ujianTA->tanggal_ujian
+                        ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
+                        : null,
+                    'waktu_mulai' => $ujianTA->sesi->waktu_mulai ?? null,
+                    'waktu_selesai' => $ujianTA->sesi->waktu_selesai ?? null,
+                    'ruang' => $ujianTA->ruang->nama_ruang ?? null,
+                    'status_ujian' => $ujianTA->status_ujian
+                ] : [],
+                'dosen_penguji' =>
+                    $tugasAkhir->dosenPenguji
+                        ? $tugasAkhir->dosenPenguji->map(function ($penguji) {
                             return [
-                                'dosen_penguji_id' => $penguji->id,
+                                'id' => $penguji->id,
                                 'name' => $penguji->name,
                                 'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
                             ];
                         })->values()
                         : [],
-
-                    'berita_acara' => null,
-                    'catatan_revisi' => null,
-                ];
-            });
-
-            $result = [
-                'data' => $data,
-                'pagination' => [
-                    'current_page' => $tugasAkhir->currentPage(),
-                    'last_page' => $tugasAkhir->lastPage(),
-                    'per_page' => $tugasAkhir->perPage(),
-                    'total' => $tugasAkhir->total(),
-                ],
             ];
-
-            return ApiResponse::success($result, 'List Tugas Akhir yang sudah memiliki berita acara berhasil diambil');
+            return ApiResponse::success($data, 'Detail Tugas Akhir untuk penjadwalan ujian berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
 
-    // ========================== END FITUR ADMIN ==========================
+    // End Fitur Ujian TA Admin TA
 
 
     // ========================== FITUR MAHASISWA ==========================
