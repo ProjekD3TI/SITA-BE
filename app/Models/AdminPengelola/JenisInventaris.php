@@ -21,5 +21,19 @@ class JenisInventaris extends Model
     public function fotos() {
         return $this->hasMany(Foto::class, 'id_jenis_inventaris');
     }
+    public function merk()
+    {
+        return $this->belongsTo(Merk::class, 'id_merk');
+    }
+
+    public function tipe()
+    {
+        return $this->belongsTo(Tipe::class, 'id_tipe');
+    }
+
+    public function inventaris()
+    {
+        return $this->hasMany(Inventaris::class, 'id_jenis_inventaris');
+    }
 
 }

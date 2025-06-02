@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\AdminPengelola;
 
+use App\Exports\PeminjamanInventarisExport;
 use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AdminPengelola\DetailPeminjamanInventaris;
@@ -15,6 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PeminjamanInventarisController extends Controller
 {
@@ -33,8 +35,35 @@ class PeminjamanInventarisController extends Controller
             });
         }
 
-        $query->orderBy('created_at', 'desc');
-        
+        if ($request->has('start_date') && $request->start_date !== '') {
+            $query->whereDate('tanggal_pinjam', '>=', $request->start_date);
+        }
+            
+        if ($request->has('end_date') && $request->end_date !== '') {
+            $query->whereDate('tanggal_pinjam', '<=', $request->end_date);
+        }
+
+        $sortBy = $request->input('sort_by', 'created_at');
+            $sortType = $request->input('sort_type', 'desc');
+
+        $sortableColumns = [
+            'referensi' => 'referensi',
+            'nama_peminjam' => 'nama_peminjam',
+            'ni_peminjam' => 'ni_peminjam',
+            'tanggal_pinjam' => 'tanggal_pinjam',
+            'tipe_peminjam' => 'tipe_peminjam',
+            'kegunaan' => 'kegunaan',
+            'created_at' => 'created_at',
+        ];
+
+        if (array_key_exists($sortBy, $sortableColumns)) {
+            $sortColumn = $sortableColumns[$sortBy];
+        } else {
+            $sortColumn = 'created_at';
+        }
+
+        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
+        $query->orderBy($sortColumn, $sortDirection);        
         $peminjaman_inventaris = $query->get();
         
         $peminjaman_inventaris = $peminjaman_inventaris->map(function($item) {
@@ -88,7 +117,11 @@ class PeminjamanInventarisController extends Controller
                 'per_page' => $paginatedData->perPage(),
                 'current_page' => $paginatedData->currentPage(),
                 'last_page' => $paginatedData->lastPage(),
-            ]
+            ],
+            'sorting' => [
+                'sort_by' => $sortBy,
+                'sort_type' => $sortType,
+        ]
         ], 200);
     }
     
@@ -590,5 +623,17 @@ class PeminjamanInventarisController extends Controller
             'chat_id' => env('TELEGRAM_CHAT_ID'),
             'text' => $message
         ]);
+    }
+
+    public function exportPeminjamanInventaris(Request $request) {
+        $searchTerm = $request->input('search', null);
+        $status = $request->input('status', null);
+        $start_date = $request->input('start_date', null);
+        $end_date = $request->input('end_date', null);
+    
+        return Excel::download(
+            new PeminjamanInventarisExport($searchTerm, $status, $start_date, $end_date),
+            'peminjaman_inventaris.xlsx'
+        );
     }
 }

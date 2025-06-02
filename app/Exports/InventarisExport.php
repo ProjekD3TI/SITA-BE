@@ -11,12 +11,15 @@ class InventarisExport implements FromCollection, WithHeadings
     protected $searchTerm;
     protected $status;
     protected $kondisi;
+    protected $year;
 
-    public function __construct($searchTerm = null, $status = null, $kondisi = null)
+    public function __construct($searchTerm = null, $status = null, $kondisi = null, $year = null)
     {
         $this->searchTerm = $searchTerm;
         $this->status = $status;
         $this->kondisi = $kondisi;
+        $this->year = $year;
+
     }
 
     public function collection()
@@ -49,6 +52,9 @@ class InventarisExport implements FromCollection, WithHeadings
 
             if ($this->kondisi !== null) {
                 $query->where('inventaris.kondisi', $this->kondisi);
+            }
+            if ($this->year !== null) {
+                $query->where('inventaris.tahun_pengadaan', $this->year);
             }
 
             $query->orderBy('inventaris.created_at', 'desc');

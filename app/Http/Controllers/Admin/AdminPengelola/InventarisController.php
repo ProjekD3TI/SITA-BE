@@ -47,8 +47,35 @@ class InventarisController extends Controller
         if ($request->has('kondisi') && $request->kondisi !== '') {
             $query->where('kondisi', $request->kondisi);
         }
+
+        if ($request->has('year') && $request->year !== '') {
+            $query->where('inventaris.tahun_pengadaan', $request->year);
+        }
         
-        $query->orderBy('created_at', 'desc');
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortType = $request->input('sort_type', 'desc');
+
+        $sortableColumns = [
+            'no' => 'inventaris.id_inventaris', 
+            'no_inventaris' => 'inventaris.no_inventaris',
+            'nama_inventaris' => 'jenis_inventaris.nama_inventaris',
+            'nama_ruang' => 'ruangs.nama_ruang',
+            'kondisi' => 'inventaris.kondisi',
+            'tahun_pengadaan' => 'inventaris.tahun_pengadaan',
+            'status' => 'inventaris.status',
+            'created_at' => 'inventaris.created_at',
+        ];
+
+        if (array_key_exists($sortBy, $sortableColumns)) {
+            $sortColumn = $sortableColumns[$sortBy];
+        } else {
+            $sortColumn = 'inventaris.created_at';
+        }
+
+        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
+
+        $query->orderBy($sortColumn, $sortDirection);
+        
         $inventaris = $query->get();
 
         $perPage = $request->input('per_page', 10);
@@ -68,7 +95,11 @@ class InventarisController extends Controller
                 'per_page' => $paginatedData->perPage(),
                 'current_page' => $paginatedData->currentPage(),
                 'last_page' => $paginatedData->lastPage(),
-            ]
+            ],
+            'sorting' => [
+                'sort_by' => $sortBy,
+                'sort_type' => $sortType,
+        ]
         ], 200);
     }
 
@@ -128,6 +159,7 @@ class InventarisController extends Controller
             return response()->json(['message' => 'inventaris tidak ditemukan'], 404);
         }
         
+        
         return response()->json([
             'status' => 'success',
             'message' => 'Data Inventaris',
@@ -183,10 +215,11 @@ class InventarisController extends Controller
         $searchTerm = $request->input('search', null);
         $status = $request->input('status', null);
         $kondisi = $request->input('kondisi', null);
+        $year = $request->input('year', null);
     
     
         return Excel::download(
-            new InventarisExport($searchTerm, $status, $kondisi),
+            new InventarisExport($searchTerm, $status, $kondisi, $year),
             'inventaris.xlsx'
         );
     }

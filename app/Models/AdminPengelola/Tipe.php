@@ -14,4 +14,8 @@ class Tipe extends Model
     protected $fillable = [
         'nama_tipe',
     ];
+    public function jenisInventaris()
+    {
+        return $this->hasMany(JenisInventaris::class, 'id_merk');
+    }
 }

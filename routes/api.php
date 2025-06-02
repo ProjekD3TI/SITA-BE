@@ -116,6 +116,8 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 Route::get('/admin_pengelola/bhp/export', [BhpController::class, 'exportBhp']);
 Route::get('/admin_pengelola/jenis_inventaris/export', [JenisInventarisController::class, 'exportJenisInventaris']);
 Route::get('/admin_pengelola/inventaris/export', [InventarisController::class, 'exportInventaris']);
+Route::get('/admin_pengelola/peminjaman_bhp/export', [PeminjamanBhpController::class, 'exportPeminjamanBhp']);
+Route::get('/admin_pengelola/peminjaman_inventaris/export', [PeminjamanInventarisController::class, 'exportPeminjamanInventaris']);
 
 // ---------- || Route Admin || ---------- \\
 

@@ -45,8 +45,30 @@ class JenisInventarisController extends Controller
         if ($request->has('peruntukan') && $request->peruntukan !== '') {
             $query->where('peruntukan', $request->peruntukan);
         }
+
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortType = $request->input('sort_type', 'desc');
+
+        $sortableColumns = [
+            'no' => 'jenis_inventaris.id_jenis_inventaris', 
+            'nama_inventaris' => 'jenis_inventaris.nama_inventaris',
+            'nama_merk' => 'merk.nama_merk',
+            'nama_tipe' => 'tipe.nama_tipe',
+            'peruntukan' => 'jenis_inventaris.peruntukan',
+            'status_import' => 'jenis_inventaris.status_import',
+            'created_at' => 'jenis_inventaris.created_at',
+        ];
+
+        if (array_key_exists($sortBy, $sortableColumns)) {
+            $sortColumn = $sortableColumns[$sortBy];
+        } else {
+            $sortColumn = 'jenis_inventaris.created_at';
+        }
+
+        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
+
+        $query->orderBy($sortColumn, $sortDirection);
         
-        $query->orderBy('created_at', 'desc');
         $jenis_inventaris = $query->get();
 
         $perPage = $request->input('per_page', 10);
@@ -57,6 +79,7 @@ class JenisInventarisController extends Controller
             'query' => $request->query(),
         ]);
 
+
         return response()->json([
             'status' => 'success',
             'message' => 'Data Jenis Inventaris',
@@ -66,7 +89,11 @@ class JenisInventarisController extends Controller
                 'per_page' => $paginatedData->perPage(),
                 'current_page' => $paginatedData->currentPage(),
                 'last_page' => $paginatedData->lastPage(),
-            ]
+            ],
+            'sorting' => [
+                'sort_by' => $sortBy,
+                'sort_type' => $sortType,
+        ]
         ], 200);
     }
 
@@ -131,6 +158,11 @@ class JenisInventarisController extends Controller
                 'message' => 'inventaris tidak ditemukan'
             ], 404);
         }
+
+        //hitung total inventaris di jenis inventaris
+        $inventaris->total_inventaris = DB::table('inventaris')
+            ->where('id_jenis_inventaris', $id)
+            ->count();
         
         $photos = DB::table('foto')
                     ->where('id_jenis_inventaris', $id)
@@ -141,7 +173,8 @@ class JenisInventarisController extends Controller
             'status' => 'success',
             'message' => 'Detail inventaris',
             'data' => $inventaris,
-            'photos' => $photos
+            'photos' => $photos,
+            'total_inventaris' => $inventaris->total_inventaris
         ], 200);
     }
 

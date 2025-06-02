@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\AdminPengelola;
 
+use App\Exports\PeminjamanBhpExport;
 use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AdminPengelola\Bhp;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
-
+use Maatwebsite\Excel\Facades\Excel;
 
 class PeminjamanBhpController extends Controller
 {
@@ -34,19 +35,46 @@ class PeminjamanBhpController extends Controller
         if ($request->has('status_pengembalian') && $request->status_pengembalian !== '') {
             $query->where('status_pengembalian', $request->status_pengembalian);
         }
-        $query->orderBy('created_at', 'desc');
+        if ($request->has('start_date') && $request->start_date !== '') {
+        $query->whereDate('tanggal_pinjam', '>=', $request->start_date);
+    }
+    
+    if ($request->has('end_date') && $request->end_date !== '') {
+        $query->whereDate('tanggal_pinjam', '<=', $request->end_date);
+    }
+    
+    $sortBy = $request->input('sort_by', 'created_at');
+    $sortType = $request->input('sort_type', 'desc');
 
+    $sortableColumns = [
+        'no' => 'id_peminjaman_bhp',
+        'nama_peminjam' => 'nama_peminjam',
+        'tanggal_pinjam_formatted' => 'tanggal_pinjam',
+        'jumlah_penggunaan' => 'jumlah_penggunaan',
+        'status' => 'status_pengembalian',
+        'created_at' => 'created_at',
+    ];
+
+    if (array_key_exists($sortBy, $sortableColumns)) {
+        $sortColumn = $sortableColumns[$sortBy];
+    } else {
+        $sortColumn = 'created_at';
+    }
+
+    $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
+
+    $query->orderBy($sortColumn, $sortDirection);
         $peminjaman_bhp = $query->get();
-        
+            
         $peminjaman_bhp = $peminjaman_bhp->map(function($peminjaman) {
             $photos = Foto::where('id_bhp', $peminjaman->id_bhp)
-                         ->select('foto_path')
-                         ->get();
-            
-            $peminjaman->fotos = $photos;
+                        ->select('foto_path')
+                        ->get();
+                
+             $peminjaman->fotos = $photos;
             return $peminjaman;
         });
-    
+        
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
     
@@ -54,7 +82,7 @@ class PeminjamanBhpController extends Controller
             'path' => $request->url(),
             'query' => $request->query(),
         ]);
-    
+        
         return response()->json([
             'status' => 'success',
             'message' => 'Data Peminjaman Bhp',
@@ -62,9 +90,13 @@ class PeminjamanBhpController extends Controller
             'pagination' => [
                 'total' => $paginatedData->total(),
                 'per_page' => $paginatedData->perPage(),
-                'current_page' => $paginatedData->currentPage(),
+                    'current_page' => $paginatedData->currentPage(),
                 'last_page' => $paginatedData->lastPage(),
-            ]
+            ],
+            'sorting' => [
+                'sort_by' => $sortBy,
+                'sort_type' => $sortType,
+        ]
         ], 200);
     }
     
@@ -493,6 +525,18 @@ class PeminjamanBhpController extends Controller
             'chat_id' => env('TELEGRAM_CHAT_ID'),
             'text' => $message
         ]);
+    }
+
+    public function exportPeminjamanBhp(Request $request) {
+        $searchTerm = $request->input('search', null);
+        $status_pengembalian = $request->input('status_pengembalian', null);
+        $start_date = $request->input('start_date', null);
+        $end_date = $request->input('end_date', null);
+        
+        return Excel::download(
+            new PeminjamanBhpExport($searchTerm, $status_pengembalian, $start_date, $end_date),
+            'peminjaman_bhp.xlsx'
+        );
     }
 
 }

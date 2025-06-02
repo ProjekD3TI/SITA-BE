@@ -23,18 +23,6 @@ class PeminjamanInventaris extends Model
         'referensi', 
         'created_by',
     ];
-    public static function generateNoReservasi() {
-        $terbaru = self::orderBy('created_at', 'desc')->first();
-        $nextNo = $terbaru ? intval(substr($terbaru->no_reservasi, 5)) + 1 : 1;
-    
-        do {
-            $noReservasi = 'RSVPA' . str_pad($nextNo, 5, '0', STR_PAD_LEFT);
-            $exists = self::where('no_reservasi', $noReservasi)->exists();
-            $nextNo++;
-        } while ($exists);
-    
-        return $noReservasi;
-    }
 
     public function detailPeminjamanInventaris()
     {
