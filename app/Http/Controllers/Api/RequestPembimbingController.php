@@ -40,16 +40,7 @@ class RequestPembimbingController extends Controller
             $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_id'];
             $tugasAkhir->save();
 
-            // Cek apakah sudah ada request pembimbing untuk tugas akhir ini
-            $existingRequest = RequestPembimbing::where('tugas_akhir_id', $validatedData['tugas_akhir_id'])->first();
-
-            // Jika sudah ada, update statusnya menjadi approved
-            if ($existingRequest) {
-                $existingRequest->dosen_id = $validatedData['dosen_id'];
-                $existingRequest->status_request = 1; // Approved
-                $existingRequest->tanggal_respon = now();
-                $existingRequest->save();
-            }
+            // Tidak perlu update atau membuat request pembimbing
 
             // Return tugas akhir dengan relasi dosen pembimbing
             $tugasAkhir->load('dosenPembimbing');
@@ -72,7 +63,6 @@ class RequestPembimbingController extends Controller
     }
 
 
-
     public function updateForAdmin(Request $request, $id)
     {
         try {
@@ -86,13 +76,7 @@ class RequestPembimbingController extends Controller
                 return ApiResponse::error('Request pembimbing tidak ditemukan', 404);
             }
 
-            // Update dosen_id pada request pembimbing
-            $requestPembimbing->dosen_id = $validatedData['dosen_id'];
-            $requestPembimbing->status_request = 1; // status approved
-            $requestPembimbing->tanggal_respon = now();
-            $requestPembimbing->save();
-
-            // Update juga dosen_pembimbing_id pada TugasAkhir terkait
+            // Update hanya dosen_pembimbing_id pada TugasAkhir terkait
             $tugasAkhir = $requestPembimbing->tugasAkhir;
             if ($tugasAkhir) {
                 $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_id'];
@@ -101,7 +85,7 @@ class RequestPembimbingController extends Controller
 
             return ApiResponse::success(
                 new RequestPembimbingResource($requestPembimbing->load('tugasAkhir', 'dosen')),
-                'Request pembimbing berhasil diupdate'
+                'Dosen pembimbing pada tugas akhir berhasil diupdate'
             );
         } catch (ValidationException $e) {
             return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
