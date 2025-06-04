@@ -170,6 +170,8 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Kategori
     Route::get('/dosen/kategori', [KategoriController::class, 'lihatKategori']);
 
+    // Sesi
+    Route::get('/dosen/sesi', [SesiController::class, 'index']);
     // ----------------- || ############################### || ------------------------ \\
 
 

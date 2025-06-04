@@ -105,41 +105,51 @@ class BimbinganController extends Controller
     }
 
     public function showBimbinganForMahasiswa()
-    {
-        try {
-            Carbon::setLocale('id');
-            $mahasiswa = Auth::id();
+{
+    try {
+        Carbon::setLocale('id');
+        $mahasiswa = Auth::id();
 
-            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)
-                ->where('status_aktif', 1)
-                ->select('id')
-                ->first();
+        $tugasAkhir = TugasAkhir::with('nilaiBimbingan')
+        ->where('mahasiswa_id', $mahasiswa)
+        ->where('status_aktif', 1)
+        ->select('id', 'nilai_bimbingan_id')
+        ->first();
 
-            if (!$tugasAkhir) {
-                return ApiResponse::success([], 'Belum ada tugas akhir yang aktif');
-            }
-
-            $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
-                ->orderBy('tanggal_bimbingan', 'asc')
-                ->get(['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
-
-            $result = $bimbinganList->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'tanggal_bimbingan' => $item->tanggal_bimbingan
-                        ? Carbon::parse($item->tanggal_bimbingan)->translatedFormat('l, d F Y')
-                        : null,
-                    'bab' => $item->bab,
-                    'catatan' => $item->catatan,
-                    'status_verifikasi' => $item->status_verifikasi,
-                ];
-            });
-
-            return ApiResponse::success($result, 'Daftar bimbingan berhasil diambil');
-        } catch (Exception $e) {
-            return ApiResponse::error('Daftar bimbingan gagal diambil: ' . $e->getMessage(), 500);
-        }
+    if (!$tugasAkhir) {
+        return ApiResponse::success([], 'Belum ada tugas akhir yang aktif');
     }
+
+    $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
+        ->orderBy('tanggal_bimbingan', 'asc')
+        ->get(['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
+
+    $result = $bimbinganList->map(function ($item) {
+        return [
+            'id' => $item->id,
+            'tanggal_bimbingan' => $item->tanggal_bimbingan
+                ? Carbon::parse($item->tanggal_bimbingan)->translatedFormat('l, d F Y')
+                : null,
+            'bab' => $item->bab,
+            'catatan' => $item->catatan,
+            'status_verifikasi' => $item->status_verifikasi,
+        ];
+    });
+
+    $nilaiBimbingan = $tugasAkhir->nilaiBimbingan;
+
+    if ($nilaiBimbingan) {
+        $nilaiBimbingan = collect($nilaiBimbingan)->except(['created_at', 'updated_at']);
+    }
+
+    return ApiResponse::success([
+        'bimbingan' => $result,
+        'nilai_bimbingan' => $nilaiBimbingan
+    ], 'Daftar bimbingan berhasil diambil');
+} catch (Exception $e) {
+    return ApiResponse::error('Daftar bimbingan gagal diambil: ' . $e->getMessage(), 500);
+}
+}
 
     public function destroyBimbinganByMahasiswa($id)
     {
