@@ -241,22 +241,33 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatusForAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}/update-valid-status', [TugasAkhirController::class, 'updateValidationStatusForAdmin']);
         Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTAForAdmin']);
-        Route::get('/admin_ta/tugas-akhir/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganByAdmin']);
-        Route::get('/admin_ta/tugas-akhir/detail-bimbingan/{tugasAkhirId}', [TugasAkhirController::class, 'detailBimbinganByAdmin']);
         Route::get('/admin_ta/list-plotting-penguji', [TugasAkhirController::class, 'tabelPlottingPengujiByAdmin']);
         Route::get('/admin_ta/plotting-penguji/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiByAdmin']);
         Route::get('/admin_ta/list-pendaftar-ujian', [TugasAkhirController::class, 'tabelPendaftarUjianByAdmin']);
         Route::get('/admin_ta/pendaftar-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPendaftarUjianByAdmin']);
         Route::put('/admin_ta/pendaftar-ujian/{tugasAkhirId}/status', [TugasAkhirController::class, 'validationBerkasForAdmin']);
         Route::get('/admin_ta/list-penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
-
-        // List Plotting Dosen Pembimbing
-        Route::get('/admin_ta/tugas-akhir/plotting', [TugasAkhirController::class, 'tabelPlottingPembimbingByAdmin']);
-        Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingByAdmin']);
         Route::get('/admin_ta/penjadwalan-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPenjadwalanUjianByAdmin']);
-        Route::put('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
-
         Route::get('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiByAdmin']);
+
+        // Fitur Bimbingan (Plotting List Dosen Pembimbing & Detail Plotting Pembimbing & Update Plotting Pembimbing)
+        Route::get('/admin_ta/tugas-akhir/plotting', [TugasAkhirController::class, 'tabelPlottingPembimbingForAdmin']);
+        Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingForAdmin']);
+        Route::put('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
+
+        // Fitur Bimbingan (List Bimbingan & Detail Bimbingan)
+        Route::get('/admin_ta/tugas-akhir/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganForAdmin']);
+        Route::get('/admin_ta/tugas-akhir/detail-bimbingan/{tugasAkhirId}', [TugasAkhirController::class, 'detailBimbinganForAdmin']);
+
+        // Fitur Proposal (List Pengajuan Proposal & Detail Pengajuan Proposal & Validasi Berkas)
+        Route::get('/admin_ta/proposal', [ProposalController::class, 'tabelListPengajuanProposalForAdmin']);
+        Route::get('/admin_ta/proposal/{proposalId}', [ProposalController::class, 'detailPengajuanProposalForAdmin']);
+        Route::put('/admin_ta/proposal/{proposalId}/status', [ProposalController::class, 'updateValidationStatusForAdmin']);
+
+        // Fitur Proposal (List Seminar Proposal & Detail Seminar Proposal & Update Nilai dan Catatan)
+        Route::get('/admin_ta/seminar-proposal', [ProposalController::class, 'tabelListSeminarProposalForAdmin']);
+        Route::get('/admin_ta/seminar-proposal/{proposalId}', [ProposalController::class, 'detailSeminarProposalForAdmin']);
+        Route::put('/admin_ta/seminar-proposal/{proposalId}/nilai-catatan', [ProposalController::class, 'updateNilaidanCatatanForAdmin']);
 
         // Berita Acara Semhas
         // Route::get('/admin_ta/list-berita-acara', [TugasAkhirController::class, 'tabelBeritaAcaraByAdmin']);
@@ -270,11 +281,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::post('/admin_ta/request-pembimbing/', [RequestPembimbingController::class, 'storeForAdmin']);
         Route::put('/admin_ta/request-pembimbing/{id}', [RequestPembimbingController::class, 'updateForAdmin']);
 
-        // Route proposal
-        Route::get('/admin_ta/proposal', [ProposalController::class, 'tabelProposalByAdmin']);
-        Route::get('/admin_ta/proposal/show/{id}', [ProposalController::class, 'showProposalByAdmin']);
-        Route::put('/admin_ta/proposal/{id}/status', [ProposalController::class, 'updateValidationStatusForAdmin']);
-        Route::put('/admin_ta/proposal/{id}/nilai-catatan', [ProposalController::class, 'updateNilaidanCatatanForAdmin']);
 
 
         // Plotting penguji

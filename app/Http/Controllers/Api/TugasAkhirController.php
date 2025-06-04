@@ -450,9 +450,9 @@ class TugasAkhirController extends Controller
 
     // ========================== FITUR ADMIN ==========================
 
-    // Fitur Bimbingan (Plotting List Dosen Pembimbing & )
+    // Fitur Bimbingan (Plotting List Dosen Pembimbing & Detail Plotting Pembimbing & Update Plotting Pembimbing)
 
-    public function tabelPlottingPembimbingByAdmin(Request $request)
+    public function tabelPlottingPembimbingForAdmin(Request $request)
     {
         try {
             $query = TugasAkhir::with([
@@ -502,7 +502,7 @@ class TugasAkhirController extends Controller
                         'dosen_pembimbing_id' => $item->dosenPembimbing->id ?? null,
                         'name' => $item->dosenPembimbing->name ?? null,
                     ],
-                    'kategori_ta' => [
+                    'kategori' => [
                         'kategori_id' => $item->kategori->id ?? null,
                         'nama_kategori' => $item->kategori->nama_kategori ?? null,
                     ],
@@ -526,7 +526,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function plottingPembimbingByAdmin($tugasAkhirId)
+    public function plottingPembimbingForAdmin($tugasAkhirId)
     {
         try {
             $tugasAkhir = TugasAkhir::with([
@@ -548,7 +548,7 @@ class TugasAkhirController extends Controller
                         'nim' => $item->mahasiswa->nim ?? null,
                         'name' => $item->mahasiswa->name ?? null,
                     ],
-                    'kategori_ta' => [
+                    'kategori' => [
                         'kategori_id' => $item->kategori->id ?? null,
                         'nama_kategori' => $item->kategori->nama_kategori ?? null,
                     ],
@@ -593,19 +593,18 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function tabelListBimbinganByAdmin(Request $request)
+    // Fitur Bimbingan (List Bimbingan & Detail Bimbingan)
+    public function tabelListBimbinganForAdmin(Request $request)
     {
         try {
             $query = TugasAkhir::with([
-                'mahasiswa',
-                'dosenPembimbing',
+                'mahasiswa:id,nim,name',
+                'dosenPembimbing:id,name,nik',
                 'bimbingan',
-                'kategori'
+                'kategori:id,nama_kategori',
             ])
                 ->where('status_aktif', 1)
                 ->whereNotNull('dosen_pembimbing_id'); // hanya yang sudah punya dosen pembimbing
-            // ->orderBy('id', 'asc') // urutkan berdasarkan id ascending
-            // ->paginate(10);
 
             if ($request->search) {
                 $query->whereHas('mahasiswa', function ($q) use ($request) {
@@ -613,6 +612,7 @@ class TugasAkhirController extends Controller
                         ->orWhere('nim', 'like', '%' . $request->search . '%');
                 });
             }
+
             if ($request->kategori) {
                 $kategoriList = explode(',', $request->kategori);
                 $query->whereHas('kategori', function ($q) use ($kategoriList) {
@@ -633,12 +633,21 @@ class TugasAkhirController extends Controller
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
-                    'id' => $item->id,
-                    'nim' => $item->mahasiswa->nim,
-                    'mahasiswa' => $item->mahasiswa->name,
-                    'dosen_pembimbing' => $item->dosenPembimbing->name,
-                    'kategori' => $item->kategori ? $item->kategori->nama_kategori : null,
-                    'jumlah_bimbingan' => $item->bimbingan ? $item->bimbingan->count() : 0,
+                    'tugas_akhir_id' => $item->id,
+                    'mahasiswa' => [
+                        'mahasiswa_id' => $item->mahasiswa->id ?? null,
+                        'nim' => $item->mahasiswa->nim ?? null,
+                        'name' => $item->mahasiswa->name ?? null,
+                    ],
+                    'dosen_pembimbing' => [
+                        'dosen_pembimbing_id' => $item->dosenPembimbing->id ?? null,
+                        'name' => $item->dosenPembimbing->name ?? null,
+                    ],
+                    'kategori' => [
+                        'kategori_id' => $item->kategori->id ?? null,
+                        'nama_kategori' => $item->kategori->nama_kategori ?? null,
+                    ],
+                    'jumlah_bimbingan' => $item->bimbingan ? $item->bimbingan->where('status_verifikasi', 1)->count() : 0,
                 ];
             });
 
@@ -652,44 +661,69 @@ class TugasAkhirController extends Controller
                 ],
             ];
 
-            return ApiResponse::success($result, 'Data Tugas Akhir berhasil diambil');
+            return ApiResponse::success($result, 'Data list bimbingan semua mahasiswa berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
 
-
-
-
-    public function detailBimbinganByAdmin($tugasAkhirId)
+    public function detailBimbinganForAdmin($tugasAkhirId)
     {
         try {
             $tugasAkhir = TugasAkhir::with([
-                'mahasiswa',
-                'dosenPembimbing',
-                'bimbingan',
-                'kategori',
+                'mahasiswa:id,nim,name',
+                'dosenPembimbing:id,name,nik',
+                'bimbingan:id,tugas_akhir_id,catatan,bab,status_verifikasi,tanggal_bimbingan',
+                'kategori:id,nama_kategori',
                 'nilaiBimbingan',
-                'tahunAjaran'
+                'tahunAjaran:id,tahun_ajaran',
             ])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->first();
 
-
+            Carbon::setLocale('id');
             $data = [
-                'id' => $tugasAkhir->id,
-                'nim' => $tugasAkhir->mahasiswa->nim ?? null,
-                'nama_mahasiswa' => $tugasAkhir->mahasiswa->name ?? null,
-                'kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
-                'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
-                'dosen_pembimbing' => $tugasAkhir->dosenPembimbing->name ?? null,
-                'bimbingan' => BimbinganResource::collection($tugasAkhir->bimbingan),
-                'nilai_bimbingan' => $tugasAkhir->nilaiBimbingan
-                    ? new NilaiBimbinganResource($tugasAkhir->nilaiBimbingan)
-                    : null,
+                'tugas_akhir_id' => $tugasAkhir->id,
+                'mahasiswa' => [
+                    'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
+                    'nim' => $tugasAkhir->mahasiswa->nim ?? null,
+                    'name' => $tugasAkhir->mahasiswa->name ?? null,
+                ],
+                'kategori' => [
+                    'kategori_id' => $tugasAkhir->kategori->id ?? null,
+                    'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
+                ],
+                'tahun_ajaran' => [
+                    'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
+                    'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
+                ],
+                'dosen_pembimbing' => [
+                    'dosen_pembimbing_id' => $tugasAkhir->dosenPembimbing->id ?? null,
+                    'name' => $tugasAkhir->dosenPembimbing->name ?? null,
+                    'nik' => $tugasAkhir->dosenPembimbing->nik ?? null,
+                ],
+                'bimbingan' => $tugasAkhir->bimbingan->map(function ($bimbingan) {
+                    return [
+                        'bimbingan_id' => $bimbingan->id,
+                        'catatan' => $bimbingan->catatan,
+                        'bab' => $bimbingan->bab,
+                        'status_verifikasi' => $bimbingan->status_verifikasi,
+                        'tanggal_bimbingan' => $bimbingan->tanggal_bimbingan
+                            ? Carbon::parse($bimbingan->tanggal_bimbingan)->translatedFormat('l, d F Y')
+                            : null,
+                    ];
+                }),
+                'nilai_bimbingan' => [
+                    'nilai_bimbingan_id' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->id : null,
+                    'rerata_bimbingan' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->rerata_bimbingan : null,
+                    'disiplin' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->disiplin : null,
+                    'komunikasi' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->komunikasi : null,
+                    'skill_pengetahuan' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->skill_pengetahuan : null,
+                    'tingkah_laku' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->tingkah_laku : null,
+                ],
             ];
-            return ApiResponse::success($data, 'Data Tugas Akhir berhasil diambil');
+            return ApiResponse::success($data, 'Data detail bimbingan berhasil diambil');
 
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
@@ -1145,7 +1179,7 @@ class TugasAkhirController extends Controller
                         'id' => $tugasAkhir->dosenPembimbing->id,
                         'nama' => $tugasAkhir->dosenPembimbing->name,
                     ] : null,
-                    'kategori_ta' => $tugasAkhir->kategori ? [
+                    'kategori' => $tugasAkhir->kategori ? [
                         'id' => $tugasAkhir->kategori->id,
                         'nama' => $tugasAkhir->kategori->nama_kategori,
                     ] : null,
@@ -1282,7 +1316,7 @@ class TugasAkhirController extends Controller
                         'nim' => $tugasAkhir->mahasiswa->nim ?? null,
                         'name' => $tugasAkhir->mahasiswa->name ?? null,
                     ],
-                    'kategori_ta' => [
+                    'kategori' => [
                         'kategori_id' => $tugasAkhir->kategori->id ?? null,
                         'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
                     ],
