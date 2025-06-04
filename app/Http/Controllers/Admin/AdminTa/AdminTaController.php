@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\AdminTa;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\TugasAkhir;
+use App\Models\User;
 use Illuminate\Validation\ValidationException;
 use Exception;
 use Illuminate\Http\Request;
@@ -77,5 +78,29 @@ class AdminTaController extends Controller
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
+    }
+
+    public function tabelMahasiswa()
+    {
+        try {
+            //ambil data mahasiswa dari tabel mahasiswa
+            $mahasiswa = User::where('status', 1)
+                ->get()
+                ->map(function ($mhs) {
+                    $angkatan = substr($mhs->nim, 3, 2);
+                    return [
+                        'id' => $mhs->id,
+                        'nama' => $mhs->name,
+                        'nim' => $mhs->nim,
+                        'email' => $mhs->email,
+                        'angkatan' => "20".$angkatan,
+                        'status_ta'=> $mhs->status_ta,
+                    ];
+                });
+            return ApiResponse::success($mahasiswa, 'Data mahasiswa berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+
     }
 }

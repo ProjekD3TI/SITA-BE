@@ -309,6 +309,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
         // Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyForAdmin']);
         // Route::get('/admin_ta/dashboard', [AdminTaController::class, 'setDashboardByAdmin']);
+        Route::get('/admin_ta/mahasiswa',[AdminTaController::class,'tabelMahasiswa']);
     });
 
     // Route Admin Pengelola (inventaris)
