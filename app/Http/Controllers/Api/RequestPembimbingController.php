@@ -62,7 +62,6 @@ class RequestPembimbingController extends Controller
         }
     }
 
-
     public function updateForAdmin(Request $request, $id)
     {
         try {
@@ -269,34 +268,62 @@ class RequestPembimbingController extends Controller
 
     // ========================== FITUR DOSEN ==========================
 
-    public function tabelRequestPembimbingForDosen()
+    // Fitur Bimbingan (List Request Pembimbing untuk Dosen & Update Status Request)
+
+    public function tabelRequestPembimbingForDosen(Request $request)
     {
         try {
 
             $dosenId = Auth::id();
 
-            $requestPembimbing = RequestPembimbing::with([
+            $query = RequestPembimbing::with([
                 'tugasAkhir.mahasiswa:id,name,nim',
                 'tugasAkhir.kategori:id,nama_kategori'
             ])
                 ->where('status_request', 0)
-                ->where('dosen_id', $dosenId)
-                ->orderBy('tanggal_request', 'asc')
-                ->paginate(10);
+                ->where('dosen_id', $dosenId);
 
-            $data = $requestPembimbing->map(function ($item) {
+
+            // Fitur search berdasarkan nim, nama mahasiswa
+            if ($request->search) {
+                $query->whereHas('tugasAkhir.mahasiswa', function ($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->search . '%')
+                        ->orWhere('nim', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            // Fitur filter kategori
+            if ($request->kategori) {
+                $kategoriList = explode(',', $request->kategori);
+                $query->whereHas('tugasAkhir.kategori', function ($q) use ($kategoriList) {
+                    $q->where(function ($subQuery) use ($kategoriList) {
+                        foreach ($kategoriList as $index => $kategori) {
+                            $kategori = trim($kategori);
+                            if ($index === 0) {
+                                $subQuery->where('nama_kategori', 'like', '%' . $kategori . '%');
+                            } else {
+                                $subQuery->orWhere('nama_kategori', 'like', '%' . $kategori . '%');
+                            }
+                        }
+                    });
+                });
+            }
+
+
+            $requestPembimbing = $query->orderBy('tanggal_request', 'asc')->paginate(10);
+
+            $data = collect($requestPembimbing->items())->map(function ($item) {
                 Carbon::setLocale('id');
-
                 return [
                     'request_pembimbing_id' => $item->id,
                     'tugas_akhir_id' => $item->tugasAkhir->id,
                     'mahasiswa' => [
-                        'id' => $item->tugasAkhir->mahasiswa->id ?? null,
+                        'mahasiswa_id' => $item->tugasAkhir->mahasiswa->id ?? null,
                         'name' => $item->tugasAkhir->mahasiswa->name ?? null,
                         'nim' => $item->tugasAkhir->mahasiswa->nim ?? null,
                     ],
                     'kategori' => [
-                        'id' => $item->tugasAkhir->kategori->id ?? null,
+                        'kategori_  id' => $item->tugasAkhir->kategori->id ?? null,
                         'nama_kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
                     ],
                     'tanggal_request' => $item->tanggal_request
@@ -321,10 +348,15 @@ class RequestPembimbingController extends Controller
         }
     }
 
-    public function updateApprovalForDosen(Request $request, $id)
+    public function updateApprovalByDosen(Request $request, $requestPembimbingId)
     {
         try {
-            $requestPembimbing = RequestPembimbing::with(['tugasAkhir', 'dosen'])->find($id);
+            $requestPembimbing = RequestPembimbing::with(
+                [
+                    'tugasAkhir',
+                    'dosen'
+                ]
+            )->find($requestPembimbingId);
 
             if (!$requestPembimbing) {
                 return ApiResponse::error('Request not found', 404);

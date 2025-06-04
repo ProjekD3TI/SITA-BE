@@ -359,6 +359,10 @@ class ProposalController extends Controller
 
     // ========================== END FITUR ADMIN ==========================
 
+
+
+    // ========================== FITUR MAHASISWA ==========================
+
     // Fitur Proposal Admin TA
 
     public function storeForMahasiswa(Request $request)
@@ -545,4 +549,7 @@ class ProposalController extends Controller
             return ApiResponse::error('Gagal mengambil data proposal: ' . $e->getMessage(), 500);
         }
     }
+
+    // ========================== END FITUR MAHASISWA ==========================
+
 }

@@ -141,11 +141,11 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Sistem Tugas-akhir (Sesi)
     Route::get('/dosen/sesi', [SesiController::class, 'lihatSesiForDosen']);
 
-    // Sistem Tugas-akhir (Request Pembimbing)
+    // Sistem Tugas-akhir (Fitur Bimbingan ~ List Request Pembimbing untuk Dosen & Update Status Request)
     Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'tabelRequestPembimbingForDosen']);
-    Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalForDosen']);
+    Route::put('/dosen/request-pembimbing/approval/{requestPembimbingId}', [RequestPembimbingController::class, 'updateApprovalByDosen']);
 
-    // Sistem TugasAkhir (Bimbingan)
+    // Sistem Tugas-akhir (Fitur Bimbingan ~ List Dibimbing & Detail Bimbingan & Update Verifikasi Bimbingan)
     Route::get('/dosen/bimbingan/', [BimbinganController::class, 'tabelListDibimbingForDosen']);
     Route::get('/dosen/bimbingan/{tugasAkhirId}', [BimbinganController::class, 'tabelDetailBimbinganForDosen']);
     Route::put('/dosen/bimbingan/{bimbinganId}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
@@ -159,7 +159,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::post('/dosen/nilai-ujian-ta/', [NilaiUjianTAController::class, 'storeNilaiByDosenPenguji']);
     Route::put('/dosen/nilai-ujian-ta/{tugasAkhirId}', [NilaiUjianTAController::class, 'updateNilaiByDosenPenguji']);
 
-    // Ujian Tugas Akhir
+    // Sistem Tugas-akhir (Fitur Ujian Tugas Akhir ~ List Ujian TA untuk Dosen & Detail Ujian TA)
     Route::get('/dosen/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
     Route::get('/dosen/detail-ujian-ta/{tugasAkhirId}', [TugasAkhirController::class, 'detailUjianForDosen']);
 
@@ -315,7 +315,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
         // Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyForAdmin']);
         // Route::get('/admin_ta/dashboard', [AdminTaController::class, 'setDashboardByAdmin']);
-        Route::get('/admin_ta/mahasiswa',[AdminTaController::class,'tabelMahasiswa']);
+        Route::get('/admin_ta/mahasiswa', [AdminTaController::class, 'tabelMahasiswa']);
     });
 
     // Route Admin Pengelola (inventaris)

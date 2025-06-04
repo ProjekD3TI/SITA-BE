@@ -105,51 +105,51 @@ class BimbinganController extends Controller
     }
 
     public function showBimbinganForMahasiswa()
-{
-    try {
-        Carbon::setLocale('id');
-        $mahasiswa = Auth::id();
+    {
+        try {
+            Carbon::setLocale('id');
+            $mahasiswa = Auth::id();
 
-        $tugasAkhir = TugasAkhir::with('nilaiBimbingan')
-        ->where('mahasiswa_id', $mahasiswa)
-        ->where('status_aktif', 1)
-        ->select('id', 'nilai_bimbingan_id')
-        ->first();
+            $tugasAkhir = TugasAkhir::with('nilaiBimbingan')
+                ->where('mahasiswa_id', $mahasiswa)
+                ->where('status_aktif', 1)
+                ->select('id', 'nilai_bimbingan_id')
+                ->first();
 
-    if (!$tugasAkhir) {
-        return ApiResponse::success([], 'Belum ada tugas akhir yang aktif');
+            if (!$tugasAkhir) {
+                return ApiResponse::success([], 'Belum ada tugas akhir yang aktif');
+            }
+
+            $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
+                ->orderBy('tanggal_bimbingan', 'asc')
+                ->get(['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
+
+            $result = $bimbinganList->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'tanggal_bimbingan' => $item->tanggal_bimbingan
+                        ? Carbon::parse($item->tanggal_bimbingan)->translatedFormat('l, d F Y')
+                        : null,
+                    'bab' => $item->bab,
+                    'catatan' => $item->catatan,
+                    'status_verifikasi' => $item->status_verifikasi,
+                ];
+            });
+
+            $nilaiBimbingan = $tugasAkhir->nilaiBimbingan;
+
+            if ($nilaiBimbingan) {
+                $nilaiBimbingan = collect($nilaiBimbingan)->except(['created_at', 'updated_at']);
+            }
+
+            return ApiResponse::success([
+                'bimbingan' => $result,
+                'nilai_bimbingan' => $nilaiBimbingan
+            ], 'Daftar bimbingan berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Daftar bimbingan gagal diambil: ' . $e->getMessage(), 500);
+        }
     }
-
-    $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
-        ->orderBy('tanggal_bimbingan', 'asc')
-        ->get(['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
-
-    $result = $bimbinganList->map(function ($item) {
-        return [
-            'id' => $item->id,
-            'tanggal_bimbingan' => $item->tanggal_bimbingan
-                ? Carbon::parse($item->tanggal_bimbingan)->translatedFormat('l, d F Y')
-                : null,
-            'bab' => $item->bab,
-            'catatan' => $item->catatan,
-            'status_verifikasi' => $item->status_verifikasi,
-        ];
-    });
-
-    $nilaiBimbingan = $tugasAkhir->nilaiBimbingan;
-
-    if ($nilaiBimbingan) {
-        $nilaiBimbingan = collect($nilaiBimbingan)->except(['created_at', 'updated_at']);
-    }
-
-    return ApiResponse::success([
-        'bimbingan' => $result,
-        'nilai_bimbingan' => $nilaiBimbingan
-    ], 'Daftar bimbingan berhasil diambil');
-} catch (Exception $e) {
-    return ApiResponse::error('Daftar bimbingan gagal diambil: ' . $e->getMessage(), 500);
-}
-}
 
     public function destroyBimbinganByMahasiswa($id)
     {
@@ -182,24 +182,51 @@ class BimbinganController extends Controller
 
     // ========================== FITUR DOSEN ==========================
 
-    public function tabelListDibimbingForDosen()
+    public function tabelListDibimbingForDosen(Request $request)
     {
         try {
             $dosenId = Auth::id();
-            $tugasAkhir = TugasAkhir::with([
+
+            $query = TugasAkhir::with([
                 'mahasiswa:id,name,nim',
                 'kategori:id,nama_kategori'
             ])
                 ->where('dosen_pembimbing_id', $dosenId)
-                ->where('status_aktif', 1)
-                ->paginate(10);
+                ->where('status_aktif', 1);
+
+            // Fitur search nim/nama mahasiswa
+            if ($request->search) {
+                $query->whereHas('mahasiswa', function ($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->search . '%')
+                        ->orWhere('nim', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            // Fitur filter kategori
+            if ($request->kategori) {
+                $kategoriList = explode(',', $request->kategori);
+                $query->whereHas('kategori', function ($q) use ($kategoriList) {
+                    $q->where(function ($subQuery) use ($kategoriList) {
+                        foreach ($kategoriList as $index => $kategori) {
+                            $kategori = trim($kategori);
+                            if ($index === 0) {
+                                $subQuery->where('nama_kategori', 'like', '%' . $kategori . '%');
+                            } else {
+                                $subQuery->orWhere('nama_kategori', 'like', '%' . $kategori . '%');
+                            }
+                        }
+                    });
+                });
+            }
+
+            $tugasAkhir = $query->paginate(10);
 
             $data = collect($tugasAkhir->items())->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
                     'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
                     'mahasiswa' => [
-                        'id' => $item->mahasiswa->id ?? null,
+                        'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'name' => $item->mahasiswa->name ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
                     ],
@@ -246,7 +273,7 @@ class BimbinganController extends Controller
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir ?? null,
                 'mahasiswa' => [
-                    'id' => $tugasAkhir->mahasiswa->id ?? null,
+                    'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
                     'name' => $tugasAkhir->mahasiswa->name ?? null,
                     'nim' => $tugasAkhir->mahasiswa->nim ?? null,
                 ],
@@ -255,7 +282,7 @@ class BimbinganController extends Controller
                     'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
                 ],
                 'tahun_ajaran' => [
-                    'id' => $tugasAkhir->tahunAjaran->id ?? null,
+                    'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
                     'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
                 ],
                 'bimbingan' => BimbinganResource::collection($tugasAkhir->bimbingan),
@@ -304,6 +331,5 @@ class BimbinganController extends Controller
     }
 
     // ========================== END FITUR DOSEN ==========================
-
 
 }
