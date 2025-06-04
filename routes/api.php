@@ -102,8 +102,6 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
     // Ujian Tugas Akhir
     Route::get('/mahasiswa/ujian-ta', [TugasAkhirController::class, 'ujianTAForMahasiswa']);
-    Route::get('/admin_ta/list-penjadwalan-ujian', [UjianTAController::class, 'jadwalUjianForMahasiswa']);
-
     Route::get('/mahasiswa/ujian-ta/nilai-ujian', [NilaiUjianTAController::class, 'getNilaiUjianForMahasiswa']);
     Route::get('/mahasiswa/ujian-ta/jadwal-ujian', [UjianTAController::class, 'jadwalUjianForMahasiswa']);
 
@@ -140,6 +138,9 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::put('/dosen/profil/edit', [DosenController::class, 'editProfileDosen']);
     // ----------------- || Sistem Informasi Tugas AKhir || ------------------------ \\
 
+    // Sistem Tugas-akhir (Sesi)
+    Route::get('/dosen/sesi', [SesiController::class, 'lihatSesiForDosen']);
+
     // Sistem Tugas-akhir (Request Pembimbing)
     Route::get('/dosen/request-pembimbing/', [RequestPembimbingController::class, 'tabelRequestPembimbingForDosen']);
     Route::put('/dosen/request-pembimbing/approval/{id}', [RequestPembimbingController::class, 'updateApprovalForDosen']);
@@ -150,9 +151,9 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::put('/dosen/bimbingan/{bimbinganId}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
 
     // Sistem TugasAkhir (Nilai Bimbingan)
-    Route::get('/dosen/nilai-bimbingan/{id}', [NilaiBimbinganController::class, 'getNilaiBimbinganByDosen']);
-    Route::post('/dosen/nilai-bimbingan/{id}', [NilaiBimbinganController::class, 'storeNilaiBimbinganByDosen']);
-    Route::put('/dosen/nilai-bimbingan/{id}/update', [NilaiBimbinganController::class, 'updateNilaiBimbinganByDosen']);
+    Route::get('/dosen/nilai-bimbingan/{tugasAkhirId}', [NilaiBimbinganController::class, 'getNilaiBimbinganByDosen']);
+    Route::post('/dosen/nilai-bimbingan/{tugasAkhirId}', [NilaiBimbinganController::class, 'storeNilaiBimbinganByDosen']);
+    Route::put('/dosen/nilai-bimbingan/{tugasAkhirId}/update', [NilaiBimbinganController::class, 'updateNilaiBimbinganByDosen']);
 
     // Sistem Tugas-akhir (Nilai Ujian TA)
     Route::post('/dosen/nilai-ujian-ta/', [NilaiUjianTAController::class, 'storeNilaiByDosenPenguji']);
@@ -160,11 +161,10 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 
     // Ujian Tugas Akhir
     Route::get('/dosen/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
+    Route::get('/dosen/detail-ujian-ta/{tugasAkhirId}', [TugasAkhirController::class, 'detailUjianForDosen']);
 
     // Sistem Tugas akhir (Tugas Akhir)
-    //blm ditest (nilai bimbingan sudah ditest)
-    Route::put('/dosen/tugas-akhir/{id}/nilai', [TugasAkhirController::class, 'memberiNilaiTAbyDosen']);
-    Route::put('/dosen/status-kelulusan/{tugas_akhir_id}', [TugasAkhirController::class, 'updateStatusKelulusanByDosenPengujiKetua']);
+    Route::put('/dosen/status-kelulusan/{tugasAkhirId}', [TugasAkhirController::class, 'updateStatusKelulusanByDosenPembimbing']);
 
     Route::get('/dosen/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByDosen']);
     // Kategori
@@ -239,9 +239,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatusForAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}/update-valid-status', [TugasAkhirController::class, 'updateValidationStatusForAdmin']);
         Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTAForAdmin']);
-        Route::get('/admin_ta/tugas-akhir/plotting', [TugasAkhirController::class, 'tabelPlottingByAdmin']);
         Route::get('/admin_ta/tugas-akhir/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganByAdmin']);
-        Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingByAdmin']);
         Route::get('/admin_ta/tugas-akhir/detail-bimbingan/{tugasAkhirId}', [TugasAkhirController::class, 'detailBimbinganByAdmin']);
         Route::get('/admin_ta/list-plotting-penguji', [TugasAkhirController::class, 'tabelPlottingPengujiByAdmin']);
         Route::get('/admin_ta/plotting-penguji/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiByAdmin']);
@@ -249,8 +247,14 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/pendaftar-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPendaftarUjianByAdmin']);
         Route::put('/admin_ta/pendaftar-ujian/{tugasAkhirId}/status', [TugasAkhirController::class, 'validationBerkasForAdmin']);
         Route::get('/admin_ta/list-penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
+
+        // List Plotting Dosen Pembimbing
+        Route::get('/admin_ta/tugas-akhir/plotting', [TugasAkhirController::class, 'tabelPlottingPembimbingByAdmin']);
+        Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingByAdmin']);
         Route::get('/admin_ta/penjadwalan-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPenjadwalanUjianByAdmin']);
         Route::put('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
+
+        Route::get('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiByAdmin']);
 
         // Berita Acara Semhas
         // Route::get('/admin_ta/list-berita-acara', [TugasAkhirController::class, 'tabelBeritaAcaraByAdmin']);

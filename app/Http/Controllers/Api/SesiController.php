@@ -10,6 +10,9 @@ use App\Models\Sesi;
 use Illuminate\Validation\ValidationException;
 class SesiController extends Controller
 {
+
+    // ========================== FITUR ADMIN ==========================
+
     public function index()
     {
         try {
@@ -92,4 +95,32 @@ class SesiController extends Controller
             return ApiResponse::error('Data sesi gagal dihapus ' . $e->getMessage(), 500);
         }
     }
+
+    // ========================== END FITUR ADMIN ==========================
+
+
+
+    // ========================== FITUR DOSEN ==========================
+
+    public function lihatSesiForDosen()
+    {
+        try {
+            $sesi = Sesi::all();
+            // Format the data as requested
+            $data = $sesi->map(function ($item) {
+                return [
+                    'sesi_id' => $item->id,
+                    'nama_sesi' => $item->nama_sesi,
+                    'waktu_mulai' => date('H:i', strtotime($item->waktu_mulai)),
+                    'waktu_selesai' => date('H:i', strtotime($item->waktu_selesai)),
+                ];
+            });
+            return ApiResponse::success($data, "Data sesi berhasil diambil");
+        } catch (\Exception $e) {
+            return ApiResponse::error("Gagal mengambil data sesi: " . $e->getMessage(), 500);
+        }
+    }
+
+    // ========================== END FITUR DOSEN ==========================
+
 }

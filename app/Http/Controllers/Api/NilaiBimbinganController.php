@@ -14,23 +14,8 @@ use Illuminate\Http\Request;
 
 class NilaiBimbinganController extends Controller
 {
-    public function getNilaiBimbinganByMahasiswa()
-    {
-        $mahasiswaId = Auth::id();
 
-        try {
-            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswaId)->where('status_aktif', 1)->firstOrFail();
-
-            $nilaiBimbingan = $tugasAkhir->nilaiBimbingan;
-            if (!$nilaiBimbingan) {
-                return ApiResponse::error('Nilai bimbingan tidak ditemukan untuk tugas akhir ini', 404);
-            }
-
-            return ApiResponse::success(new NilaiBimbinganResource($nilaiBimbingan), 'Data nilai bimbingan berhasil diambil');
-        } catch (\Exception $e) {
-            return ApiResponse::error('Data nilai bimbingan gagal diambil: ' . $e->getMessage(), 500);
-        }
-    }
+    // ========================== FITUR DOSEN ==========================
 
     public function getNilaiBimbinganByDosen($tugasAkhirId)
     {
@@ -101,6 +86,30 @@ class NilaiBimbinganController extends Controller
         }
     }
 
+    // ========================== END FITUR DOSEN ==========================
+
+
+
+    // ========================== FITUR MAHASISWA ==========================
+
+    public function getNilaiBimbinganByMahasiswa()
+    {
+        $mahasiswaId = Auth::id();
+
+        try {
+            $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswaId)->where('status_aktif', 1)->firstOrFail();
+
+            $nilaiBimbingan = $tugasAkhir->nilaiBimbingan;
+            if (!$nilaiBimbingan) {
+                return ApiResponse::error('Nilai bimbingan tidak ditemukan untuk tugas akhir ini', 404);
+            }
+
+            return ApiResponse::success(new NilaiBimbinganResource($nilaiBimbingan), 'Data nilai bimbingan berhasil diambil');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Data nilai bimbingan gagal diambil: ' . $e->getMessage(), 500);
+        }
+    }
+
     public function updateNilaiBimbinganByDosen(Request $request, $tugasAkhirId)
     {
         $dosenId = Auth::id();
@@ -140,5 +149,7 @@ class NilaiBimbinganController extends Controller
             return ApiResponse::error('Data nilai bimbingan gagal diperbarui: ' . $e->getMessage(), 500);
         }
     }
+
+    // ========================== END FITUR MAHASISWA ==========================
 
 }

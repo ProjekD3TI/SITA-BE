@@ -11,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class RuangController extends Controller
 {
+    // ========================== FITUR ADMIN ==========================
+
     public function index()
     {
         try {
@@ -83,4 +85,7 @@ class RuangController extends Controller
             return ApiResponse::error(' Sesi gagal ditambahkan ' . $e->getMessage(), 500);
         }
     }
+
+    // ========================== END FITUR ADMIN ==========================
+
 }
