@@ -28,6 +28,7 @@ class User extends Authenticatable
         'no_telp',
         'password',
         'status',
+        'akses_ta',
     ];
 
     /**

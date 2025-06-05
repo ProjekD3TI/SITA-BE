@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->string('password');
             $table->string('nik');
             $table->boolean('status')->default(1);
+            $table->boolean('akses_ta')->default(1);
             $table->timestamps();
         });
     }
