@@ -241,14 +241,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatusForAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}/update-valid-status', [TugasAkhirController::class, 'updateValidationStatusForAdmin']);
         Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTAForAdmin']);
-        Route::get('/admin_ta/list-plotting-penguji', [TugasAkhirController::class, 'tabelPlottingPengujiByAdmin']);
-        Route::get('/admin_ta/plotting-penguji/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiByAdmin']);
-        Route::get('/admin_ta/list-pendaftar-ujian', [TugasAkhirController::class, 'tabelPendaftarUjianByAdmin']);
-        Route::get('/admin_ta/pendaftar-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPendaftarUjianByAdmin']);
-        Route::put('/admin_ta/pendaftar-ujian/{tugasAkhirId}/status', [TugasAkhirController::class, 'validationBerkasForAdmin']);
-        Route::get('/admin_ta/list-penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
-        Route::get('/admin_ta/penjadwalan-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPenjadwalanUjianByAdmin']);
-        Route::get('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiByAdmin']);
+
 
         // Fitur Bimbingan (Plotting List Dosen Pembimbing & Detail Plotting Pembimbing & Update Plotting Pembimbing)
         Route::get('/admin_ta/tugas-akhir/plotting', [TugasAkhirController::class, 'tabelPlottingPembimbingForAdmin']);
@@ -268,6 +261,19 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/seminar-proposal', [ProposalController::class, 'tabelListSeminarProposalForAdmin']);
         Route::get('/admin_ta/seminar-proposal/{proposalId}', [ProposalController::class, 'detailSeminarProposalForAdmin']);
         Route::put('/admin_ta/seminar-proposal/{proposalId}/nilai-catatan', [ProposalController::class, 'updateNilaidanCatatanForAdmin']);
+
+        // Fitur Ujian TA (List Plotting Penguji & Detail Plotting Penguji)
+        Route::get('/admin_ta/plotting-penguji', [TugasAkhirController::class, 'tabelPlottingPengujiForAdmin']);
+        Route::get('/admin_ta/plotting-penguji/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPengujiForAdmin']);
+
+        // Fitur Ujian TA (List Pendaftar Ujian & Detail Pendaftar Ujian)
+        Route::get('/admin_ta/pendaftar-ujian', [TugasAkhirController::class, 'tabelPendaftarUjianForAdmin']);
+        Route::get('/admin_ta/pendaftar-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPendaftarUjianForAdmin']);
+        Route::put('/admin_ta/pendaftar-ujian/{tugasAkhirId}/status', [TugasAkhirController::class, 'validasiBerkasByAdmin']);
+
+        // Fitur Ujian TA (List Jadwal Ujian & Berita Acara Ujian)
+        Route::get('/admin_ta/penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
+        Route::get('/admin_ta/penjadwalan-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPenjadwalanUjianByAdmin']);
 
         // Berita Acara Semhas
         // Route::get('/admin_ta/list-berita-acara', [TugasAkhirController::class, 'tabelBeritaAcaraByAdmin']);

@@ -20,6 +20,7 @@ class TugasAkhir extends Model
         'kategori_id',
         'judul_tugas_akhir',
         'catatan_proposal',
+        'catatan_perbaikan',
         'nilai_proposal',
         'nilai_akhir',
         'status_kelulusan',

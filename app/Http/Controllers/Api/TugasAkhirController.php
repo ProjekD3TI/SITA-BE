@@ -730,13 +730,13 @@ class TugasAkhirController extends Controller
         }
     }
 
-    // Fitur Ujian TA (Plotting Penguji & List Pendaftar Ujian & Penjadwalan Ujian & Berita Acara )
+    // Fitur Ujian TA (List Plotting Penguji & Detail Plotting Penguji)
 
-    public function tabelPlottingPengujiByAdmin()
+    public function tabelPlottingPengujiForAdmin(Request $request)
     {
         try {
 
-            $tugasAkhir = TugasAkhir::with([
+            $query = TugasAkhir::with([
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
                 'dosenPenguji:id,name',
@@ -749,23 +749,55 @@ class TugasAkhirController extends Controller
                         $query->where('status_verifikasi', 1);
                     }
                 ])
-                ->having('bimbingan_count', '>=', 9)
-                ->paginate(10);
+                ->having('bimbingan_count', '>=', 9);
 
+            // Search nim, nama, judul proposal
+            if ($request->search) {
+                $query->where(function ($q) use ($request) {
+                    $q->whereHas('mahasiswa', function ($q2) use ($request) {
+                        $q2->where('name', 'like', '%' . $request->search . '%')
+                            ->orWhere('nim', 'like', '%' . $request->search . '%');
+                    })
+                        ->orWhereHas('proposal', function ($q2) use ($request) {
+                            $q2->where('judul_proposal', 'like', '%' . $request->search . '%');
+                        });
+                });
+            }
+
+            // Filter status plotting penguji
+            if ($request->has('status')) {
+                $statusList = explode(',', $request->status);
+                $query->where(function ($q) use ($statusList) {
+                    foreach ($statusList as $status) {
+                        $status = (int) trim($status);
+                        if ($status === 0) {
+                            $q->orWhereDoesntHave('dosenPenguji');
+                        } elseif ($status === 1) {
+                            $q->orWhereHas('dosenPenguji');
+                        }
+                    }
+                });
+            }
+
+            $tugasAkhir = $query->paginate(10);
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
                     'mahasiswa' => [
+                        'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
                         'name' => $item->mahasiswa->name ?? null,
                     ],
-                    'judul_proposal' => $item->proposal->judul_proposal ?? null,
+                    'proposal' => [
+                        'proposal_id' => $item->proposal->id ?? null,
+                        'judul_proposal' => $item->proposal->judul_proposal ?? null,
+                    ],
                     'dosen_pembimbing' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
                     'dosen_penguji' => $item->dosenPenguji
                         ? $item->dosenPenguji->map(function ($penguji) {
                             return [
-                                'id' => $penguji->id,
+                                'dosen_penguji_id' => $penguji->id,
                                 'name' => $penguji->name,
                                 'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
                             ];
@@ -794,7 +826,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function plottingPengujiByAdmin($tugasAkhirId)
+    public function plottingPengujiForAdmin($tugasAkhirId)
     {
         try {
             $tugasAkhir = TugasAkhir::with([
@@ -815,7 +847,7 @@ class TugasAkhirController extends Controller
             $dosenPenguji = $tugasAkhir && $tugasAkhir->dosenPenguji
                 ? $tugasAkhir->dosenPenguji->map(function ($penguji) {
                     return [
-                        'id' => $penguji->id,
+                        'dosenPenguji_id' => $penguji->id,
                         'name' => $penguji->name,
                         'nik' => $penguji->nik,
                         'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
@@ -826,17 +858,24 @@ class TugasAkhirController extends Controller
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id ?? null,
                 'mahasiswa' => [
+                    'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
                     'nim' => $tugasAkhir->mahasiswa->nim ?? null,
                     'name' => $tugasAkhir->mahasiswa->name ?? null,
                 ],
                 'judul_proposal' => $tugasAkhir->proposal->judul_proposal ?? null,
                 'dosen_pembimbing' => [
-                    'id' => $tugasAkhir->dosenPembimbing ? $tugasAkhir->dosenPembimbing->id : null,
-                    'name' => $tugasAkhir->dosenPembimbing ? $tugasAkhir->dosenPembimbing->name : null,
-                    'nik' => $tugasAkhir->dosenPembimbing ? $tugasAkhir->dosenPembimbing->nik : null,
+                    'dosen_pembimbing_id' => $tugasAkhir->dosenPembimbing->id ?? null,
+                    'name' => $tugasAkhir->dosenPembimbing->name ?? null,
+                    'nik' => $tugasAkhir->dosenPembimbing->nik ?? null,
                 ],
-                'kategori' => $tugasAkhir->kategori ? $tugasAkhir->kategori->nama_kategori : null,
-                'tahun_ajaran' => $tugasAkhir->tahunAjaran ? $tugasAkhir->tahunAjaran->tahun_ajaran : null,
+                'kategori' => [
+                    'kategori_id' => $tugasAkhir->kategori->id ?? null,
+                    'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
+                ],
+                'tahun_ajaran' => [
+                    'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
+                    'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
+                ],
                 'dosen_penguji' => $dosenPenguji, // <-- tambahkan ini
                 'daftar_dosen' => $daftarDosen
             ];
@@ -847,17 +886,42 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function tabelPendaftarUjianByAdmin()
+    // Fitur Ujian TA (List Pendaftar Ujian & Detail Pendaftar Ujian)
+
+    public function tabelPendaftarUjianForAdmin(Request $request)
     {
         try {
-            $tugasAkhir = TugasAkhir::with([
+            $query = TugasAkhir::with([
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
+                'berkas'
             ])
                 ->where('status_aktif', 1)
-                ->whereIn('status_valid', [0, 1, 2]) // Hanya ambil yang belum validasi atau ditolak
-                ->paginate(10)
-            ;
+                ->whereIn('status_valid', [0, 1, 2]); // Hanya ambil yang belum validasi atau ditolak
+
+            // Fitur search nim, nama, judul tugas akhir
+            if ($request->search) {
+                $query->where(function ($q) use ($request) {
+                    $q->whereHas('mahasiswa', function ($q2) use ($request) {
+                        $q2->where('name', 'like', '%' . $request->search . '%')
+                            ->orWhere('nim', 'like', '%' . $request->search . '%');
+                    })
+                        ->orWhere('judul_tugas_akhir', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            // Fitur filter status (0,1,2 saja, null tidak masuk)
+            if ($request->has('status')) {
+                $statusValidList = array_filter(
+                    explode(',', $request->status),
+                    fn($v) => in_array($v, ['0', '1', '2'], true)
+                );
+                if (count($statusValidList)) {
+                    $query->whereIn('status_valid', $statusValidList);
+                }
+            }
+
+            $tugasAkhir = $query->paginate(10);
 
             $statusForm = StatusForm::where('nama_form', 'Tugas Akhir')
                 ->select('id', 'is_open')
@@ -868,12 +932,16 @@ class TugasAkhirController extends Controller
                 return [
                     'tugas_akhir_id' => $item->id,
                     'mahasiswa' => [
+                        'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
                         'name' => $item->mahasiswa->name ?? null,
                     ],
                     'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
-                    'dosen_pembimbing' => $item->dosenPembimbing ? $item->dosenPembimbing->name : null,
-                    'status_valid' => $item->status_valid,
+                    'dosen_pembimbing' => [
+                        'dosen_pembimbing_id' => $item->dosenPembimbing->id ?? null,
+                        'name' => $item->dosenPembimbing->name ?? null,
+                    ],
+                    'status_valid' => $item->status_valid ?? null,
                     'berkas' => $item->berkas ? $item->berkas->map(function ($berkas) {
                         return [
                             'id' => $berkas->id,
@@ -903,14 +971,16 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function showPendaftarUjianByAdmin($tugasAkhirId)
+    public function showPendaftarUjianForAdmin($tugasAkhirId)
     {
         try {
             $tugasAkhir = TugasAkhir::with([
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
                 'dosenPenguji:id,name',
-                'ujianTA'
+                'kategori:id,nama_kategori',
+                'tahunAjaran:id,tahun_ajaran',
+                'berkas'
             ])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
@@ -923,12 +993,20 @@ class TugasAkhirController extends Controller
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'mahasiswa' => [
+                    'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
                     'nim' => $tugasAkhir->mahasiswa->nim ?? null,
                     'name' => $tugasAkhir->mahasiswa->name ?? null,
                 ],
                 'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir ?? null,
-                'kategori' => $tugasAkhir->kategori ? $tugasAkhir->kategori->nama_kategori : null,
-                'tahun_ajaran' => $tugasAkhir->tahunAjaran ? $tugasAkhir->tahunAjaran->tahun_ajaran : null,
+                'kategori' => [
+                    'kategori_id' => $tugasAkhir->kategori->id ?? null,
+                    'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
+                ],
+                'tahun_ajaran' => [
+                    'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
+                    'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
+                ],
+                'catatan_perbaikan' => $tugasAkhir->catatan_perbaikan ?? null,
                 'status_valid' => $tugasAkhir->status_valid,
                 'berkas' => $tugasAkhir->berkas ? $tugasAkhir->berkas->map(function ($berkas) {
                     return [
@@ -946,10 +1024,13 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function validationBerkasForAdmin(Request $request, $id)
+    public function validasiBerkasByAdmin(Request $request, $tugasAkhirId)
     {
         try {
-            $tugasAkhir = TugasAkhir::with(['berkas'])->findOrFail($id);
+            $tugasAkhir = TugasAkhir::with(
+                ['berkas']
+            )->
+                findOrFail($tugasAkhirId);
 
             // Ambil semua nama berkas yang ada di DB untuk tugas akhir ini
             $berkasList = $tugasAkhir->berkas->pluck('nama_berkas')->toArray();
@@ -975,7 +1056,7 @@ class TugasAkhirController extends Controller
             $validatedData = $request->validate([
                 'status_valid_berkas' => "required|array|size:$jumlahBerkas",
                 'status_valid_berkas.*' => 'required|in:1,2',
-                // 'catatan_perbaikan' => 'nullable|string',
+                'catatan_perbaikan' => 'nullable|string',
             ]);
 
             // Update status_valid pada masing-masing berkas sesuai urutan di DB
@@ -994,10 +1075,10 @@ class TugasAkhirController extends Controller
                 $tugasAkhir->status_valid = 1; // Diterima
             }
 
-            // // Tambahkan update catatan_perbaikan jika ada
-            // if (array_key_exists('catatan_perbaikan', $validatedData)) {
-            //     $tugasAkhir->catatan_perbaikan = $validatedData['catatan_perbaikan'];
-            // }
+            // Tambahkan update catatan_perbaikan jika ada
+            if (array_key_exists('catatan_perbaikan', $validatedData)) {
+                $tugasAkhir->catatan_perbaikan = $validatedData['catatan_perbaikan'];
+            }
 
             $tugasAkhir->save();
 
@@ -1009,49 +1090,108 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function tabelPenjadwalanUjianByAdmin()
+    // Fitur Ujian TA (List Jadwal Ujian & Berita Acara Ujian)
+
+    public function tabelPenjadwalanUjianByAdmin(Request $request)
     {
         try {
-            $tugasAkhir = TugasAkhir::with([
+            $query = TugasAkhir::with([
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
                 'dosenPenguji:id,name',
                 'ujianTA'
             ])
                 ->where('status_aktif', 1)
-                ->where('status_valid', 1) // Hanya ambil yang sudah validasi
-                ->paginate(10);
+                ->where('status_valid', 1);
 
-            Carbon::setLocale('id');
+            // Fitur search nim, nama, judul tugas akhir
+            if ($request->search) {
+                $query->where(function ($q) use ($request) {
+                    $q->whereHas('mahasiswa', function ($q2) use ($request) {
+                        $q2->where('name', 'like', '%' . $request->search . '%')
+                            ->orWhere('nim', 'like', '%' . $request->search . '%');
+                    })
+                        ->orWhere('judul_tugas_akhir', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            // Fitur filter status penjadwalan/kelulusan
+            if ($request->has('status')) {
+                $status = $request->status;
+                $query->where(function ($q) use ($status) {
+                    if ($status === 'menunggu') {
+                        $q->whereDoesntHave('ujianTA', function ($q2) {
+                            $q2->where('status_ujian', 'aktif');
+                        });
+                    } elseif ($status === 'terjadwal') {
+                        $q->whereHas('ujianTA', function ($q2) {
+                            $q2->where('status_ujian', 'aktif');
+                        })->whereNull('status_kelulusan');
+                    } elseif (in_array($status, ['1', '2', '3', '4'])) {
+                        $q->where('status_kelulusan', $status);
+                    }
+                });
+            }
+
+            $tugasAkhir = $query->paginate(10);
+
             $data = collect($tugasAkhir->items())->map(function ($item) {
+                Carbon::setLocale('id');
                 $ujianTA = $item->ujianTA->where('status_ujian', 'aktif')->first();
+                if (is_null($item->status_kelulusan)) {
+                    if ($ujianTA) {
+                        $status_kategori = 'terjadwal';
+                    } else {
+                        $status_kategori = 'menunggu';
+                    }
+                } else {
+                    // Sudah ada status kelulusan
+                    switch ($item->status_kelulusan) {
+                        case 1:
+                            $status_kategori = 'lulus_tanpa_revisi';
+                            break;
+                        case 2:
+                            $status_kategori = 'lulus_revisi_tanpa_diujikan';
+                            break;
+                        case 3:
+                            $status_kategori = 'belum_lulus_revisi_diujikan_lagi';
+                            break;
+                        case 4:
+                            $status_kategori = 'tidak_lulus_ulang_ta_diujikan_lagi';
+                            break;
+                        default:
+                            $status_kategori = 'tidak_diketahui';
+                    }
+                }
                 return [
                     'tugas_akhir_id' => $item->id,
                     'mahasiswa' => [
+                        'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
                         'name' => $item->mahasiswa->name ?? null,
                     ],
                     'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
-                    'status_kelulusan' => $item->status_kelulusan,
+                    'status_kelulusan' => $item->status_kelulusan ?? null,
+                    'status_kategori' => $status_kategori ?? null,
                     'dosen_pembimbing' => [
-                        'id' => $item->dosenPembimbing->id ?? null,
+                        'dosen_pembimbing_id' => $item->dosenPembimbing->id ?? null,
                         'name' => $item->dosenPembimbing->name ?? null,
                     ],
                     'ujian_ta' => $ujianTA ? [
-                        'id' => $ujianTA->id,
+                        'ujian_ta_id' => $ujianTA->id,
                         'tanggal_ujian' => $ujianTA->tanggal_ujian
                             ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
                             : null,
                         'waktu_mulai' => $ujianTA->sesi->waktu_mulai ?? null,
                         'waktu_selesai' => $ujianTA->sesi->waktu_selesai ?? null,
                         'ruang' => $ujianTA->ruang->nama_ruang ?? null,
-                        'status_ujian' => $ujianTA->status_ujian
+                        'status_ujian' => $ujianTA->status_ujian ?? null
                     ] : [],
                     'dosen_penguji' => $item->dosenPenguji
                         ? $item->dosenPenguji->map(function ($penguji) {
                             return [
-                                'id' => $penguji->id,
-                                'name' => $penguji->name,
+                                'dosen_penguji_id' => $penguji->id ?? null,
+                                'name' => $penguji->name ?? null,
                                 'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
                             ];
                         })->values()
@@ -1082,6 +1222,7 @@ class TugasAkhirController extends Controller
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
                 'dosenPenguji:id,name',
+                'kategori:id,nama_kategori',
                 'ujianTA'
             ])
                 ->where('status_aktif', 1)
@@ -1093,23 +1234,31 @@ class TugasAkhirController extends Controller
             }
 
             $ujianTA = $tugasAkhir->ujianTA->where('status_ujian', 'aktif')->first();
+            Carbon::setLocale('id');
 
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'mahasiswa' => [
+                    'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
                     'nim' => $tugasAkhir->mahasiswa->nim ?? null,
                     'name' => $tugasAkhir->mahasiswa->name ?? null,
                 ],
                 'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir ?? null,
-                'kategori' => $tugasAkhir->kategori ? $tugasAkhir->kategori->nama_kategori : null,
-                'tahun_ajaran' => $tugasAkhir->tahunAjaran ? $tugasAkhir->tahunAjaran->tahun_ajaran : null,
+                'kategori' => [
+                    'kategori_id' => $tugasAkhir->kategori->id ?? null,
+                    'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
+                ],
+                'tahun_ajaran' => [
+                    'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
+                    'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
+                ],
                 'status_kelulusan' => $tugasAkhir->status_kelulusan,
                 'dosen_pembimbing' => [
-                    'id' => $tugasAkhir->dosenPembimbing->id ?? null,
+                    'dosen_pembimbing_id' => $tugasAkhir->dosenPembimbing->id ?? null,
                     'name' => $tugasAkhir->dosenPembimbing->name ?? null,
                 ],
                 'ujian_ta' => $ujianTA ? [
-                    'id' => $ujianTA->id,
+                    'ujian_ta_id' => $ujianTA->id,
                     'tanggal_ujian' => $ujianTA->tanggal_ujian
                         ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
                         : null,
@@ -1122,7 +1271,7 @@ class TugasAkhirController extends Controller
                     $tugasAkhir->dosenPenguji
                     ? $tugasAkhir->dosenPenguji->map(function ($penguji) {
                         return [
-                            'id' => $penguji->id,
+                            'dosen_penguji_id' => $penguji->id,
                             'name' => $penguji->name,
                             'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
                         ];
@@ -1135,6 +1284,7 @@ class TugasAkhirController extends Controller
         }
     }
 
+    // ========================== END FITUR ADMIN ==========================
 
 
     // ========================== FITUR MAHASISWA ==========================
