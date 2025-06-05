@@ -169,9 +169,6 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::get('/dosen/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByDosen']);
     // Kategori
     Route::get('/dosen/kategori', [KategoriController::class, 'lihatKategori']);
-
-    // Sesi
-    Route::get('/dosen/sesi', [SesiController::class, 'index']);
     // ----------------- || ############################### || ------------------------ \\
 
 
