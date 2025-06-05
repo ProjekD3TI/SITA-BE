@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\AdminTa;
 
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
+use App\Models\Dosen;
 use App\Models\TugasAkhir;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
@@ -80,7 +81,69 @@ class AdminTaController extends Controller
         }
     }
 
-    public function tabelMahasiswa()
+    public function getDosen()
+    {
+        try {
+            //ambil data mahasiswa dari tabel mahasiswa
+            $dosen = Dosen::where('status', 1)
+                ->get()
+                ->map(function ($dosen) {
+                    $angkatan = substr($dosen->nim, 3, 2);
+                    return [
+                        'id' => $dosen->id,
+                        'nama' => $dosen->name,
+                        'nim' => $dosen->nim,
+                        'email' => $dosen->email,
+                        'angkatan' => "20".$angkatan,
+                        'akses_ta'=> $dosen->akses_ta,
+                    ];
+                });
+            return ApiResponse::success($dosen, 'Data mahasiswa berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+
+    }
+    //setAksesTA mahasiswa
+    public function setAksesTADosen(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:dosen,id',
+            'akses_ta' => 'required|boolean',
+        ]);
+
+        try {
+            // Update semua user yang id-nya ada di array
+            User::whereIn('id', $request->ids)->update(['akses_ta' => $request->akses_ta]);
+
+            return ApiResponse::success(null, 'Akses TA berhasil diubah untuk banyak user');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+    public function setAksesTAMahasiswa(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:mahasiswa,id',
+            'akses_ta' => 'required|boolean',
+        ]);
+
+        try {
+            // Update semua user yang id-nya ada di array
+            User::whereIn('id', $request->ids)->update(['akses_ta' => $request->akses_ta]);
+
+            return ApiResponse::success(null, 'Akses TA berhasil diubah untuk banyak user');
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+    public function getMahasiswa()
     {
         try {
             //ambil data mahasiswa dari tabel mahasiswa
@@ -94,7 +157,7 @@ class AdminTaController extends Controller
                         'nim' => $mhs->nim,
                         'email' => $mhs->email,
                         'angkatan' => "20".$angkatan,
-                        'status_ta'=> $mhs->status_ta,
+                        'akses_ta'=> $mhs->akses_ta,
                     ];
                 });
             return ApiResponse::success($mahasiswa, 'Data mahasiswa berhasil diambil');

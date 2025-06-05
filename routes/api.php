@@ -315,7 +315,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
         // Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyForAdmin']);
         // Route::get('/admin_ta/dashboard', [AdminTaController::class, 'setDashboardByAdmin']);
-        Route::get('/admin_ta/mahasiswa', [AdminTaController::class, 'tabelMahasiswa']);
+        Route::get('/admin_ta/getMahasiswa',[AdminTaController::class,'getMahasiswa']);
+        Route::put('/admin_ta/setAksesTAMahasiswa',[AdminTaController::class,'setAksesTAMahasiswa']);
+        Route::get('/admin_ta/getDosen',[AdminTaController::class,'getDosen']);
+        Route::put('/admin_ta/setAksesTADosen',[AdminTaController::class,'setAksesTADosen']);
     });
 
     // Route Admin Pengelola (inventaris)

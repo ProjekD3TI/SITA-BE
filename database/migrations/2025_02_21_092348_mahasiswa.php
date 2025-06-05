@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->string('no_telp');
             $table->string('password');
             $table->boolean('status')->default(1);
-            $table->boolean('status_ta')->default(0);
+            $table->boolean('akses_ta')->default(0);
             $table->timestamps();
         });
     }
