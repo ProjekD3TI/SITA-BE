@@ -629,7 +629,7 @@ class TugasAkhirController extends Controller
                 });
             }
 
-            $tugasAkhir = $query->orderBy('id', 'asc')->paginate(2);
+            $tugasAkhir = $query->orderBy('id', 'asc')->paginate(10);
 
             $data = $tugasAkhir->map(function ($item) {
                 return [

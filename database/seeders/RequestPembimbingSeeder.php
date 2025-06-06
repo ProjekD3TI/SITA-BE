@@ -31,5 +31,17 @@ class RequestPembimbingSeeder extends Seeder
             'dosen_id' => 2,
             'status_request' => 1,
         ]);
+        // Dika
+        // RequestPembimbing::create([
+        //     'tugas_akhir_id' => 4,
+        //     'dosen_id' => 3,
+        //     'status_request' => 2,
+        // ]);
+        // // Veri
+        // RequestPembimbing::create([
+        //     'tugas_akhir_id' => 5,
+        //     'dosen_id' => 1,
+        //     'status_request' => 0,
+        // ]);
     }
 }

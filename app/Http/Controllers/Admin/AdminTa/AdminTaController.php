@@ -34,6 +34,7 @@ class AdminTaController extends Controller
                 })
                 ->map(function ($ta) {
                     return [
+                        'proposal_id' => $ta->proposal->id ?? null,
                         'nim' => $ta->mahasiswa->nim ?? null,
                         'mahasiswa' => $ta->mahasiswa->name ?? null,
                         'judul' => $ta->proposal->judul_proposal ?? null,
@@ -46,6 +47,7 @@ class AdminTaController extends Controller
                 ->where('status_valid', '0')
                 ->map(function ($ta) {
                     return [
+                        'tugas_akhir_id' => $ta->id ?? null, // Tambahkan id tugas akhir
                         'nim' => $ta->mahasiswa->nim ?? null,
                         'mahasiswa' => $ta->mahasiswa->name ?? null,
                         'judul' => $ta->judul_tugas_akhir ?? null,
@@ -71,8 +73,8 @@ class AdminTaController extends Controller
                     'ujian_terjadwal' => $tanggal_ujian->count() ?? null,
                     'mahasiswa_tugas_akhir' => $tugasAkhir->count() ?? null,
                 ],
-                'tabel_validasi_berkas_sempro' => $tableValidasi->take(5) ?? null,
-                'tabel_validasi_berkas_ujian' => $tabelUjian->take(5) ?? null,
+                'tabel_validasi_berkas_sempro' => $tableValidasi->take(3) ?? null,
+                'tabel_validasi_berkas_ujian' => $tabelUjian->take(3) ?? null,
 
             ];
             return ApiResponse::success($data, 'Data berhasil diambil');

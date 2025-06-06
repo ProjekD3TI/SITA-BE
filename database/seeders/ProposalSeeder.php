@@ -28,10 +28,18 @@ class ProposalSeeder extends Seeder
             'catatan_perbaikan' => 'Sudah diperbaiki sesuai dengan masukan dari dosen pembimbing.',
         ]);
 
+        // Rizqi
         Proposal::create([
             'judul_proposal' => 'Pancing Ikan Otomatis',
             'status_proposal' => 1,
             'catatan_perbaikan' => 'Sudah diperbaiki sesuai dengan masukan dari dosen pembimbing.',
         ]);
+
+        // Dika
+        // Proposal::create([
+        //     'judul_proposal' => 'Sistem Informasi Pengelolaan Tugas Akhir',
+        //     'status_proposal' => 0,
+        //     'catatan_perbaikan' => 'Perlu perbaikan pada bagian metodologi.',
+        // ]);
     }
 }

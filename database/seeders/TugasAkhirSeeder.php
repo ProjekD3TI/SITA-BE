@@ -13,7 +13,7 @@ class TugasAkhirSeeder extends Seeder
      */
     public function run(): void
     {
-        // Raffael
+        // Raffael (Selesai)
         TugasAkhir::create([
             'mahasiswa_id' => 1,
             'dosen_pembimbing_id' => 15,
@@ -30,7 +30,7 @@ class TugasAkhirSeeder extends Seeder
             'status_valid' => 1,
             'status_aktif' => 1,
         ]);
-        // Raihan
+        // Raihan (Belum daftar Ujian)
         TugasAkhir::create([
             'mahasiswa_id' => 2,
             'dosen_pembimbing_id' => 1,
@@ -46,7 +46,7 @@ class TugasAkhirSeeder extends Seeder
             'status_valid' => null,
             'status_aktif' => 1,
         ]);
-        // Rizqi
+        // Rizqi (belum seminar proposal)
         TugasAkhir::create([
             'mahasiswa_id' => 3,
             'dosen_pembimbing_id' => 2,
@@ -62,5 +62,21 @@ class TugasAkhirSeeder extends Seeder
             'status_valid' => null,
             'status_aktif' => 1,
         ]);
+        // Dika (belum divalidasi proposalnya)
+        // TugasAkhir::create([
+        //     'mahasiswa_id' => 4,
+        //     'dosen_pembimbing_id' => 5,
+        //     'proposal_id' => 4,
+        //     'semester_id' => 1,
+        //     'tahun_ajaran_id' => 4,
+        //     'nilai_bimbingan_id' => null,
+        //     'kategori_id' => 1,
+        //     'judul_tugas_akhir' => null,
+        //     'nilai_proposal' => null,
+        //     'nilai_akhir' => null,
+        //     'catatan_proposal' => null,
+        //     'status_valid' => null,
+        //     'status_aktif' => 1,
+        // ]);
     }
 }

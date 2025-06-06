@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             DosenPengujiSeeder::class,
             UjianTASeeder::class,
             StatusFormSeeder::class,
+            // RelasiTugasAkhirSeeder::class,
         ]);
     }
 }
