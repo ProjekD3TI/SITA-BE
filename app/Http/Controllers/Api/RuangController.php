@@ -13,15 +13,38 @@ class RuangController extends Controller
 {
     // ========================== FITUR ADMIN ==========================
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $ruang = Ruang::all();
+            // Ambil parameter search dan pagination dari request
+            $search = $request->query('search');
+
+            // Query dasar
+            $query = Ruang::query();
+
+            // Jika ada search, filter berdasarkan nama_ruang
+            if ($search) {
+                $query->where('nama_ruang', 'like', '%' . $search . '%');
+            }
+
+            // Paginate hasil
+            $ruang = $query->orderBy('id', 'desc')->paginate(10);
+
+            // Gunakan resource collection
             $data = RuangResource::collection($ruang);
 
-            return ApiResponse::success($data, 'Data ruang berhasil diambil');
+            // Tambahkan meta pagination ke response
+            return ApiResponse::success([
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $ruang->currentPage(),
+                    'last_page' => $ruang->lastPage(),
+                    'per_page' => $ruang->perPage(),
+                    'total' => $ruang->total(),
+                ]
+            ], 'Data ruang berhasil diambil');
         } catch (\Exception $e) {
-            return ApiResponse::error('Gagal mengambil data' . $e->getMessage(), 500);
+            return ApiResponse::error('Gagal mengambil data ' . $e->getMessage(), 500);
         }
     }
 

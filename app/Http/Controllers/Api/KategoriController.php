@@ -11,20 +11,36 @@ use Illuminate\Http\Request;
 
 class KategoriController extends Controller
 {
-    public function lihatKategori()
+    public function lihatKategori(Request $request)
     {
         try {
-            $kategori = Kategori::all();
+            $search = $request->query('search');
+
+            $query = Kategori::query();
+
+            if ($search) {
+                $query->where('nama_kategori', 'like', '%' . $search . '%');
+            }
+
+            $kategori = $query->orderBy('id', 'desc')->paginate(10);
+
             $data = $kategori->map(function ($item) {
                 return [
-
                     'id' => $item->id,
                     'nama_kategori' => $item->nama_kategori,
                 ];
             });
-            return ApiResponse::success($data, "Data berhasil diambil");
+
+            return ApiResponse::success([
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $kategori->currentPage(),
+                    'last_page' => $kategori->lastPage(),
+                    'per_page' => $kategori->perPage(),
+                    'total' => $kategori->total(),
+                ]
+            ], "Data berhasil diambil");
         } catch (\Exception $e) {
-            //throw $th;
             return ApiResponse::error("Gagal mengambil data" . $e->getMessage(), 500);
         }
     }

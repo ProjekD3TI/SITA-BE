@@ -23,6 +23,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423072',
@@ -31,6 +32,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423077',
@@ -39,6 +41,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423079',
@@ -47,6 +50,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423085',
@@ -55,6 +59,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423062',
@@ -63,6 +68,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423063',
@@ -71,6 +77,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423064',
@@ -79,6 +86,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423065',
@@ -87,6 +95,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423066',
@@ -95,6 +104,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423068',
@@ -103,6 +113,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423069',
@@ -111,6 +122,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423071',
@@ -119,6 +131,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423073',
@@ -127,6 +140,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423074',
@@ -135,6 +149,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423075',
@@ -143,6 +158,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423076',
@@ -151,6 +167,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423078',
@@ -159,6 +176,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423080',
@@ -167,6 +185,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423081',
@@ -175,6 +194,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423082',
@@ -183,6 +203,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423083',
@@ -191,6 +212,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423084',
@@ -199,6 +221,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423086',
@@ -207,6 +230,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423087',
@@ -215,6 +239,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423088',
@@ -223,6 +248,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423090',
@@ -231,6 +257,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423091',
@@ -239,6 +266,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423092',
@@ -247,6 +275,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
+                'akses_ta' => 1,
             ],
             // [
             //     'nim' => ,

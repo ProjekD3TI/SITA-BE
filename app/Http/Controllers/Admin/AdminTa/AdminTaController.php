@@ -17,7 +17,6 @@ class AdminTaController extends Controller
     public function dashboard()
     {
         try {
-
             $tugasAkhir = TugasAkhir::with(['mahasiswa', 'ujianTA', 'proposal'])
                 ->where('status_aktif', 1)
                 ->get();
@@ -47,7 +46,7 @@ class AdminTaController extends Controller
                 ->where('status_valid', '0')
                 ->map(function ($ta) {
                     return [
-                        'tugas_akhir_id' => $ta->id ?? null, // Tambahkan id tugas akhir
+                        'tugas_akhir_id' => $ta->id ?? null,
                         'nim' => $ta->mahasiswa->nim ?? null,
                         'mahasiswa' => $ta->mahasiswa->name ?? null,
                         'judul' => $ta->judul_tugas_akhir ?? null,
@@ -55,6 +54,17 @@ class AdminTaController extends Controller
                     ];
                 })
                 ->values();
+
+            // Tambahan: Mahasiswa dengan akses_ta = 1
+            $mahasiswaAksesTA = User::where('akses_ta', 1)
+                ->where('status', 1)
+                ->get();
+
+            // Tambahan: Dosen dengan akses_ta = 1
+            $dosenAksesTA = Dosen::where('akses_ta', 1)
+                ->where('status', 1)
+                ->get();
+
             $data = [
                 'validasi_berkas' => [
                     'proposal' => [
@@ -71,40 +81,67 @@ class AdminTaController extends Controller
                 'summary_card' => [
                     'tugas_akhir_aktif' => $tugasAkhir->count() ?? null,
                     'ujian_terjadwal' => $tanggal_ujian->count() ?? null,
-                    'mahasiswa_tugas_akhir' => $tugasAkhir->count() ?? null,
                 ],
                 'tabel_validasi_berkas_sempro' => $tableValidasi->take(3) ?? null,
                 'tabel_validasi_berkas_ujian' => $tabelUjian->take(3) ?? null,
-
+                'mahasiswa_akses_ta' => $mahasiswaAksesTA->count() ?? null,
+                'dosen_akses_ta' => $dosenAksesTA->count() ?? null,
             ];
+
             return ApiResponse::success($data, 'Data berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
 
-    public function getDosen()
+    public function getDosen(Request $request)
     {
         try {
-            //ambil data mahasiswa dari tabel mahasiswa
-            $dosen = Dosen::where('status', 1)
-                ->get()
-                ->map(function ($dosen) {
-                    $angkatan = substr($dosen->nim, 3, 2);
-                    return [
-                        'id' => $dosen->id,
-                        'nama' => $dosen->name,
-                        'nim' => $dosen->nim,
-                        'email' => $dosen->email,
-                        'angkatan' => "20".$angkatan,
-                        'akses_ta'=> $dosen->akses_ta,
-                    ];
+            $query = Dosen::where('status', 1);
+
+            // Filter akses_ta jika ada di request
+            if ($request->has('akses_ta') && $request->akses_ta !== null && $request->akses_ta !== '') {
+                $query->where('akses_ta', (int) $request->akses_ta);
+            }
+
+            // Search by nama, nik, atau nim
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                        ->orWhere('nik', 'like', "%$search%");
                 });
-            return ApiResponse::success($dosen, 'Data mahasiswa berhasil diambil');
+            }
+
+            // Pagination (default 10 per page)
+            $dosen = $query->paginate(10);
+
+            // Mapping data
+            $data = $dosen->getCollection()->map(function ($dosen) {
+                return [
+                    'dosen_id' => $dosen->id,
+                    'name' => $dosen->name,
+                    'nik' => $dosen->nik,
+                    'email' => $dosen->email,
+                    'akses_ta' => $dosen->akses_ta,
+                ];
+            });
+
+            // Return dengan struktur pagination
+            $result = [
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $dosen->currentPage(),
+                    'last_page' => $dosen->lastPage(),
+                    'per_page' => $dosen->perPage(),
+                    'total' => $dosen->total(),
+                ],
+            ];
+
+            return ApiResponse::success($result, 'Data dosen berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
-
     }
     //setAksesTA mahasiswa
     public function setAksesTADosen(Request $request)
@@ -117,7 +154,7 @@ class AdminTaController extends Controller
 
         try {
             // Update semua user yang id-nya ada di array
-            User::whereIn('id', $request->ids)->update(['akses_ta' => $request->akses_ta]);
+            Dosen::whereIn('id', $request->ids)->update(['akses_ta' => $request->akses_ta]);
 
             return ApiResponse::success(null, 'Akses TA berhasil diubah untuk banyak user');
         } catch (ValidationException $e) {
@@ -145,27 +182,54 @@ class AdminTaController extends Controller
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
-    public function getMahasiswa()
+    public function getMahasiswa(Request $request)
     {
         try {
-            //ambil data mahasiswa dari tabel mahasiswa
-            $mahasiswa = User::where('status', 1)
-                ->get()
-                ->map(function ($mhs) {
-                    $angkatan = substr($mhs->nim, 3, 2);
-                    return [
-                        'id' => $mhs->id,
-                        'nama' => $mhs->name,
-                        'nim' => $mhs->nim,
-                        'email' => $mhs->email,
-                        'angkatan' => "20".$angkatan,
-                        'akses_ta'=> $mhs->akses_ta,
-                    ];
+            $query = User::where('status', 1);
+
+            if ($request->has('akses_ta') && $request->akses_ta !== null && $request->akses_ta !== '') {
+                $query->where('akses_ta', (int) $request->akses_ta);
+            }
+
+            // Search by nama atau nim
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                        ->orWhere('nim', 'like', "%$search%");
                 });
-            return ApiResponse::success($mahasiswa, 'Data mahasiswa berhasil diambil');
+            }
+
+            // Pagination (default 10 per page)
+            $mahasiswa = $query->paginate(10);
+
+            // Mapping data
+            $data = $mahasiswa->getCollection()->map(function ($mhs) {
+                $angkatan = substr($mhs->nim, 3, 2);
+                return [
+                    'mahasiswa_id' => $mhs->id,
+                    'name' => $mhs->name,
+                    'nim' => $mhs->nim,
+                    'email' => $mhs->email,
+                    'angkatan' => "20" . $angkatan,
+                    'akses_ta' => $mhs->akses_ta,
+                ];
+            });
+
+            // Return dengan struktur pagination
+            $result = [
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $mahasiswa->currentPage(),
+                    'last_page' => $mahasiswa->lastPage(),
+                    'per_page' => $mahasiswa->perPage(),
+                    'total' => $mahasiswa->total(),
+                ],
+            ];
+
+            return ApiResponse::success($result, 'Data mahasiswa berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
-
     }
 }

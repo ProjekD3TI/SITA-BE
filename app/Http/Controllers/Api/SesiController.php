@@ -13,12 +13,36 @@ class SesiController extends Controller
 
     // ========================== FITUR ADMIN ==========================
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $sesi = Sesi::all();
+            // Ambil parameter search dan pagination dari request
+            $search = $request->query('search');
+
+            // Query dasar
+            $query = Sesi::query();
+
+            // Jika ada search, filter berdasarkan nama_sesi
+            if ($search) {
+                $query->where('nama_sesi', 'like', '%' . $search . '%');
+            }
+
+            // Paginate hasil
+            $sesi = $query->orderBy('id', 'desc')->paginate(10);
+
+            // Gunakan resource collection
             $data = SesiResource::collection($sesi);
-            return ApiResponse::success($data, 'Data Sesi Berhasil Diambil');
+
+            // Tambahkan meta pagination ke response
+            return ApiResponse::success([
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $sesi->currentPage(),
+                    'last_page' => $sesi->lastPage(),
+                    'per_page' => $sesi->perPage(),
+                    'total' => $sesi->total(),
+                ]
+            ], 'Data Sesi Berhasil Diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Gagal mengambil data ' . $e->getMessage(), 500);
         }

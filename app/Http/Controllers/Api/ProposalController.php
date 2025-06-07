@@ -228,6 +228,8 @@ class ProposalController extends Controller
                 });
             }
 
+            // Tambahkan filter status_proposal = 1
+            $query->where('status_proposal', 1);
             $listProposal = $query->paginate(10);
 
             $data = collect($listProposal->items())->map(function ($item) {
@@ -313,6 +315,10 @@ class ProposalController extends Controller
                     'tahun_ajaran_id' => $proposal->tugasAkhir->tahunAjaran->id ?? null,
                     'tahun_ajaran' => $proposal->tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
                 ],
+                'dosen_pembimbing' => $proposal->tugasAkhir->dosenPembimbing ? [
+                    'id' => $proposal->tugasAkhir->dosenPembimbing->id,
+                    'name' => $proposal->tugasAkhir->dosenPembimbing->name,
+                ] : null,
                 'nilai_proposal' => $proposal->tugasAkhir->nilai_proposal ?? null,
                 'catatan_proposal' => $proposal->tugasAkhir->catatan_proposal ?? null,
                 'berkas' => $naskahBerkas, // Hanya berkas Naskah Proposal Tugas Akhir
@@ -378,6 +384,11 @@ class ProposalController extends Controller
             $tugasAkhir = TugasAkhir::with(['proposal'])->where('mahasiswa_id', $request->user()->id)
                 ->where('status_aktif', 1)
                 ->first();
+            $statusForm = StatusForm::where('nama_form', 'proposal')->first();
+
+            if ($statusForm->is_open !== 1) {
+                return ApiResponse::error('Pengajuan proposal tidak dibuka saat ini', 400);
+            }
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Mahasiswa tidak memiliki tugas akhir yang aktif', 400);
@@ -498,6 +509,8 @@ class ProposalController extends Controller
                 ->where('status_aktif', 1)
                 ->first();
 
+            $statusForm = StatusForm::where('nama_form', 'proposal')->first();
+
             if (!$tugasAkhir) {
                 // Kembalikan data kosong/null agar FE bisa handle
                 return ApiResponse::success([
@@ -509,6 +522,10 @@ class ProposalController extends Controller
             $proposal = $tugasAkhir->proposal;
 
             $result = [
+                'status_form' => [
+                    'id' => $statusForm->id,
+                    'is_open' => $statusForm->is_open,
+                ],
                 'tugas_akhir' => [
                     'id' => $tugasAkhir->id,
                     'dosen_pembimbing' => $tugasAkhir->dosenPembimbing ? [

@@ -91,6 +91,11 @@ class TugasAkhirController extends Controller
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswaId)
                 ->where('status_aktif', 1)
                 ->first();
+            $statusForm = StatusForm::where('nama_form', 'tugas akhir')->first();
+
+            if ($statusForm->is_open !== 1) {
+                return ApiResponse::error('Pendaftaran tugas akhir tidak dibuka saat ini', 400);
+            }
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan atau tidak aktif', 404);
@@ -571,6 +576,46 @@ class TugasAkhirController extends Controller
         }
     }
 
+    public function storePlottingPembimbingByAdmin(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'tugas_akhir_id' => 'required|integer|exists:tugas_akhir,id',
+                'dosen_pembimbing_id' => 'required|integer',
+            ]);
+
+            // Cek apakah tugas akhir ada
+            $tugasAkhir = TugasAkhir::find($validatedData['tugas_akhir_id']);
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
+            }
+
+            // Langsung update dosen pembimbing di tugas akhir
+            $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_pembimbing_id'];
+            $tugasAkhir->save();
+
+            // Tidak perlu update atau membuat request pembimbing
+
+            // Return tugas akhir dengan relasi dosen pembimbing
+            $tugasAkhir->load('dosenPembimbing');
+
+            return ApiResponse::success([
+                'tugas_akhir' => [
+                    'id' => $tugasAkhir->id,
+                    'dosen_pembimbing' => [
+                        'id' => $tugasAkhir->dosenPembimbing->id,
+                        'name' => $tugasAkhir->dosenPembimbing->name,
+                    ]
+                ]
+            ], 'Dosen pembimbing berhasil ditetapkan', 200);
+
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
     public function putPlottingPembimbingByAdmin(Request $request, $tugasAkhirId)
     {
         try {
@@ -914,7 +959,7 @@ class TugasAkhirController extends Controller
             if ($request->has('status')) {
                 $statusValidList = array_filter(
                     explode(',', $request->status),
-                    fn($v) => in_array($v, ['0', '1', '2'], true)
+                    fn($v) => in_array((int) $v, [0, 1, 2], true)
                 );
                 if (count($statusValidList)) {
                     $query->whereIn('status_valid', $statusValidList);
@@ -941,6 +986,7 @@ class TugasAkhirController extends Controller
                         'dosen_pembimbing_id' => $item->dosenPembimbing->id ?? null,
                         'name' => $item->dosenPembimbing->name ?? null,
                     ],
+                    'catatan_perbaikan' => $item->catatan_perbaikan ?? null,
                     'status_valid' => $item->status_valid ?? null,
                     'berkas' => $item->berkas ? $item->berkas->map(function ($berkas) {
                         return [
@@ -1305,6 +1351,10 @@ class TugasAkhirController extends Controller
                 ->where('status_aktif', 1)
                 ->first();
 
+            $statusForm = StatusForm::where('nama_form', 'Tugas Akhir')
+                ->select('id', 'is_open')
+                ->first();
+
             if (!$tugasAkhir) {
                 return ApiResponse::success(null, 'Belum ada Tugas Akhir yang aktif');
             }
@@ -1321,6 +1371,10 @@ class TugasAkhirController extends Controller
                 ->values();
 
             $result = [
+                'status_form' => [
+                    'id' => $statusForm->id,
+                    'is_open' => $statusForm->is_open,
+                ],
                 'tugas_akhir' => [
                     'id' => $tugasAkhir->id,
                     'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir,
