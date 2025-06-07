@@ -272,7 +272,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Fitur Ujian TA (List Jadwal Ujian & Berita Acara Ujian)
         Route::get('/admin_ta/penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
         Route::get('/admin_ta/penjadwalan-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPenjadwalanUjianByAdmin']);
-
+        Route::post('/admin_ta/penjadwalan-ujian/', [UjianTAController::class, 'storeJadwalUjianTAforAdmin']);
+        Route::put('/admin_ta/penjadwalan-ujian/{id}', [UjianTAController::class, 'updateJadwalUjianTAforAdmin']);
+        Route::post('/admin_ta/penjadwalan-ujian/{tugasAkhirId}/cek-jadwal-tersedia', [TugasAkhirController::class, 'checkAvailabilityForScheduling']);
         // Berita Acara Semhas
         // Route::get('/admin_ta/list-berita-acara', [TugasAkhirController::class, 'tabelBeritaAcaraByAdmin']);
 
@@ -321,8 +323,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Route Ujian TA
         // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
         // Route::get('/admin_ta/ujian-ta', [UjianTAController::class, 'index']);
-        Route::post('/admin_ta/ujian-ta/', [UjianTAController::class, 'store']);
-        Route::put('/admin_ta/ujian-ta/{id}', [UjianTAController::class, 'update']);
         // Route::get('/admin_ta/ujian-ta/daftar-ta', [UjianTAController::class, 'getTAReadyForAdmin']);
         // Route::get('/admin_ta/dashboard', [AdminTaController::class, 'setDashboardByAdmin']);
     });

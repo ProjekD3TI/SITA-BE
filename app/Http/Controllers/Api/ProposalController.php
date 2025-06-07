@@ -445,7 +445,11 @@ class ProposalController extends Controller
                 'file_proposal' => 'nullable|file|mimes:pdf',
                 'file_transkrip' => 'nullable|file|mimes:pdf',
             ]);
+            $statusForm = StatusForm::where('nama_form', 'proposal')->first();
 
+            if ($statusForm->is_open !== 1) {
+                return ApiResponse::error('Pengajuan proposal tidak dibuka saat ini', 400);
+            }
             $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
 
             $proposal->judul_proposal = $validatedData['judul_proposal'];

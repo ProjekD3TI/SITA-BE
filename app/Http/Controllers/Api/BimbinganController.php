@@ -104,7 +104,7 @@ class BimbinganController extends Controller
         }
     }
 
-    public function showBimbinganForMahasiswa()
+    public function showBimbinganForMahasiswa(Request $request)
     {
         try {
             Carbon::setLocale('id');
@@ -120,11 +120,15 @@ class BimbinganController extends Controller
                 return ApiResponse::success([], 'Belum ada tugas akhir yang aktif');
             }
 
+
             $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
                 ->orderBy('tanggal_bimbingan', 'asc')
-                ->get(['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
+                ->paginate(10, ['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
 
-            $result = $bimbinganList->map(function ($item) {
+            $babTertinggi = $tugasAkhir->bimbingan
+                ->where('status_verifikasi', 1)
+                ->max('bab') ?? null;
+            $result = collect($bimbinganList->items())->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'tanggal_bimbingan' => $item->tanggal_bimbingan
@@ -137,13 +141,19 @@ class BimbinganController extends Controller
             });
 
             $nilaiBimbingan = $tugasAkhir->nilaiBimbingan;
-
             if ($nilaiBimbingan) {
                 $nilaiBimbingan = collect($nilaiBimbingan)->except(['created_at', 'updated_at']);
             }
 
             return ApiResponse::success([
                 'bimbingan' => $result,
+                'pagination' => [
+                    'current_page' => $bimbinganList->currentPage(),
+                    'last_page' => $bimbinganList->lastPage(),
+                    'per_page' => $bimbinganList->perPage(),
+                    'total' => $bimbinganList->total(),
+                ],
+                'bab_tertinggi' => $babTertinggi,
                 'nilai_bimbingan' => $nilaiBimbingan
             ], 'Daftar bimbingan berhasil diambil');
         } catch (Exception $e) {

@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Api;
 
 use Exception;
 use Carbon\Carbon;
+use App\Models\Sesi;
 use App\Models\Dosen;
+use App\Models\Ruang;
+use App\Models\UjianTA;
+use App\Models\Bimbingan;
 use App\Models\StatusForm;
 use App\Models\TugasAkhir;
 use Illuminate\Http\Request;
@@ -14,8 +18,8 @@ use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\BimbinganResource;
-use App\Http\Resources\NilaiBimbinganResource;
 use App\Http\Resources\TugasAkhirResource;
+use App\Http\Resources\NilaiBimbinganResource;
 use Illuminate\Validation\ValidationException;
 
 
@@ -164,6 +168,11 @@ class TugasAkhirController extends Controller
                 ->where('status_aktif', 1)
                 ->first();
 
+            $statusForm = StatusForm::where('nama_form', 'tugas akhir')->first();
+
+            if ($statusForm->is_open !== 1) {
+                return ApiResponse::error('Pendaftaran tugas akhir tidak dibuka saat ini', 400);
+            }
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan atau tidak aktif', 404);
             }
@@ -712,13 +721,12 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function detailBimbinganForAdmin($tugasAkhirId)
+    public function detailBimbinganForAdmin(Request $request, $tugasAkhirId)
     {
         try {
             $tugasAkhir = TugasAkhir::with([
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name,nik',
-                'bimbingan:id,tugas_akhir_id,catatan,bab,status_verifikasi,tanggal_bimbingan',
                 'kategori:id,nama_kategori',
                 'nilaiBimbingan',
                 'tahunAjaran:id,tahun_ajaran',
@@ -727,7 +735,29 @@ class TugasAkhirController extends Controller
                 ->where('id', $tugasAkhirId)
                 ->first();
 
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+
             Carbon::setLocale('id');
+
+            // Ambil hanya kolom yang diminta dari tabel bimbingan
+            $bimbinganQuery = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
+                ->orderBy('tanggal_bimbingan', 'asc')
+                ->paginate(10, ['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
+
+            $bimbinganData = collect($bimbinganQuery->items())->map(function ($bimbingan) {
+                return [
+                    'id' => $bimbingan->id,
+                    'tanggal_bimbingan' => $bimbingan->tanggal_bimbingan
+                        ? Carbon::parse($bimbingan->tanggal_bimbingan)->translatedFormat('l, d F Y')
+                        : null,
+                    'bab' => $bimbingan->bab,
+                    'catatan' => $bimbingan->catatan,
+                    'status_verifikasi' => $bimbingan->status_verifikasi,
+                ];
+            });
+
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'mahasiswa' => [
@@ -748,17 +778,16 @@ class TugasAkhirController extends Controller
                     'name' => $tugasAkhir->dosenPembimbing->name ?? null,
                     'nik' => $tugasAkhir->dosenPembimbing->nik ?? null,
                 ],
-                'bimbingan' => $tugasAkhir->bimbingan->map(function ($bimbingan) {
-                    return [
-                        'bimbingan_id' => $bimbingan->id,
-                        'catatan' => $bimbingan->catatan,
-                        'bab' => $bimbingan->bab,
-                        'status_verifikasi' => $bimbingan->status_verifikasi,
-                        'tanggal_bimbingan' => $bimbingan->tanggal_bimbingan
-                            ? Carbon::parse($bimbingan->tanggal_bimbingan)->translatedFormat('l, d F Y')
-                            : null,
-                    ];
-                }),
+                'bab_tertinggi' => $tugasAkhir->bimbingan
+                    ->where('status_verifikasi', 1)
+                    ->max('bab') ?? null,
+                'bimbingan' => $bimbinganData,
+                'pagination' => [
+                    'current_page' => $bimbinganQuery->currentPage(),
+                    'last_page' => $bimbinganQuery->lastPage(),
+                    'per_page' => $bimbinganQuery->perPage(),
+                    'total' => $bimbinganQuery->total(),
+                ],
                 'nilai_bimbingan' => [
                     'nilai_bimbingan_id' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->id : null,
                     'rerata_bimbingan' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->rerata_bimbingan : null,
@@ -769,7 +798,6 @@ class TugasAkhirController extends Controller
                 ],
             ];
             return ApiResponse::success($data, 'Data detail bimbingan berhasil diambil');
-
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
@@ -1269,7 +1297,9 @@ class TugasAkhirController extends Controller
                 'dosenPembimbing:id,name',
                 'dosenPenguji:id,name',
                 'kategori:id,nama_kategori',
-                'ujianTA'
+                'tahunAjaran:id,tahun_ajaran',
+                'ujianTA.sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
+                'ujianTA.ruang:id,nama_ruang'
             ])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
@@ -1279,8 +1309,16 @@ class TugasAkhirController extends Controller
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
             }
 
+            // Ambil list dosen penguji untuk checking conflicts
+            $listDosenPenguji = $tugasAkhir->dosenPenguji->pluck('id')->toArray();
+
             $ujianTA = $tugasAkhir->ujianTA->where('status_ujian', 'aktif')->first();
             Carbon::setLocale('id');
+
+            // Get initial availability (all available without constraints)
+            $availableDates = $this->getAvailableDates($listDosenPenguji);
+            $availableRuang = $this->getAvailableRuang(null, null, $listDosenPenguji);
+            $availableSesi = $this->getAvailableSesi(null, null, $listDosenPenguji);
 
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id,
@@ -1305,16 +1343,23 @@ class TugasAkhirController extends Controller
                 ],
                 'ujian_ta' => $ujianTA ? [
                     'ujian_ta_id' => $ujianTA->id,
-                    'tanggal_ujian' => $ujianTA->tanggal_ujian
-                        ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
-                        : null,
-                    'waktu_mulai' => $ujianTA->sesi->waktu_mulai ?? null,
-                    'waktu_selesai' => $ujianTA->sesi->waktu_selesai ?? null,
-                    'ruang' => $ujianTA->ruang->nama_ruang ?? null,
+                    'tanggal_ujian' => $ujianTA->tanggal_ujian,
+                    // 'tanggal_ujian_formatted' => $ujianTA->tanggal_ujian
+                    //     ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
+                    //     : null,
+                    'sesi' => $ujianTA->sesi ? [
+                        'sesi_id' => $ujianTA->sesi->id,
+                        'nama_sesi' => $ujianTA->sesi->nama_sesi,
+                        'waktu_mulai' => $ujianTA->sesi->waktu_mulai,
+                        'waktu_selesai' => $ujianTA->sesi->waktu_selesai,
+                    ] : null,
+                    'ruang' => $ujianTA->ruang ? [
+                        'ruang_id' => $ujianTA->ruang->id,
+                        'nama_ruang' => $ujianTA->ruang->nama_ruang,
+                    ] : null,
                     'status_ujian' => $ujianTA->status_ujian
-                ] : [],
-                'dosen_penguji' =>
-                    $tugasAkhir->dosenPenguji
+                ] : null,
+                'dosen_penguji' => $tugasAkhir->dosenPenguji
                     ? $tugasAkhir->dosenPenguji->map(function ($penguji) {
                         return [
                             'dosen_penguji_id' => $penguji->id,
@@ -1323,11 +1368,208 @@ class TugasAkhirController extends Controller
                         ];
                     })->values()
                     : [],
+                // Dynamic availability data
+                'availability' => [
+                    'available_dates' => $availableDates,
+                    'available_ruang' => $availableRuang,
+                    'available_sesi' => $availableSesi,
+                ],
             ];
+
             return ApiResponse::success($data, 'Detail Tugas Akhir untuk penjadwalan ujian berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
+    }
+
+    public function checkAvailabilityForScheduling(Request $request, $tugasAkhirId)
+    {
+        try {
+            $request->validate([
+                'tanggal_ujian' => 'nullable|date',
+                'ruang_id' => 'nullable|exists:ruang,id',
+                'sesi_id' => 'nullable|exists:sesi,id',
+            ]);
+
+            $tugasAkhir = TugasAkhir::with('dosenPenguji')->findOrFail($tugasAkhirId);
+            $listDosenPenguji = $tugasAkhir->dosenPenguji->pluck('id')->toArray();
+
+            $tanggal = $request->tanggal_ujian;
+            $ruangId = $request->ruang_id;
+            $sesiId = $request->sesi_id;
+
+            // 1. Get available dates (next 30 days)
+            $availableDates = $this->getAvailableDates($listDosenPenguji, $ruangId, $sesiId);
+
+            // 2. Get available ruang based on selected date and sesi
+            $availableRuang = $this->getAvailableRuang($tanggal, $sesiId, $listDosenPenguji);
+
+            // 3. Get available sesi based on selected date and ruang
+            $availableSesi = $this->getAvailableSesi($tanggal, $ruangId, $listDosenPenguji);
+
+            return ApiResponse::success([
+                'available_dates' => $availableDates,
+                'available_ruang' => $availableRuang,
+                'available_sesi' => $availableSesi,
+            ], 'Data availability berhasil diambil');
+
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    private function getAvailableDates($listDosenPenguji, $ruangId = null, $sesiId = null)
+    {
+        $dates = [];
+        $startDate = now();
+        $endDate = now()->addDays(30);
+
+        for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
+            $dateString = $date->format('Y-m-d');
+
+            // Skip weekends (optional)
+            if ($date->isWeekend()) {
+                continue;
+            }
+
+            $isAvailable = true;
+
+            // ✅ PERBAIKAN: Cek conflict ruang + sesi + tanggal (kombinasi lengkap)
+            if ($ruangId && $sesiId) {
+                $ruangSesiConflict = UjianTA::where('tanggal_ujian', $dateString)
+                    ->where('ruang_id', $ruangId)
+                    ->where('sesi_id', $sesiId)
+                    ->where('status_ujian', 'aktif')
+                    ->exists();
+
+                if ($ruangSesiConflict) {
+                    $isAvailable = false;
+                }
+            }
+
+            // ✅ PERBAIKAN: Cek conflict dosen (tanggal + sesi sama, ruang boleh beda)
+            if ($isAvailable && $sesiId && !empty($listDosenPenguji)) {
+                $dosenConflict = UjianTA::where('tanggal_ujian', $dateString)
+                    ->where('sesi_id', $sesiId)
+                    ->where('status_ujian', 'aktif')
+                    ->whereHas('tugasAkhir.dosenPenguji', function ($q) use ($listDosenPenguji) {
+                        $q->whereIn('dosen_id', $listDosenPenguji);
+                    })
+                    ->exists();
+
+                if ($dosenConflict) {
+                    $isAvailable = false;
+                }
+            }
+
+            if ($isAvailable) {
+                $dates[] = [
+                    'date' => $dateString,
+                    'formatted_date' => $date->locale('id')->translatedFormat('l, d F Y'), // ✅ Uncomment
+                ];
+            }
+        }
+
+        return $dates;
+    }
+
+    private function getAvailableRuang($tanggal = null, $sesiId = null, $listDosenPenguji = [])
+    {
+        $allRuang = Ruang::select('id', 'nama_ruang')->get();
+        $availableRuang = [];
+
+        foreach ($allRuang as $ruang) {
+            $isAvailable = true;
+
+            // ✅ PERBAIKAN: Cek conflict ruang + sesi + tanggal
+            if ($tanggal && $sesiId) {
+                $ruangSesiConflict = UjianTA::where('tanggal_ujian', $tanggal)
+                    ->where('ruang_id', $ruang->id)
+                    ->where('sesi_id', $sesiId)
+                    ->where('status_ujian', 'aktif')
+                    ->exists();
+
+                if ($ruangSesiConflict) {
+                    $isAvailable = false;
+                }
+            }
+
+            // ✅ TAMBAHAN: Cek conflict dosen jika ada tanggal dan sesi
+            if ($isAvailable && $tanggal && $sesiId && !empty($listDosenPenguji)) {
+                // Meskipun ruang berbeda, dosen tidak boleh ujian di tanggal+sesi yang sama
+                $dosenConflict = UjianTA::where('tanggal_ujian', $tanggal)
+                    ->where('sesi_id', $sesiId)
+                    ->where('status_ujian', 'aktif')
+                    ->whereHas('tugasAkhir.dosenPenguji', function ($q) use ($listDosenPenguji) {
+                        $q->whereIn('dosen_id', $listDosenPenguji);
+                    })
+                    ->exists();
+
+                if ($dosenConflict) {
+                    $isAvailable = false;
+                }
+            }
+
+            if ($isAvailable) {
+                $availableRuang[] = [
+                    'ruang_id' => $ruang->id,
+                    'nama_ruang' => $ruang->nama_ruang,
+                ];
+            }
+        }
+
+        return $availableRuang;
+    }
+
+    private function getAvailableSesi($tanggal = null, $ruangId = null, $listDosenPenguji = [])
+    {
+        $allSesi = Sesi::select('id', 'nama_sesi', 'waktu_mulai', 'waktu_selesai')->get();
+        $availableSesi = [];
+
+        foreach ($allSesi as $sesi) {
+            $isAvailable = true;
+
+            if ($tanggal) {
+                // ✅ PERBAIKAN: Cek conflict ruang + sesi + tanggal
+                if ($ruangId) {
+                    $ruangSesiConflict = UjianTA::where('tanggal_ujian', $tanggal)
+                        ->where('ruang_id', $ruangId)
+                        ->where('sesi_id', $sesi->id)
+                        ->where('status_ujian', 'aktif')
+                        ->exists();
+
+                    if ($ruangSesiConflict) {
+                        $isAvailable = false;
+                    }
+                }
+
+                // ✅ PERBAIKAN: Cek conflict dosen (tanggal + sesi sama, ruang boleh beda)
+                if ($isAvailable && !empty($listDosenPenguji)) {
+                    $dosenConflict = UjianTA::where('tanggal_ujian', $tanggal)
+                        ->where('sesi_id', $sesi->id)
+                        ->where('status_ujian', 'aktif')
+                        ->whereHas('tugasAkhir.dosenPenguji', function ($q) use ($listDosenPenguji) {
+                            $q->whereIn('dosen_id', $listDosenPenguji);
+                        })
+                        ->exists();
+
+                    if ($dosenConflict) {
+                        $isAvailable = false;
+                    }
+                }
+            }
+
+            if ($isAvailable) {
+                $availableSesi[] = [
+                    'sesi_id' => $sesi->id,
+                    'nama_sesi' => $sesi->nama_sesi,
+                    'waktu_mulai' => $sesi->waktu_mulai,
+                    'waktu_selesai' => $sesi->waktu_selesai,
+                ];
+            }
+        }
+
+        return $availableSesi;
     }
 
     // ========================== END FITUR ADMIN ==========================
