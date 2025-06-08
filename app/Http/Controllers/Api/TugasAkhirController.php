@@ -1821,6 +1821,7 @@ class TugasAkhirController extends Controller
             $data =
                 [
                     'tugas_akhir_id' => $tugasAkhir->id,
+                    'status_kelulusan' => $tugasAkhir->status_kelulusan ?? null,
                     'mahasiswa' => [
                         'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
                         'nim' => $tugasAkhir->mahasiswa->nim ?? null,
@@ -1895,13 +1896,13 @@ class TugasAkhirController extends Controller
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
             }
-            // Cek apakah dosen yang sedang login adalah dosen pembimbing
-            $isKetua = $tugasAkhir->dosenPenguji
+            // Cek apakah dosen yang sedang login adalah dosen pembimbing atau sekretaris
+            $isSekretaris = $tugasAkhir->dosenPenguji
                 ->filter(function ($penguji) use ($dosenId) {
                     return $penguji->id == $dosenId && ($penguji->pivot->jabatan_penguji ?? null) === 'sekretaris';
                 })
                 ->isNotEmpty();
-            if (!$isKetua) {
+            if (!$isSekretaris) {
                 return ApiResponse::error('Anda bukan sekretaris pada tugas akhir ini.', 403);
             }
 
