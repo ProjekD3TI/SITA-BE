@@ -553,7 +553,12 @@ class TugasAkhirController extends Controller
                 ->where('id', $tugasAkhirId)
                 ->get();
 
-            $daftarDosen = Dosen::select('name', 'nik', 'id')->get();
+            // ✅ PERBAIKAN: Filter dosen dengan multiple kondisi
+            $daftarDosen = Dosen::select('name', 'nik', 'id', 'akses_ta')
+                ->where('status', 1)
+                ->orderBy('name', 'asc')
+                ->get();
+
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
@@ -599,6 +604,16 @@ class TugasAkhirController extends Controller
                 return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
             }
 
+            // ✅ TAMBAHAN: Cek apakah dosen memiliki akses_ta = 1
+            $dosen = Dosen::where('id', $validatedData['dosen_pembimbing_id'])
+                ->where('akses_ta', 1)
+                ->where('status', 1) // ✅ Optional: pastikan dosen aktif
+                ->first();
+
+            if (!$dosen) {
+                return ApiResponse::error('Dosen tidak ditemukan atau tidak memiliki akses Tugas Akhir', 404);
+            }
+
             // Langsung update dosen pembimbing di tugas akhir
             $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_pembimbing_id'];
             $tugasAkhir->save();
@@ -629,7 +644,20 @@ class TugasAkhirController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'dosen_pembimbing_id' => 'required|exists:dosen,id',
+                'dosen_pembimbing_id' => [
+                    'required',
+                    'exists:dosen,id',
+                    function ($attribute, $value, $fail) {
+                        $dosen = Dosen::where('id', $value)
+                            ->where('akses_ta', 1)
+                            ->where('status', 1)
+                            ->first();
+
+                        if (!$dosen) {
+                            $fail('Dosen yang dipilih tidak memiliki akses Tugas Akhir atau tidak aktif.');
+                        }
+                    }
+                ],
             ]);
 
             // Cek apakah Tugas Akhir dengan ID tersebut ada
@@ -914,7 +942,10 @@ class TugasAkhirController extends Controller
                 ->where('id', $tugasAkhirId)
                 ->first();
 
-            $daftarDosen = Dosen::select('id', 'name', 'nik')->get();
+            $daftarDosen = Dosen::select('id', 'name', 'nik', 'akses_ta')
+                ->where('status', 1)
+                ->orderBy('name', 'asc')
+                ->get();
 
             // Ambil dosen penguji, jika ada
             $dosenPenguji = $tugasAkhir && $tugasAkhir->dosenPenguji
@@ -949,7 +980,7 @@ class TugasAkhirController extends Controller
                     'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
                     'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
                 ],
-                'dosen_penguji' => $dosenPenguji, // <-- tambahkan ini
+                'dosen_penguji' => $dosenPenguji,
                 'daftar_dosen' => $daftarDosen
             ];
 

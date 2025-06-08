@@ -74,7 +74,8 @@ class BerkasController extends Controller
         return \Storage::download($filePath, basename($filePath));
     }
 
-    public function getBerkasPorposalForAdmin() {
+    public function getBerkasPorposalForAdmin()
+    {
 
     }
 
@@ -121,7 +122,10 @@ class BerkasController extends Controller
                 ];
             }
 
-            return ApiResponse::success(['berkas' => $result], 'Daftar berkas tugas akhir berhasil diambil');
+            return ApiResponse::success([
+                'berkas' => $result,
+                'catatan_perbaikan' => $tugasAkhir->catatan_perbaikan,
+            ], 'Daftar berkas tugas akhir berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Gagal mengambil berkas tugas akhir: ' . $e->getMessage(), 500);
         }

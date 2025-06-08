@@ -202,7 +202,10 @@ class RequestPembimbingController extends Controller
             $listKategori = Kategori::select('id', 'nama_kategori as name')->get();
 
             // Ambil semua dosen
-            $listDosen = Dosen::select('id', 'name', 'nik')->get();
+            $listDosen = Dosen::select('id', 'name', 'nik', 'akses_ta')
+                ->where('status', 1)
+                ->orderBy('name', 'asc')
+                ->get();
 
             // Ambil tahun ajaran default
             $defaultTahunAjaran = TahunAjaran::where('is_default', 1)
