@@ -48,7 +48,7 @@ class ProposalController extends Controller
             }
 
             $listProposal = $query->paginate(10);
-
+            $notificationCount = Proposal::where('status_proposal', 0)->count();
 
             $data = collect($listProposal->items())->map(function ($item) {
                 Carbon::setLocale('id');
@@ -78,6 +78,7 @@ class ProposalController extends Controller
             });
 
             $result = [
+                'notification' => $notificationCount,
                 'status_form' => [
                     'id' => $statusForm->id,
                     'is_open' => $statusForm->is_open,
@@ -445,11 +446,7 @@ class ProposalController extends Controller
                 'file_proposal' => 'nullable|file|mimes:pdf',
                 'file_transkrip' => 'nullable|file|mimes:pdf',
             ]);
-            $statusForm = StatusForm::where('nama_form', 'proposal')->first();
 
-            if ($statusForm->is_open !== 1) {
-                return ApiResponse::error('Pengajuan proposal tidak dibuka saat ini', 400);
-            }
             $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
 
             $proposal->judul_proposal = $validatedData['judul_proposal'];

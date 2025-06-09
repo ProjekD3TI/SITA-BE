@@ -107,17 +107,17 @@ class SesiController extends Controller
 
     public function destroy($id)
     {
-        try {
-            $sesi = Sesi::findOrFail($id);
-            $sesi->delete();
+        // try {
+        //     $sesi = Sesi::findOrFail($id);
+        //     $sesi->delete();
 
-            return ApiResponse::success(
-                null,
-                'Data sesi berhasil dihapus'
-            );
-        } catch (\Exception $e) {
-            return ApiResponse::error('Data sesi gagal dihapus ' . $e->getMessage(), 500);
-        }
+        //     return ApiResponse::success(
+        //         null,
+        //         'Data sesi berhasil dihapus'
+        //     );
+        // } catch (\Exception $e) {
+        //     return ApiResponse::error('Data sesi gagal dihapus ' . $e->getMessage(), 500);
+        // }
     }
 
     // ========================== END FITUR ADMIN ==========================

@@ -99,14 +99,14 @@ class RuangController extends Controller
 
     public function destroy($id)
     {
-        try {
-            $ruang = Ruang::findOrFail($id);
-            $ruang->delete();
+        // try {
+        //     $ruang = Ruang::findOrFail($id);
+        //     $ruang->delete();
 
-            return ApiResponse::success(null, "Data sesi berhasil ditambahkan");
-        } catch (\Exception $e) {
-            return ApiResponse::error(' Sesi gagal ditambahkan ' . $e->getMessage(), 500);
-        }
+        //     return ApiResponse::success(null, "Data sesi berhasil ditambahkan");
+        // } catch (\Exception $e) {
+        //     return ApiResponse::error(' Sesi gagal ditambahkan ' . $e->getMessage(), 500);
+        // }
     }
 
     // ========================== END FITUR ADMIN ==========================

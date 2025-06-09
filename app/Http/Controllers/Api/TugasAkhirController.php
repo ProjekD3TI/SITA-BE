@@ -168,11 +168,6 @@ class TugasAkhirController extends Controller
                 ->where('status_aktif', 1)
                 ->first();
 
-            $statusForm = StatusForm::where('nama_form', 'tugas akhir')->first();
-
-            if ($statusForm->is_open !== 1) {
-                return ApiResponse::error('Pendaftaran tugas akhir tidak dibuka saat ini', 400);
-            }
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan atau tidak aktif', 404);
             }
@@ -509,7 +504,13 @@ class TugasAkhirController extends Controller
             }
 
             $tugasAkhir = $query->paginate(10);
-
+            $notificationCount = TugasAkhir::with('requestPembimbing')
+                ->where('status_aktif', 1)
+                ->whereHas('requestPembimbing', function ($q) {
+                    $q->where('status_request', '!=', 1)
+                        ->whereIn('status_request', [0, 2]); // 0 = menunggu, 2 = ditolak
+                })
+                ->count();
             $data = collect($tugasAkhir->items())->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
@@ -531,6 +532,7 @@ class TugasAkhirController extends Controller
             });
 
             $result = [
+                'notification' => $notificationCount,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
@@ -842,7 +844,6 @@ class TugasAkhirController extends Controller
     public function tabelPlottingPengujiForAdmin(Request $request)
     {
         try {
-
             $query = TugasAkhir::with([
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
@@ -888,9 +889,26 @@ class TugasAkhirController extends Controller
 
             $tugasAkhir = $query->paginate(10);
 
+            // ✅ PERBAIKAN: Hitung notification count
+            $notificationCount = TugasAkhir::where('status_aktif', 1)
+                ->withCount([
+                    'bimbingan as bimbingan_count' => function ($query) {
+                        $query->where('status_verifikasi', 1);
+                    }
+                ])
+                ->having('bimbingan_count', '>=', 9)
+                ->whereDoesntHave('dosenPenguji')
+                ->count();
+
+            // ✅ PERBAIKAN: Map data dengan pengecekan status lulus per item
             $data = $tugasAkhir->map(function ($item) {
+                // ✅ PERBAIKAN: Cek status lulus untuk setiap item individually
+                $sudahLulus = in_array($item->status_kelulusan, [1, 2]);
+
                 return [
+                    'sudah_lulus' => $sudahLulus,
                     'tugas_akhir_id' => $item->id,
+                    'status_kelulusan' => $item->status_kelulusan, // ✅ TAMBAHAN: Include status kelulusan
                     'mahasiswa' => [
                         'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
@@ -913,7 +931,13 @@ class TugasAkhirController extends Controller
                 ];
             });
 
+            // ✅ TAMBAHAN: Hitung statistik kelulusan
+            $totalSudahLulus = TugasAkhir::where('status_aktif', 1)
+                ->whereIn('status_kelulusan', [1, 2])
+                ->count();
+
             $result = [
+                'notification' => $notificationCount,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
@@ -1037,7 +1061,9 @@ class TugasAkhirController extends Controller
                 ->select('id', 'is_open')
                 ->first();
 
-
+            $notificationCount = TugasAkhir::where('status_aktif', 1)
+                ->where('status_valid', 0)
+                ->count();
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
@@ -1066,6 +1092,7 @@ class TugasAkhirController extends Controller
             });
 
             $result = [
+                'notification' => $notificationCount,
                 'status_form' => $statusForm,
                 'data' => $data,
                 'pagination' => [
@@ -1245,7 +1272,21 @@ class TugasAkhirController extends Controller
             }
 
             $tugasAkhir = $query->paginate(10);
-
+            $notificationCount = TugasAkhir::where('status_aktif', 1)
+                ->where('status_valid', 1)
+                ->where(function ($query) {
+                    $query->where(function ($q) {
+                        // Kondisi 1: Belum ada ujian aktif sama sekali
+                        $q->whereDoesntHave('ujianTA', function ($q2) {
+                            $q2->where('status_ujian', 'aktif');
+                        });
+                    })
+                        ->orWhere(function ($q) {
+                            // Kondisi 2: Status kelulusan = 3 (belum lulus, revisi, diujikan lagi)
+                            $q->where('status_kelulusan', 3);
+                        });
+                })
+                ->count();
             $data = collect($tugasAkhir->items())->map(function ($item) {
                 Carbon::setLocale('id');
                 $ujianTA = $item->ujianTA->where('status_ujian', 'aktif')->first();
@@ -1311,6 +1352,7 @@ class TugasAkhirController extends Controller
             });
 
             $result = [
+                'notification' => $notificationCount,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
@@ -1426,6 +1468,7 @@ class TugasAkhirController extends Controller
                 'tanggal_ujian' => 'nullable|date',
                 'ruang_id' => 'nullable|exists:ruang,id',
                 'sesi_id' => 'nullable|exists:sesi,id',
+                'ujian_ta_id' => 'nullable|exists:ujian_ta,id', // ✅ TAMBAHAN: Terima ujian_ta_id
             ]);
 
             $tugasAkhir = TugasAkhir::with('dosenPenguji')->findOrFail($tugasAkhirId);
@@ -1434,15 +1477,16 @@ class TugasAkhirController extends Controller
             $tanggal = $request->tanggal_ujian;
             $ruangId = $request->ruang_id;
             $sesiId = $request->sesi_id;
+            $ujianTaId = $request->ujian_ta_id; // ✅ TAMBAHAN: Ambil ujian_ta_id dari request
 
             // 1. Get available dates (next 30 days)
-            $availableDates = $this->getAvailableDates($listDosenPenguji, $ruangId, $sesiId);
+            $availableDates = $this->getAvailableDates($listDosenPenguji, $ruangId, $sesiId, $ujianTaId);
 
             // 2. Get available ruang based on selected date and sesi
-            $availableRuang = $this->getAvailableRuang($tanggal, $sesiId, $listDosenPenguji);
+            $availableRuang = $this->getAvailableRuang($tanggal, $sesiId, $listDosenPenguji, $ujianTaId);
 
             // 3. Get available sesi based on selected date and ruang
-            $availableSesi = $this->getAvailableSesi($tanggal, $ruangId, $listDosenPenguji);
+            $availableSesi = $this->getAvailableSesi($tanggal, $ruangId, $listDosenPenguji, $ujianTaId);
 
             return ApiResponse::success([
                 'available_dates' => $availableDates,
@@ -1455,11 +1499,12 @@ class TugasAkhirController extends Controller
         }
     }
 
-    private function getAvailableDates($listDosenPenguji, $ruangId = null, $sesiId = null)
+    // ✅ PERBAIKAN: Tambahkan parameter ujianTaId ke semua method availability
+    private function getAvailableDates($listDosenPenguji, $ruangId = null, $sesiId = null, $ujianTaId = null)
     {
         $dates = [];
         $startDate = now();
-        $endDate = now()->addDays(30);
+        $endDate = now()->addDays(60);
 
         for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
             $dateString = $date->format('Y-m-d');
@@ -1476,8 +1521,14 @@ class TugasAkhirController extends Controller
                 $ruangSesiConflict = UjianTA::where('tanggal_ujian', $dateString)
                     ->where('ruang_id', $ruangId)
                     ->where('sesi_id', $sesiId)
-                    ->where('status_ujian', 'aktif')
-                    ->exists();
+                    ->where('status_ujian', 'aktif');
+
+                // ✅ KUNCI: Abaikan ujian yang sedang diedit
+                if ($ujianTaId) {
+                    $ruangSesiConflict->where('id', '!=', $ujianTaId);
+                }
+
+                $ruangSesiConflict = $ruangSesiConflict->exists();
 
                 if ($ruangSesiConflict) {
                     $isAvailable = false;
@@ -1491,10 +1542,14 @@ class TugasAkhirController extends Controller
                     ->where('status_ujian', 'aktif')
                     ->whereHas('tugasAkhir.dosenPenguji', function ($q) use ($listDosenPenguji) {
                         $q->whereIn('dosen_id', $listDosenPenguji);
-                    })
-                    ->exists();
+                    });
 
-                if ($dosenConflict) {
+                // ✅ KUNCI: Abaikan ujian yang sedang diedit
+                if ($ujianTaId) {
+                    $dosenConflict->where('id', '!=', $ujianTaId);
+                }
+
+                if ($dosenConflict->exists()) {
                     $isAvailable = false;
                 }
             }
@@ -1502,7 +1557,7 @@ class TugasAkhirController extends Controller
             if ($isAvailable) {
                 $dates[] = [
                     'date' => $dateString,
-                    'formatted_date' => $date->locale('id')->translatedFormat('l, d F Y'), // ✅ Uncomment
+                    'formatted_date' => $date->locale('id')->translatedFormat('l, d F Y'),
                 ];
             }
         }
@@ -1510,7 +1565,7 @@ class TugasAkhirController extends Controller
         return $dates;
     }
 
-    private function getAvailableRuang($tanggal = null, $sesiId = null, $listDosenPenguji = [])
+    private function getAvailableRuang($tanggal = null, $sesiId = null, $listDosenPenguji = [], $ujianTaId = null)
     {
         $allRuang = Ruang::select('id', 'nama_ruang')->get();
         $availableRuang = [];
@@ -1523,26 +1578,33 @@ class TugasAkhirController extends Controller
                 $ruangSesiConflict = UjianTA::where('tanggal_ujian', $tanggal)
                     ->where('ruang_id', $ruang->id)
                     ->where('sesi_id', $sesiId)
-                    ->where('status_ujian', 'aktif')
-                    ->exists();
+                    ->where('status_ujian', 'aktif');
 
-                if ($ruangSesiConflict) {
+                // ✅ KUNCI: Abaikan ujian yang sedang diedit
+                if ($ujianTaId) {
+                    $ruangSesiConflict->where('id', '!=', $ujianTaId);
+                }
+
+                if ($ruangSesiConflict->exists()) {
                     $isAvailable = false;
                 }
             }
 
             // ✅ TAMBAHAN: Cek conflict dosen jika ada tanggal dan sesi
             if ($isAvailable && $tanggal && $sesiId && !empty($listDosenPenguji)) {
-                // Meskipun ruang berbeda, dosen tidak boleh ujian di tanggal+sesi yang sama
                 $dosenConflict = UjianTA::where('tanggal_ujian', $tanggal)
                     ->where('sesi_id', $sesiId)
                     ->where('status_ujian', 'aktif')
                     ->whereHas('tugasAkhir.dosenPenguji', function ($q) use ($listDosenPenguji) {
                         $q->whereIn('dosen_id', $listDosenPenguji);
-                    })
-                    ->exists();
+                    });
 
-                if ($dosenConflict) {
+                // ✅ KUNCI: Abaikan ujian yang sedang diedit
+                if ($ujianTaId) {
+                    $dosenConflict->where('id', '!=', $ujianTaId);
+                }
+
+                if ($dosenConflict->exists()) {
                     $isAvailable = false;
                 }
             }
@@ -1558,7 +1620,7 @@ class TugasAkhirController extends Controller
         return $availableRuang;
     }
 
-    private function getAvailableSesi($tanggal = null, $ruangId = null, $listDosenPenguji = [])
+    private function getAvailableSesi($tanggal = null, $ruangId = null, $listDosenPenguji = [], $ujianTaId = null)
     {
         $allSesi = Sesi::select('id', 'nama_sesi', 'waktu_mulai', 'waktu_selesai')->get();
         $availableSesi = [];
@@ -1572,10 +1634,14 @@ class TugasAkhirController extends Controller
                     $ruangSesiConflict = UjianTA::where('tanggal_ujian', $tanggal)
                         ->where('ruang_id', $ruangId)
                         ->where('sesi_id', $sesi->id)
-                        ->where('status_ujian', 'aktif')
-                        ->exists();
+                        ->where('status_ujian', 'aktif');
 
-                    if ($ruangSesiConflict) {
+                    // ✅ KUNCI: Abaikan ujian yang sedang diedit
+                    if ($ujianTaId) {
+                        $ruangSesiConflict->where('id', '!=', $ujianTaId);
+                    }
+
+                    if ($ruangSesiConflict->exists()) {
                         $isAvailable = false;
                     }
                 }
@@ -1587,10 +1653,14 @@ class TugasAkhirController extends Controller
                         ->where('status_ujian', 'aktif')
                         ->whereHas('tugasAkhir.dosenPenguji', function ($q) use ($listDosenPenguji) {
                             $q->whereIn('dosen_id', $listDosenPenguji);
-                        })
-                        ->exists();
+                        });
 
-                    if ($dosenConflict) {
+                    // ✅ KUNCI: Abaikan ujian yang sedang diedit
+                    if ($ujianTaId) {
+                        $dosenConflict->where('id', '!=', $ujianTaId);
+                    }
+
+                    if ($dosenConflict->exists()) {
                         $isAvailable = false;
                     }
                 }
