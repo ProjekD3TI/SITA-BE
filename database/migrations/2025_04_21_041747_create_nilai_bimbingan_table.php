@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->integer('komunikasi');
             $table->integer('skill_pengetahuan');
             $table->integer('tingkah_laku');
+            $table->text('catatan_akhir_bimbingan')->default(null)->nullable();
             $table->timestamps();
         });
     }

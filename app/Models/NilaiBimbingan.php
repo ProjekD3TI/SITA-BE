@@ -16,6 +16,7 @@ class NilaiBimbingan extends Model
         'komunikasi',
         'skill_pengetahuan',
         'tingkah_laku',
+        'catatan_akhir_bimbingan'
     ];
 
     public function tugasAkhir()

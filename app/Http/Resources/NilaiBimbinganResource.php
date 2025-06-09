@@ -21,6 +21,7 @@ class NilaiBimbinganResource extends JsonResource
             'komunikasi' => $this->komunikasi,
             'skill_pengetahuan' => $this->skill_pengetahuan,
             'tingkah_laku' => $this->tingkah_laku,
+            'catatan_akhir_bimbingan' => $this->catatan_akhir_bimbingan,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -21,6 +21,7 @@ class NilaiBimbinganSeeder extends Seeder
             'komunikasi' => 80,
             'skill_pengetahuan' => 88,
             'tingkah_laku' => 82,
+            'catatan_akhir_bimbingan' => 'Sangat baik dalam mengikuti bimbingan, selalu disiplin dan komunikatif.',
         ]);
 
         // NilaiBimbingan::create([

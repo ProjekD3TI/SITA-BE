@@ -273,7 +273,7 @@ class BimbinganController extends Controller
                 'kategori:id,nama_kategori',
                 'bimbingan',
                 'tahunAjaran:id,tahun_ajaran',
-                'nilaiBimbingan:id,rerata_bimbingan,disiplin,komunikasi,skill_pengetahuan,tingkah_laku'
+                'nilaiBimbingan:id,rerata_bimbingan,disiplin,komunikasi,skill_pengetahuan,tingkah_laku,catatan_akhir_bimbingan'
             ])
                 ->where('id', $tugasAkhirId)
                 ->where('dosen_pembimbing_id', $dosenId)
