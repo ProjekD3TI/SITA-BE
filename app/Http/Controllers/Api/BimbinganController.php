@@ -104,7 +104,7 @@ class BimbinganController extends Controller
         }
     }
 
-    public function showBimbinganForMahasiswa(Request $request)
+    public function showBimbinganForMahasiswa()
     {
         try {
             Carbon::setLocale('id');
@@ -120,14 +120,14 @@ class BimbinganController extends Controller
                 return ApiResponse::success([], 'Belum ada tugas akhir yang aktif');
             }
 
-
             $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
-                ->orderBy('tanggal_bimbingan', 'asc')
-                ->paginate(10, ['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
+                ->orderBy('id', 'desc')
+                ->paginate(10);
 
             $babTertinggi = $tugasAkhir->bimbingan
                 ->where('status_verifikasi', 1)
                 ->max('bab') ?? null;
+
             $result = collect($bimbinganList->items())->map(function ($item) {
                 return [
                     'id' => $item->id,
@@ -199,7 +199,8 @@ class BimbinganController extends Controller
 
             $query = TugasAkhir::with([
                 'mahasiswa:id,name,nim',
-                'kategori:id,nama_kategori'
+                'kategori:id,nama_kategori',
+                'bimbingan'
             ])
                 ->where('dosen_pembimbing_id', $dosenId)
                 ->where('status_aktif', 1);
@@ -229,7 +230,7 @@ class BimbinganController extends Controller
                 });
             }
 
-            $tugasAkhir = $query->paginate(10);
+            $tugasAkhir = $query->orderBy('id', 'desc')->paginate(10);
 
             $data = collect($tugasAkhir->items())->map(function ($item) {
                 return [
@@ -244,6 +245,12 @@ class BimbinganController extends Controller
                         'kategori_id' => $item->kategori->id ?? null,
                         'nama_kategori' => $item->kategori->nama_kategori ?? null,
                     ],
+                    'bimbingan' => [
+                        'total_bimbingan' => $item->bimbingan
+                            ? $item->bimbingan->where('status_verifikasi', 1)->count()
+                            : 0,
+                    ]
+
                 ];
             });
 
@@ -295,7 +302,9 @@ class BimbinganController extends Controller
                     'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
                     'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
                 ],
-                'bimbingan' => BimbinganResource::collection($tugasAkhir->bimbingan),
+                'bimbingan' => BimbinganResource::collection(
+                    $tugasAkhir->bimbingan->sortByDesc('id')->values()
+                ),
                 'bab_tertinggi' => $tugasAkhir->bimbingan->max('bab'),
                 'nilai_bimbingan' => $tugasAkhir->nilaiBimbingan
             ];

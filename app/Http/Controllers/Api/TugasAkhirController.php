@@ -368,10 +368,16 @@ class TugasAkhirController extends Controller
                 'mahasiswa:id,nim,name',
                 'kategori:id,nama_kategori',
             ])
-                ->where('dosen_pembimbing_id', $dosenId)
                 ->where('status_aktif', 1)
+                ->where(function ($q) use ($dosenId) {
+                    $q->where('dosen_pembimbing_id', $dosenId)
+                        ->orWhereHas('dosenPenguji', function ($q2) use ($dosenId) {
+                            $q2->where('dosen_id', $dosenId);
+                        });
+                })
                 ->get();
 
+            $taYangDibimbing = $tugasAkhir->where('dosen_pembimbing_id', $dosenId);
             $requestPembimbing = RequestPembimbing::with(['tugasAkhir.mahasiswa', 'tugasAkhir.kategori'])
                 ->where('status_request', 0)
                 ->where('dosen_id', $dosenId)
@@ -397,7 +403,7 @@ class TugasAkhirController extends Controller
             }
 
             // Sekarang $tugasAkhir adalah collection, map() aman digunakan
-            $taPerBab = $tugasAkhir->map(function ($item) {
+            $taPerBab = $taYangDibimbing->map(function ($item) {
                 return [
                     'id_ta' => $item->id,
                     'bab_tertinggi' => $item->bimbingan
@@ -445,7 +451,7 @@ class TugasAkhirController extends Controller
             $data = [
                 'doughnat_chart' => $statistikBab->pluck('jumlah_ta', 'bab') ?? null,
                 'summary_card' => [
-                    'ta_yang_dibimbing' => $tugasAkhir->count() ?? null,
+                    'ta_yang_dibimbing' => $taYangDibimbing->count(),
                     'ujian_terjadwal' => $ujianTerjadwal ?? null,
                     'permintaan_bimbingan' => $jumlahReqPembimbing ?? null,
                 ],
@@ -1712,25 +1718,33 @@ class TugasAkhirController extends Controller
                 });
             }
 
-            // Filter sesi
-            if ($request->sesi) {
-                $query->whereHas('ujianTA.sesi', function ($q) use ($request) {
-                    $q->where('nama_sesi', 'like', '%' . $request->sesi . '%');
-                });
+            // Filter status (0 = menunggu, 1 = selesai)
+            if ($request->has('status')) {
+                $statusList = array_filter(
+                    explode(',', $request->status),
+                    fn($v) => in_array((int) $v, [0, 1], true)
+                );
+                if (count($statusList) === 1) {
+                    if ((int) $statusList[0] === 0) {
+                        $query->whereNull('status_kelulusan');
+                    } elseif ((int) $statusList[0] === 1) {
+                        $query->whereNotNull('status_kelulusan');
+                    }
+                } elseif (count($statusList) === 2) {
+                    // Jika 0 dan 1, tidak perlu filter (tampilkan semua)
+                    // Atau, jika ingin lebih eksplisit, hapus filter status_kelulusan
+                }
             }
 
-            // Urutkan berdasarkan tanggal ujian terdekat
-            $query->whereHas('ujianTA', function ($q) {
-                $q->where('status_ujian', 'aktif');
-            });
-
-            // Join ke tabel ujian_ta agar bisa orderBy tanggal_ujian
-            $query->leftJoin('ujian_ta', function ($join) {
-                $join->on('tugas_akhir.id', '=', 'ujian_ta.tugas_akhir_id')
-                    ->where('ujian_ta.status_ujian', 'aktif');
-            })
-                ->orderBy('ujian_ta.tanggal_ujian', 'asc')
-                ->select('tugas_akhir.*');
+            $query->orderByRaw("
+                        CASE WHEN status_kelulusan IS NULL THEN 0 ELSE 1 END
+                    ")->orderBy(
+                    UjianTA::select('tanggal_ujian')
+                        ->whereColumn('tugas_akhir_id', 'tugas_akhir.id')
+                        ->where('status_ujian', 'aktif')
+                        ->orderBy('tanggal_ujian', 'asc')
+                        ->limit(1)
+                );
 
             $tugasAkhir = $query->paginate(10);
 
@@ -1745,6 +1759,7 @@ class TugasAkhirController extends Controller
                         'name' => $item->mahasiswa->name ?? null,
                     ],
                     'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
+                    'status_kelulusan' => $item->status_kelulusan ?? null,
                     'kategori' => [
                         'kategori_id' => $item->kategori->id ?? null,
                         'nama_kategori' => $item->kategori->nama_kategori ?? null,
@@ -1753,10 +1768,10 @@ class TugasAkhirController extends Controller
                         ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
                         : null,
                     'sesi' => [
-                        'sesi_id' => $ujianTA && $ujianTA->sesi ? $ujianTA->sesi->id : null,
-                        'nama_sesi' => $ujianTA && $ujianTA->sesi ? $ujianTA->sesi->nama_sesi : null,
-                        'waktu_mulai' => $ujianTA && $ujianTA->sesi ? date('H:i', strtotime($ujianTA->sesi->waktu_mulai)) : null,
-                        'waktu_selesai' => $ujianTA && $ujianTA->sesi ? date('H:i', strtotime($ujianTA->sesi->waktu_selesai)) : null,
+                        'sesi_id' => $ujianTA->sesi->id ?? null,
+                        'nama_sesi' => $ujianTA->sesi->nama_sesi ?? null,
+                        'waktu_mulai' => date('H:i', strtotime($ujianTA->sesi->waktu_mulai)) ?? null,
+                        'waktu_selesai' => date('H:i', strtotime($ujianTA->sesi->waktu_selesai)) ?? null,
                     ],
                     'ruang' => $ujianTA && $ujianTA->ruang ? $ujianTA->ruang->nama_ruang : null,
                 ];
