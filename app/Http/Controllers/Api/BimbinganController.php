@@ -199,7 +199,8 @@ class BimbinganController extends Controller
 
             $query = TugasAkhir::with([
                 'mahasiswa:id,name,nim',
-                'kategori:id,nama_kategori'
+                'kategori:id,nama_kategori',
+                'bimbingan'
             ])
                 ->where('dosen_pembimbing_id', $dosenId)
                 ->where('status_aktif', 1);
@@ -244,6 +245,7 @@ class BimbinganController extends Controller
                         'kategori_id' => $item->kategori->id ?? null,
                         'nama_kategori' => $item->kategori->nama_kategori ?? null,
                     ],
+                    'jumlah_bimbingan' => $item->bimbingan ? $item->bimbingan->where('status_verifikasi', 1)->count() : 0,
                 ];
             });
 
