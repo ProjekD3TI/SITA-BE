@@ -12,11 +12,11 @@ return new class extends Migration {
     {
         Schema::create('nilai_ujian_ta', function (Blueprint $table) {
             $table->id();
-            $table->integer('rerata_ujian_ta');
-            $table->integer('kualitas_tata_laporan');
-            $table->integer('kemampuan_teknis');
-            $table->integer('kualitas_produk');
-            $table->integer('presentasi');
+            $table->double('rerata_ujian_ta', 5, 2);
+            $table->double('kualitas_tata_laporan', 5, 2);
+            $table->double('kemampuan_teknis', 5, 2);
+            $table->double('kualitas_produk', 5, 2);
+            $table->double('presentasi', 5, 2);
             $table->timestamps();
         });
     }

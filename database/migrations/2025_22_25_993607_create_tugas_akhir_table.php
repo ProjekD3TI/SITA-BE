@@ -20,8 +20,8 @@ return new class extends Migration {
             $table->foreignId('nilai_bimbingan_id')->default(null)->nullable()->constrained('nilai_bimbingan')->onDelete('restrict');
             $table->foreignId('kategori_id')->default(null)->nullable()->constrained('kategori')->onDelete('restrict');
             $table->string('judul_tugas_akhir', 255)->default(null)->nullable();
-            $table->integer('nilai_proposal')->default(null)->nullable();
-            $table->integer('nilai_akhir')->default(null)->nullable();
+            $table->double('nilai_proposal', 5, 2)->default(null)->nullable();
+            $table->double('nilai_akhir', 5, 2)->default(null)->nullable();
             $table->text('catatan_proposal')->default(null)->nullable();
             $table->text('catatan_perbaikan')->default(null)->nullable();
             $table->tinyInteger('status_kelulusan')->default(null)->nullable();//1: Lulus tanpa revisi, 2: Lulus revisi tanpa diuji lagi, 3: Belum lulus revisi & diuji lagi, 4: Tidak lulus ulang TA & diuji lagi
