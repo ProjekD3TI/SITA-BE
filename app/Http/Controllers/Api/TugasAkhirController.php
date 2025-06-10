@@ -424,9 +424,11 @@ class TugasAkhirController extends Controller
                     ->where('status_ujian', 'aktif')
                     ->map(function ($ujian) use ($ta) {
                         return [
+                            'tugas_akhir_id' => $ta->id,
+                            'nim' => $ta->mahasiswa->nim,
                             'tanggal_ujian' => $ujian->tanggal_ujian,
                             'nama' => $ta->mahasiswa->name,
-                            'waktu' => date('H:i', strtotime($ujian->sesi->waktu_mulai)),
+                            'waktu' => date('H:i', strtotime($ujian->sesi->waktu_mulai)) . ' - ' . date('H:i', strtotime($ujian->sesi->waktu_selesai)),
                             'sesi' => $ujian->sesi->nama_sesi ?? null,
                             'ruang' => $ujian->ruang->nama_ruang ?? null
                         ];
@@ -1927,62 +1929,61 @@ class TugasAkhirController extends Controller
                 ->values();
             Carbon::setLocale('id');
             $ujianTA = $tugasAkhir->ujianTA->where('status_ujian', 'aktif')->first();
-            $data =
-                [
-                    'tugas_akhir_id' => $tugasAkhir->id,
-                    'status_kelulusan' => $tugasAkhir->status_kelulusan ?? null,
-                    'mahasiswa' => [
-                        'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
-                        'nim' => $tugasAkhir->mahasiswa->nim ?? null,
-                        'name' => $tugasAkhir->mahasiswa->name ?? null,
-                    ],
-                    'kategori' => [
-                        'kategori_id' => $tugasAkhir->kategori->id ?? null,
-                        'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
-                    ],
-                    'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir ?? null,
-                    'berkas' => $naskahBerkas,
-                    'tahun_ajaran' => [
-                        'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
-                        'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
-                    ],
-                    'dosen_pembimbing' => [
-                        'dosen_pembimbing_id' => $tugasAkhir->dosenPembimbing->id ?? null,
-                        'name' => $tugasAkhir->dosenPembimbing->name ?? null,
-                    ],
-                    'ujian_ta' => $ujianTA ? [
-                        'ujian_ta_id' => $ujianTA->id,
-                        'tanggal_ujian' => $ujianTA->tanggal_ujian
-                            ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
-                            : null,
-
-                        'waktu_mulai' => date('H:i', strtotime($ujianTA->sesi->waktu_mulai)) ?? null,
-                        'waktu_selesai' => date('H:i', strtotime($ujianTA->sesi->waktu_selesai)) ?? null,
-                        'ruang' => $ujianTA->ruang->nama_ruang ?? null,
-                        'status_ujian' => $ujianTA->status_ujian
-                    ] : [],
-                    'dosen_penguji' => $tugasAkhir->dosenPenguji
-                        ? $tugasAkhir->dosenPenguji->map(function ($penguji) use ($dosenId) {
-                            $isLogin = $penguji->id == $dosenId;
-                            $nilai = $penguji->pivot->nilaiUjianTA;
-                            return [
-                                'dosen_penguji_id' => $penguji->id,
-                                'name' => $penguji->name,
-                                'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
-                                // Hanya tampilkan nilai jika dosen login
-                                'nilai_ujian_ta' => $isLogin && $nilai ? [
-                                    'id' => $nilai->id,
-                                    'kualitas_tata_laporan' => $nilai->kualitas_tata_laporan,
-                                    'kemampuan_teknis' => $nilai->kemampuan_teknis,
-                                    'kualitas_produk' => $nilai->kualitas_produk,
-                                    'presentasi' => $nilai->presentasi,
-                                    'rerata_ujian_ta' => $nilai->rerata_ujian_ta,
-                                ] : null,
-                                'revisi' => $penguji->pivot->revisi ?? null,
+            $data = [
+                'tugas_akhir_id' => $tugasAkhir->id,
+                'status_kelulusan' => $tugasAkhir->status_kelulusan ?? null,
+                'mahasiswa' => [
+                    'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
+                    'nim' => $tugasAkhir->mahasiswa->nim ?? null,
+                    'name' => $tugasAkhir->mahasiswa->name ?? null,
+                ],
+                'kategori' => [
+                    'kategori_id' => $tugasAkhir->kategori->id ?? null,
+                    'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
+                ],
+                'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir ?? null,
+                'berkas' => $naskahBerkas,
+                'tahun_ajaran' => [
+                    'tahun_ajaran_id' => $tugasAkhir->tahunAjaran->id ?? null,
+                    'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
+                ],
+                'dosen_pembimbing' => [
+                    'dosen_pembimbing_id' => $tugasAkhir->dosenPembimbing->id ?? null,
+                    'name' => $tugasAkhir->dosenPembimbing->name ?? null,
+                    'nik' => $tugasAkhir->dosenPembimbing->nik ?? null,
+                ],
+                'ujian_ta' => $ujianTA ? [
+                    'ujian_ta_id' => $ujianTA->id,
+                    'tanggal_ujian' => $ujianTA->tanggal_ujian
+                        ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
+                        : null,
+                    'waktu_mulai' => date('H:i', strtotime($ujianTA->sesi->waktu_mulai)) ?? null,
+                    'waktu_selesai' => date('H:i', strtotime($ujianTA->sesi->waktu_selesai)) ?? null,
+                    'ruang' => $ujianTA->ruang->nama_ruang ?? null,
+                    'status_ujian' => $ujianTA->status_ujian
+                ] : [],
+                'dosen_penguji' => $tugasAkhir->dosenPenguji
+                    ? $tugasAkhir->dosenPenguji->map(function ($penguji) use ($dosenId) {
+                        $isCurrentUser = $penguji->id == $dosenId;
+                        $nilai = $penguji->pivot->nilaiUjianTA;
+                        return [
+                            'dosen_penguji_id' => $penguji->id,
+                            'name' => $penguji->name,
+                            'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
+                            'is_current_user' => $isCurrentUser,
+                            'nilai_ujian_ta' => $isCurrentUser && $nilai ? [
+                                'id' => $nilai->id,
+                                'kualitas_tata_laporan' => $nilai->kualitas_tata_laporan,
+                                'kemampuan_teknis' => $nilai->kemampuan_teknis,
+                                'kualitas_produk' => $nilai->kualitas_produk,
+                                'presentasi' => $nilai->presentasi,
+                                'rerata_ujian_ta' => $nilai->rerata_ujian_ta,
+                            ] : null,
+                            'revisi' => $penguji->pivot->revisi ?? null,
                             ];
-                        })->values()
-                        : [],
-                ];
+                    })->values()
+                    : [],
+            ];
 
             return ApiResponse::success($data, 'Detail ujian tugas akhir berhasil diambil');
         } catch (Exception $e) {
@@ -1999,7 +2000,6 @@ class TugasAkhirController extends Controller
 
             $dosenId = Auth::id();
             $tugasAkhir = TugasAkhir::with(['dosenPenguji'])
-                ->where('id', $tugasAkhirId)
                 ->first();
 
             if (!$tugasAkhir) {
