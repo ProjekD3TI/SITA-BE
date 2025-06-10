@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\BimbinganResource;
 use App\Http\Resources\TugasAkhirResource;
 use App\Http\Resources\NilaiBimbinganResource;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 
@@ -1980,7 +1981,7 @@ class TugasAkhirController extends Controller
                                 'rerata_ujian_ta' => $nilai->rerata_ujian_ta,
                             ] : null,
                             'revisi' => $penguji->pivot->revisi ?? null,
-                            ];
+                        ];
                     })->values()
                     : [],
             ];
@@ -1999,23 +2000,55 @@ class TugasAkhirController extends Controller
             ]);
 
             $dosenId = Auth::id();
-            $tugasAkhir = TugasAkhir::with(['dosenPenguji'])
-                ->first();
+            $tugasAkhir = TugasAkhir::with(['dosenPenguji', 'berkas', 'ujianTA'])->find($tugasAkhirId);
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
             }
-            // Cek apakah dosen yang sedang login adalah dosen pembimbing atau sekretaris
-            $isSekretaris = $tugasAkhir->dosenPenguji
+
+            // Cek apakah dosen yang sedang login adalah sekretaris
+            $cekPembimbing = $tugasAkhir->dosenPenguji
                 ->filter(function ($penguji) use ($dosenId) {
                     return $penguji->id == $dosenId && ($penguji->pivot->jabatan_penguji ?? null) === 'sekretaris';
                 })
                 ->isNotEmpty();
-            if (!$isSekretaris) {
+
+            if (!$cekPembimbing) {
                 return ApiResponse::error('Anda bukan sekretaris pada tugas akhir ini.', 403);
             }
 
             $tugasAkhir->status_kelulusan = $request->status_kelulusan;
+
+            // Jika status_kelulusan = 3, set status_valid berkas naskah TA menjadi 2 (ditolak)
+            if ($request->status_kelulusan == 3) {
+                foreach ($tugasAkhir->berkas as $berkas) {
+                    if (strtolower($berkas->nama_berkas) === strtolower('Naskah Tugas Akhir')) {
+                        $berkas->status_valid = 2;
+                        $berkas->save();
+                    }
+                }
+            }
+
+            // Jika status_kelulusan = 4, lakukan reset TA
+            if ($request->status_kelulusan == 4) {
+                // Hapus semua berkas TA
+                foreach ($tugasAkhir->berkas as $berkas) {
+                    if (Storage::exists($berkas->file_path)) {
+                        Storage::delete($berkas->file_path);
+                    }
+                    $berkas->delete();
+                }
+                // Nonaktifkan semua ujian TA aktif
+                foreach ($tugasAkhir->ujianTA as $ujian) {
+                    if ($ujian->status_ujian === 'aktif') {
+                        $ujian->status_ujian = 'non-aktif';
+                        $ujian->save();
+                    }
+                }
+                // Reset status_valid
+                $tugasAkhir->status_valid = null;
+            }
+
             $tugasAkhir->save();
 
             return ApiResponse::success(

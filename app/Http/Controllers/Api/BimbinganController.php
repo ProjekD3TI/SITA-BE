@@ -122,7 +122,7 @@ class BimbinganController extends Controller
 
 
             $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
-                ->orderBy('tanggal_bimbingan', 'asc')
+                ->orderBy('id', 'desc')
                 ->paginate(10, ['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
 
             $babTertinggi = $tugasAkhir->bimbingan
