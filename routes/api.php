@@ -139,36 +139,36 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // ----------------- || Sistem Informasi Tugas AKhir || ------------------------ \\
 
     // Sistem Tugas-akhir (Sesi)
-    Route::get('/dosen/sesi', [SesiController::class, 'lihatSesiForDosen']);
+    Route::get('/dosen/tugas-akhir/sesi', [SesiController::class, 'lihatSesiForDosen']);
 
     // Sistem Tugas-akhir (Fitur Bimbingan ~ List Request Pembimbing untuk Dosen & Update Status Request)
-    Route::get('/dosen/request-pembimbing', [RequestPembimbingController::class, 'tabelRequestPembimbingForDosen']);
-    Route::put('/dosen/request-pembimbing/approval/{requestPembimbingId}', [RequestPembimbingController::class, 'updateApprovalByDosen']);
+    Route::get('/dosen/tugas-akhir/request-pembimbing', [RequestPembimbingController::class, 'tabelRequestPembimbingForDosen']);
+    Route::put('/dosen/tugas-akhir/request-pembimbing/approval/{requestPembimbingId}', [RequestPembimbingController::class, 'updateApprovalByDosen']);
 
     // Sistem Tugas-akhir (Fitur Bimbingan ~ List Dibimbing & Detail Bimbingan & Update Verifikasi Bimbingan)
-    Route::get('/dosen/bimbingan', [BimbinganController::class, 'tabelListDibimbingForDosen']);
-    Route::get('/dosen/bimbingan/{tugasAkhirId}', [BimbinganController::class, 'tabelDetailBimbinganForDosen']);
-    Route::put('/dosen/bimbingan/{bimbinganId}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
+    Route::get('/dosen/tugas-akhir/bimbingan', [BimbinganController::class, 'tabelListDibimbingForDosen']);
+    Route::get('/dosen/tugas-akhir/bimbingan/{tugasAkhirId}', [BimbinganController::class, 'tabelDetailBimbinganForDosen']);
+    Route::put('/dosen/tugas-akhir/bimbingan/{bimbinganId}', [BimbinganController::class, 'updateVerifikasiBimbinganByDosen']);
 
     // Sistem TugasAkhir (Nilai Bimbingan)
-    Route::get('/dosen/nilai-bimbingan/{tugasAkhirId}', [NilaiBimbinganController::class, 'getNilaiBimbinganByDosen']);
-    Route::post('/dosen/nilai-bimbingan/{tugasAkhirId}', [NilaiBimbinganController::class, 'storeNilaiBimbinganByDosen']);
-    Route::put('/dosen/nilai-bimbingan/{tugasAkhirId}/update', [NilaiBimbinganController::class, 'updateNilaiBimbinganByDosen']);
+    Route::get('/dosen/tugas-akhir/nilai-bimbingan/{tugasAkhirId}', [NilaiBimbinganController::class, 'getNilaiBimbinganByDosen']);
+    Route::post('/dosen/tugas-akhir/nilai-bimbingan/{tugasAkhirId}', [NilaiBimbinganController::class, 'storeNilaiBimbinganByDosen']);
+    Route::put('/dosen/tugas-akhir/nilai-bimbingan/{tugasAkhirId}/update', [NilaiBimbinganController::class, 'updateNilaiBimbinganByDosen']);
 
     // Sistem Tugas-akhir (Nilai Ujian TA)
-    Route::post('/dosen/nilai-ujian-ta', [NilaiUjianTAController::class, 'storeNilaiByDosenPenguji']);
-    Route::put('/dosen/nilai-ujian-ta/{tugasAkhirId}', [NilaiUjianTAController::class, 'updateNilaiByDosenPenguji']);
+    Route::post('/dosen/tugas-akhir/nilai-ujian-ta', [NilaiUjianTAController::class, 'storeNilaiByDosenPenguji']);
+    Route::put('/dosen/tugas-akhir/nilai-ujian-ta/{tugasAkhirId}', [NilaiUjianTAController::class, 'updateNilaiByDosenPenguji']);
 
     // Sistem Tugas-akhir (Fitur Ujian Tugas Akhir ~ List Ujian TA untuk Dosen & Detail Ujian TA)
-    Route::get('/dosen/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
-    Route::get('/dosen/detail-ujian-ta/{tugasAkhirId}', [TugasAkhirController::class, 'detailUjianForDosen']);
+    Route::get('/dosen/tugas-akhir/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
+    Route::get('/dosen/tugas-akhir/detail-ujian-ta/{tugasAkhirId}', [TugasAkhirController::class, 'detailUjianForDosen']);
 
     // Sistem Tugas akhir (Tugas Akhir)
-    Route::put('/dosen/status-kelulusan/{tugasAkhirId}', [TugasAkhirController::class, 'updateStatusKelulusanByDosenPembimbing']);
+    Route::put('/dosen/tugas-akhir/status-kelulusan/{tugasAkhirId}', [TugasAkhirController::class, 'updateStatusKelulusanByDosenPembimbing']);
 
     Route::get('/dosen/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByDosen']);
     // Kategori
-    Route::get('/dosen/kategori', [KategoriController::class, 'lihatKategori']);
+    Route::get('/dosen/tugas-akhir/kategori', [KategoriController::class, 'lihatKategori']);
     // ----------------- || ############################### || ------------------------ \\
 
 
