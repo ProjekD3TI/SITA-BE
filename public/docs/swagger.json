@@ -1,0 +1,4245 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Sistem Informasi Tugas Akhir",
+    "contact": {},
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000/api",
+      "variables": {}
+    },
+    {
+      "url": "https://v3423085.mhs.d3tiuns.com/api/api",
+      "variables": {}
+    }
+  ],
+  "paths": {
+    "/login/admin": {
+      "post": {
+        "tags": [
+          "Admin Login"
+        ],
+        "summary": "Login Admin",
+        "operationId": "LoginAdmin",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/LoginAdminRequest"
+                  },
+                  {
+                    "example": {
+                      "email": "",
+                      "password": ""
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "email": "",
+                "password": ""
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false,
+        "security": []
+      }
+    },
+    "/admin_ta/dashboard": {
+      "get": {
+        "tags": [
+          "Admin Dashbord"
+        ],
+        "summary": "Dashboard Admin",
+        "operationId": "DashboardAdmin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/request-pembimbing": {
+      "post": {
+        "tags": [
+          "Admin Request Pembimbing"
+        ],
+        "summary": "Buat Request Pembimbing",
+        "operationId": "BuatRequestPembimbing",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BuatRequestPembimbingRequest"
+                  },
+                  {
+                    "example": {
+                      "tugas_akhir_id": 1,
+                      "dosen_id": 2
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "tugas_akhir_id": 1,
+                "dosen_id": 2
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/request-pembimbing/{id}": {
+      "put": {
+        "tags": [
+          "Admin Request Pembimbing"
+        ],
+        "summary": "Update Request Pembimbing",
+        "operationId": "UpdateRequestPembimbing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateRequestPembimbingRequest"
+                  },
+                  {
+                    "example": {
+                      "tugas_akhir_id": 1,
+                      "dosen_id": 1
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "tugas_akhir_id": 1,
+                "dosen_id": 1
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/plotting": {
+      "get": {
+        "tags": [
+          "Admin Fitur Bimbingan"
+        ],
+        "summary": "Plotting List Dosen Pembimbing",
+        "operationId": "PlottingListDosenPembimbing",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/plotting-pembimbing/show/{tugasAkhirId}": {
+      "get": {
+        "tags": [
+          "Admin Fitur Bimbingan"
+        ],
+        "summary": "Detail Plotting Pembimbing",
+        "operationId": "DetailPlottingPembimbing",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/plotting-pembimbing": {
+      "post": {
+        "tags": [
+          "Admin Fitur Bimbingan"
+        ],
+        "summary": "Simpan Plotting Pembimbing",
+        "operationId": "SimpanPlottingPembimbing",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\r\n    \"tugas_akhir_id\": {{tugasAkhirId}},\r\n    \"dosen_pembimbing_id\" : {{dosenPembimbingId}}\r\n}\r\n"
+              },
+              "example": "{\r\n    \"tugas_akhir_id\": {{tugasAkhirId}},\r\n    \"dosen_pembimbing_id\" : {{dosenPembimbingId}}\r\n}\r\n"
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}": {
+      "put": {
+        "tags": [
+          "Admin Fitur Bimbingan"
+        ],
+        "summary": "Update Plotting Pembimbing",
+        "operationId": "UpdatePlottingPembimbing",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\r\n    \"dosen_pembimbing_id\" : {{dosenPembimbingId}}\r\n}"
+              },
+              "example": "{\r\n    \"dosen_pembimbing_id\" : {{dosenPembimbingId}}\r\n}"
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/list-bimbingan": {
+      "get": {
+        "tags": [
+          "Admin Fitur Bimbingan"
+        ],
+        "summary": "List Bimbingan",
+        "operationId": "ListBimbingan",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/detail-bimbingan/{tugasAkhirId}": {
+      "get": {
+        "tags": [
+          "Admin Fitur Bimbingan"
+        ],
+        "summary": "Detail Bimbingan",
+        "operationId": "DetailBimbingan",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/pendaftar-proposal": {
+      "get": {
+        "tags": [
+          "Admin Fitur Proposal"
+        ],
+        "summary": "List Pengajuan Proposal",
+        "operationId": "ListPengajuanProposal",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/pendaftar-proposal/{proposalId}": {
+      "get": {
+        "tags": [
+          "Admin Fitur Proposal"
+        ],
+        "summary": "Detail Pengajuan Proposal",
+        "operationId": "DetailPengajuanProposal",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/pendaftar-proposal/{proposalId}/status": {
+      "put": {
+        "tags": [
+          "Admin Fitur Proposal"
+        ],
+        "summary": "Update Validasi Berkas Proposal",
+        "operationId": "UpdateValidasiBerkasProposal",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateValidasiBerkasProposalRequest"
+                  },
+                  {
+                    "example": {
+                      "status_valid_berkas": [
+                        1,
+                        1
+                      ],
+                      "catatan_perbaikan": "Berkas 1 diterima, berkas 2 perlu perbaikan format."
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "status_valid_berkas": [
+                  1,
+                  1
+                ],
+                "catatan_perbaikan": "Berkas 1 diterima, berkas 2 perlu perbaikan format."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/seminar-proposal": {
+      "get": {
+        "tags": [
+          "Admin Seminar Proposal"
+        ],
+        "summary": "List Seminar Proposal",
+        "operationId": "ListSeminarProposal",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/seminar-proposal/{proposalId}": {
+      "get": {
+        "tags": [
+          "Admin Seminar Proposal"
+        ],
+        "summary": "Detail Seminar Proposal",
+        "operationId": "DetailSeminarProposal",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/seminar-proposal/{proposalId}/nilai-catatan": {
+      "put": {
+        "tags": [
+          "Admin Seminar Proposal"
+        ],
+        "summary": "Update Nilai dan Catatan",
+        "operationId": "UpdateNilaidanCatatan",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\r\n    \"nilai_proposal\" : {{masukan nilai}}, //rentang nilai 0-100\r\n    \"catatan_proposal\" : \"{{masukan Catatan}}\"\r\n}"
+              },
+              "example": "{\r\n    \"nilai_proposal\" : {{masukan nilai}}, //rentang nilai 0-100\r\n    \"catatan_proposal\" : \"{{masukan Catatan}}\"\r\n}"
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/dosen-penguji": {
+      "get": {
+        "tags": [
+          "Admin Dosen Penguji"
+        ],
+        "summary": "List Dosen Penguji",
+        "operationId": "ListDosenPenguji",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "Admin Dosen Penguji"
+        ],
+        "summary": "Tambah Dosen Penguji",
+        "operationId": "TambahDosenPenguji",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TambahDosenPengujiRequest"
+                  },
+                  {
+                    "example": {
+                      "tugas_akhir_id": 1,
+                      "list_dosen": [
+                        {
+                          "dosen_id": 1,
+                          "jabatan_penguji": "ketua"
+                        },
+                        {
+                          "dosen_id": 2,
+                          "jabatan_penguji": "sekretaris"
+                        },
+                        {
+                          "dosen_id": 3,
+                          "jabatan_penguji": "penguji"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "tugas_akhir_id": 1,
+                "list_dosen": [
+                  {
+                    "dosen_id": 1,
+                    "jabatan_penguji": "ketua"
+                  },
+                  {
+                    "dosen_id": 2,
+                    "jabatan_penguji": "sekretaris"
+                  },
+                  {
+                    "dosen_id": 3,
+                    "jabatan_penguji": "penguji"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/dosen-penguji/{dosenPengujiId}": {
+      "put": {
+        "tags": [
+          "Admin Dosen Penguji"
+        ],
+        "summary": "Update Dosen Penguji",
+        "operationId": "UpdateDosenPenguji",
+        "parameters": [
+          {
+            "name": "dosenPengujiId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateDosenPengujiRequest"
+                  },
+                  {
+                    "example": {
+                      "list_dosen": [
+                        {
+                          "dosen_id": 1,
+                          "jabatan_penguji": "ketua"
+                        },
+                        {
+                          "dosen_id": 2,
+                          "jabatan_penguji": "sekretaris"
+                        },
+                        {
+                          "dosen_id": 3,
+                          "jabatan_penguji": "penguji"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "list_dosen": [
+                  {
+                    "dosen_id": 1,
+                    "jabatan_penguji": "ketua"
+                  },
+                  {
+                    "dosen_id": 2,
+                    "jabatan_penguji": "sekretaris"
+                  },
+                  {
+                    "dosen_id": 3,
+                    "jabatan_penguji": "penguji"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/plotting-penguji": {
+      "get": {
+        "tags": [
+          "Admin Plotting Penguji"
+        ],
+        "summary": "List Plotting Penguji",
+        "operationId": "ListPlottingPenguji",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/plotting-penguji/{tugasAkhirId}": {
+      "get": {
+        "tags": [
+          "Admin Plotting Penguji"
+        ],
+        "summary": "Detail Plotting Penguji",
+        "operationId": "DetailPlottingPenguji",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/pendaftar-ujian": {
+      "get": {
+        "tags": [
+          "Admin Pendaftar Ujian"
+        ],
+        "summary": "List Pendaftar Ujian",
+        "operationId": "ListPendaftarUjian",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/pendaftar-ujian/{tugasAkhirId}": {
+      "get": {
+        "tags": [
+          "Admin Pendaftar Ujian"
+        ],
+        "summary": "Detail Pendaftar Ujian",
+        "operationId": "DetailPendaftarUjian",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/pendaftar-ujian/{tugasAkhirId}/status": {
+      "put": {
+        "tags": [
+          "Admin Pendaftar Ujian"
+        ],
+        "summary": "Validasi Berkas Ujian",
+        "operationId": "ValidasiBerkasUjian",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ValidasiBerkasUjianRequest"
+                  },
+                  {
+                    "example": {
+                      "status_valid_berkas": [
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1
+                      ],
+                      "catatan_perbaikan": "Semua berkas telah sesuai persyaratan."
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "status_valid_berkas": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "catatan_perbaikan": "Semua berkas telah sesuai persyaratan."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tahun-ajaran": {
+      "get": {
+        "tags": [
+          "Admin Tahun Ajaran"
+        ],
+        "summary": "List & Create Tahun Ajaran",
+        "operationId": "List&CreateTahunAjaran",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tahun-ajaran/{id}": {
+      "put": {
+        "tags": [
+          "Admin Tahun Ajaran"
+        ],
+        "summary": "Update Tahun Ajaran",
+        "operationId": "UpdateTahunAjaran",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateTahunAjaranRequest"
+                  },
+                  {
+                    "example": {
+                      "tahun_ajaran": "2028/2029"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "tahun_ajaran": "2028/2029"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tahun-ajaran/{id}/set-default": {
+      "put": {
+        "tags": [
+          "Admin Tahun Ajaran"
+        ],
+        "summary": "Set Default Tahun Ajaran",
+        "operationId": "SetDefaultTahunAjaran",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/semester": {
+      "get": {
+        "tags": [
+          "Admin Semester"
+        ],
+        "summary": "List Semester",
+        "operationId": "ListSemester",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/semester/{id}": {
+      "get": {
+        "tags": [
+          "Admin Semester"
+        ],
+        "summary": "Detail Semester",
+        "operationId": "DetailSemester",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "Admin Semester"
+        ],
+        "summary": "Update Semester",
+        "operationId": "UpdateSemester",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateSemesterRequest"
+                  },
+                  {
+                    "example": {
+                      "nama_semester": "Ganjil"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "nama_semester": "Ganjil"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/semester/{id}/set-default": {
+      "put": {
+        "tags": [
+          "Admin Semester"
+        ],
+        "summary": "Set Default Semester",
+        "operationId": "SetDefaultSemester",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/ruang": {
+      "get": {
+        "tags": [
+          "Admin Ruang"
+        ],
+        "summary": "List Ruang",
+        "operationId": "ListRuang",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "Admin Ruang"
+        ],
+        "summary": "Create Ruang",
+        "operationId": "CreateRuang",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateRuangRequest"
+                  },
+                  {
+                    "example": {
+                      "nama_ruang": "Ruang AI"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "nama_ruang": "Ruang AI"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/ruang/{id}": {
+      "put": {
+        "tags": [
+          "Admin Ruang"
+        ],
+        "summary": "Update Ruang",
+        "operationId": "UpdateRuang",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateRuangRequest"
+                  },
+                  {
+                    "example": {
+                      "nama_ruang": "Ruang AI Update"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "nama_ruang": "Ruang AI Update"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/mahasiswa-ta": {
+      "get": {
+        "tags": [
+          "Admin User Management"
+        ],
+        "summary": "List Mahasiswa TA",
+        "operationId": "ListMahasiswaTA",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "Admin User Management"
+        ],
+        "summary": "Set Akses Mahasiswa",
+        "operationId": "SetAksesMahasiswa",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SetAksesMahasiswaRequest"
+                  },
+                  {
+                    "example": {
+                      "ids": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                      ],
+                      "akses_ta": true
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "ids": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
+                "akses_ta": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/dosen-ta": {
+      "get": {
+        "tags": [
+          "Admin User Management"
+        ],
+        "summary": "List Dosen TA",
+        "operationId": "ListDosenTA",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "Admin User Management"
+        ],
+        "summary": "Set Akses Dosen",
+        "operationId": "SetAksesDosen",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SetAksesDosenRequest"
+                  },
+                  {
+                    "example": {
+                      "ids": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                      ],
+                      "akses_ta": true
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "ids": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
+                "akses_ta": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/sesi": {
+      "get": {
+        "tags": [
+          "Admin Sesi"
+        ],
+        "summary": "List Sesi",
+        "operationId": "ListSesi",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "Admin Sesi"
+        ],
+        "summary": "Tambah Sesi",
+        "operationId": "TambahSesi",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TambahSesiRequest"
+                  },
+                  {
+                    "example": {
+                      "nama_sesi": "Sesi Pagi",
+                      "waktu_mulai": "08:00:00",
+                      "waktu_selesai": "10:00:00"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "nama_sesi": "Sesi Pagi",
+                "waktu_mulai": "08:00:00",
+                "waktu_selesai": "10:00:00"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/sesi/{id}": {
+      "put": {
+        "tags": [
+          "Admin Sesi"
+        ],
+        "summary": "Update Sesi",
+        "operationId": "UpdateSesi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateSesiRequest"
+                  },
+                  {
+                    "example": {
+                      "nama_sesi": "Sesi Pagi",
+                      "waktu_mulai": "08:00:00",
+                      "waktu_selesai": "10:00:00"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "nama_sesi": "Sesi Pagi",
+                "waktu_mulai": "08:00:00",
+                "waktu_selesai": "10:00:00"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/status-form": {
+      "get": {
+        "tags": [
+          "Admin Status Form"
+        ],
+        "summary": "List Status Form",
+        "operationId": "ListStatusForm",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/status-form/{idForm}": {
+      "put": {
+        "tags": [
+          "Admin Status Form"
+        ],
+        "summary": "Update Status Form",
+        "operationId": "UpdateStatusForm",
+        "parameters": [
+          {
+            "name": "idForm",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateStatusFormRequest"
+                  },
+                  {
+                    "example": {
+                      "is_open": true
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "is_open": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tambah-kategori": {
+      "post": {
+        "tags": [
+          "Admin Kategori"
+        ],
+        "summary": "Tambah Kategori",
+        "operationId": "TambahKategori",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TambahKategoriRequest"
+                  },
+                  {
+                    "example": {
+                      "nama_kategori": "AI"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "nama_kategori": "AI"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/kategori": {
+      "get": {
+        "tags": [
+          "Admin Kategori"
+        ],
+        "summary": "List Kategori",
+        "operationId": "ListKategori",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/edit-kategori/{id}": {
+      "put": {
+        "tags": [
+          "Admin Kategori"
+        ],
+        "summary": "Edit Kategori",
+        "operationId": "EditKategori",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/EditKategoriRequest"
+                  },
+                  {
+                    "example": {
+                      "nama_kategori": "AI Update"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "nama_kategori": "AI Update"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/penjadwalan-ujian": {
+      "get": {
+        "tags": [
+          "Admin Jadwal Ujian"
+        ],
+        "summary": "List Jadwal Ujian",
+        "operationId": "ListJadwalUjian",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "Admin Jadwal Ujian"
+        ],
+        "summary": "Simpan Jadwal Ujian",
+        "operationId": "SimpanJadwalUjian",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SimpanJadwalUjianRequest"
+                  },
+                  {
+                    "example": {
+                      "tugas_akhir_id": 1,
+                      "tanggal_ujian": "{{2025-06-20}}",
+                      "ruang_id": 1,
+                      "sesi_id": 1,
+                      "status_ujian": "aktif"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "tugas_akhir_id": 1,
+                "tanggal_ujian": "{{2025-06-20}}",
+                "ruang_id": 1,
+                "sesi_id": 1,
+                "status_ujian": "aktif"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/penjadwalan-ujian/{tugasAkhirId}": {
+      "get": {
+        "tags": [
+          "Admin Jadwal Ujian"
+        ],
+        "summary": "Detail Jadwal Ujian",
+        "operationId": "DetailJadwalUjian",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/penjadwalan-ujian/{id}": {
+      "put": {
+        "tags": [
+          "Admin Jadwal Ujian"
+        ],
+        "summary": "Update Jadwal Ujian",
+        "operationId": "UpdateJadwalUjian",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateJadwalUjianRequest"
+                  },
+                  {
+                    "example": {
+                      "tanggal_ujian": "{{2025-06-20}}",
+                      "ruang_id": 1,
+                      "sesi_id": 1,
+                      "status_ujian": "aktif"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "tanggal_ujian": "{{2025-06-20}}",
+                "ruang_id": 1,
+                "sesi_id": 1,
+                "status_ujian": "aktif"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/penjadwalan-ujian/{tugasAkhirId}/cek-jadwal-tersedia": {
+      "post": {
+        "tags": [
+          "Admin Jadwal Ujian"
+        ],
+        "summary": "Cek Jadwal Tersedia",
+        "operationId": "CekJadwalTersedia",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CekJadwalTersediaRequest"
+                  },
+                  {
+                    "example": {
+                      "tanggal_ujian": "2025-07-15",
+                      "ruang_id": 1,
+                      "sesi_id": 1,
+                      "ujian_ta_id": 1
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "tanggal_ujian": "2025-07-15",
+                "ruang_id": 1,
+                "sesi_id": 1,
+                "ujian_ta_id": 1
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir": {
+      "get": {
+        "tags": [
+          "Admin Tugas Akhir"
+        ],
+        "summary": "List Tugas Akhir",
+        "operationId": "ListTugasAkhir",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/{id}/update-active-status": {
+      "put": {
+        "tags": [
+          "Admin Tugas Akhir"
+        ],
+        "summary": "Update Active Status",
+        "operationId": "UpdateActiveStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\r\n    \"status_aktif\": {{status active 0/1/2}}\r\n}"
+              },
+              "example": "{\r\n    \"status_aktif\": {{status active 0/1/2}}\r\n}"
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/{id}/update-valid-status": {
+      "put": {
+        "tags": [
+          "Admin Tugas Akhir"
+        ],
+        "summary": "Update Validasi Status",
+        "operationId": "UpdateValidasiStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "{\r\n    \"status_aktif\": {{status active 1=valid 2=invalid}}\r\n}"
+              },
+              "example": "{\r\n    \"status_aktif\": {{status active 1=valid 2=invalid}}\r\n}"
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/admin_ta/tugas-akhir/daftar": {
+      "get": {
+        "tags": [
+          "Admin Tugas Akhir"
+        ],
+        "summary": "Daftar Tugas Akhir",
+        "operationId": "DaftarTugasAkhir",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/login/dosen": {
+      "post": {
+        "tags": [
+          "Dosen Login"
+        ],
+        "summary": "Login Dosen",
+        "operationId": "LoginDosen",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/LoginDosenRequest"
+                  },
+                  {
+                    "example": {
+                      "email": "",
+                      "password": ""
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "email": "",
+                "password": ""
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/tugas-akhir/dashboard": {
+      "get": {
+        "tags": [
+          "Dosen Dashboard"
+        ],
+        "summary": "Dashboard Dosen",
+        "operationId": "DashboardDosen",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/request-pembimbing": {
+      "get": {
+        "tags": [
+          "Dosen Request Pembimbing"
+        ],
+        "summary": "List Request Pembimbing",
+        "operationId": "ListRequestPembimbing",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/request-pembimbing/approval/{requestPembimbingId}": {
+      "put": {
+        "tags": [
+          "Dosen Request Pembimbing"
+        ],
+        "summary": "Update Approval Request",
+        "operationId": "UpdateApprovalRequest",
+        "parameters": [
+          {
+            "name": "requestPembimbingId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateApprovalRequestRequest"
+                  },
+                  {
+                    "example": {
+                      "status_request": 1
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "status_request": 1
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/bimbingan": {
+      "get": {
+        "tags": [
+          "Dosen Bimbingan"
+        ],
+        "summary": "List Mahasiswa Dibimbing",
+        "operationId": "ListMahasiswaDibimbing",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/bimbingan/{tugasAkhirId}": {
+      "get": {
+        "tags": [
+          "Dosen Bimbingan"
+        ],
+        "summary": "Detail Bimbingan",
+        "operationId": "GetDetailBimbingan",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/bimbingan/{bimbinganId}": {
+      "put": {
+        "tags": [
+          "Dosen Bimbingan"
+        ],
+        "summary": "Verifikasi Bimbingan",
+        "operationId": "VerifikasiBimbingan",
+        "parameters": [
+          {
+            "name": "bimbinganId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VerifikasiBimbinganRequest"
+                  },
+                  {
+                    "example": {
+                      "status_verifikasi": 1
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "status_verifikasi": 1
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/nilai-bimbingan/{tugasAkhirId}": {
+      "get": {
+        "tags": [
+          "Dosen Nilai Bimbingan"
+        ],
+        "summary": "Lihat Nilai Bimbingan",
+        "operationId": "LihatNilaiBimbingan",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "Dosen Nilai Bimbingan"
+        ],
+        "summary": "Simpan Nilai Bimbingan",
+        "operationId": "SimpanNilaiBimbingan",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SimpanNilaiBimbinganRequest"
+                  },
+                  {
+                    "example": {
+                      "rerata_bimbingan": 85,
+                      "disiplin": 90,
+                      "komunikasi": 80,
+                      "skill_pengetahuan": 85,
+                      "tingkah_laku": 88,
+                      "catatan_akhir_bimbingan": "Mahasiswa memiliki kemampuan yang baik dalam mengerjakan tugas akhir. Disiplin dan komunikasi perlu ditingkatkan."
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "rerata_bimbingan": 85,
+                "disiplin": 90,
+                "komunikasi": 80,
+                "skill_pengetahuan": 85,
+                "tingkah_laku": 88,
+                "catatan_akhir_bimbingan": "Mahasiswa memiliki kemampuan yang baik dalam mengerjakan tugas akhir. Disiplin dan komunikasi perlu ditingkatkan."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/nilai-bimbingan/{tugasAkhirId}/update": {
+      "put": {
+        "tags": [
+          "Dosen Nilai Bimbingan"
+        ],
+        "summary": "Update Nilai Bimbingan",
+        "operationId": "UpdateNilaiBimbingan",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateNilaiBimbinganRequest"
+                  },
+                  {
+                    "example": {
+                      "rerata_bimbingan": 88,
+                      "disiplin": 85,
+                      "komunikasi": 82,
+                      "skill_pengetahuan": 90,
+                      "tingkah_laku": 87,
+                      "catatan_akhir_bimbingan": "Mahasiswa menunjukkan perkembangan yang baik. Skill pengetahuan sangat menonjol, komunikasi perlu ditingkatkan."
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "rerata_bimbingan": 88,
+                "disiplin": 85,
+                "komunikasi": 82,
+                "skill_pengetahuan": 90,
+                "tingkah_laku": 87,
+                "catatan_akhir_bimbingan": "Mahasiswa menunjukkan perkembangan yang baik. Skill pengetahuan sangat menonjol, komunikasi perlu ditingkatkan."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/list-ujian-ta": {
+      "get": {
+        "tags": [
+          "Dosen Ujian Tugas Akhir"
+        ],
+        "summary": "List Ujian TA",
+        "operationId": "ListUjianTA",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/detail-ujian-ta/{tugasAkhirId}": {
+      "get": {
+        "tags": [
+          "Dosen Ujian Tugas Akhir"
+        ],
+        "summary": "Detail Ujian TA",
+        "operationId": "DetailUjianTA",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/nilai-ujian-ta": {
+      "post": {
+        "tags": [
+          "Dosen Nilai Ujian TA"
+        ],
+        "summary": "Simpan Nilai Ujian",
+        "operationId": "SimpanNilaiUjian",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SimpanNilaiUjianRequest"
+                  },
+                  {
+                    "example": {
+                      "tugas_akhir_id": 1,
+                      "kualitas_tata_laporan": 85,
+                      "kemampuan_teknis": 88,
+                      "kualitas_produk": 90,
+                      "presentasi": 82,
+                      "rerata_ujian_ta": 86.25,
+                      "revisi": "Perbaiki format penulisan daftar pustaka dan tambahkan penjelasan lebih detail pada bagian metodologi penelitian."
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "tugas_akhir_id": 1,
+                "kualitas_tata_laporan": 85,
+                "kemampuan_teknis": 88,
+                "kualitas_produk": 90,
+                "presentasi": 82,
+                "rerata_ujian_ta": 86.25,
+                "revisi": "Perbaiki format penulisan daftar pustaka dan tambahkan penjelasan lebih detail pada bagian metodologi penelitian."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/nilai-ujian-ta/{tugasAkhirId}": {
+      "put": {
+        "tags": [
+          "Dosen Nilai Ujian TA"
+        ],
+        "summary": "Update Nilai Ujian",
+        "operationId": "UpdateNilaiUjian",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateNilaiUjianRequest"
+                  },
+                  {
+                    "example": {
+                      "kualitas_tata_laporan": 87,
+                      "kemampuan_teknis": 85,
+                      "kualitas_produk": 92,
+                      "presentasi": 84,
+                      "rerata_ujian_ta": 87,
+                      "revisi": "Perbaiki bagian kesimpulan agar lebih mencerminkan hasil penelitian. Tambahkan referensi terbaru minimal 3 jurnal internasional."
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "kualitas_tata_laporan": 87,
+                "kemampuan_teknis": 85,
+                "kualitas_produk": 92,
+                "presentasi": 84,
+                "rerata_ujian_ta": 87,
+                "revisi": "Perbaiki bagian kesimpulan agar lebih mencerminkan hasil penelitian. Tambahkan referensi terbaru minimal 3 jurnal internasional."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/status-kelulusan/{tugasAkhirId}": {
+      "put": {
+        "tags": [
+          "Dosen Status Kelulusan"
+        ],
+        "summary": "Update Status Kelulusan",
+        "operationId": "UpdateStatusKelulusan",
+        "parameters": [
+          {
+            "name": "tugasAkhirId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateStatusKelulusanRequest"
+                  },
+                  {
+                    "example": {
+                      "status_kelulusan": 1
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "status_kelulusan": 1
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/kategori": {
+      "get": {
+        "tags": [
+          "Dosen Kategori"
+        ],
+        "summary": "Lihat Kategori",
+        "operationId": "LihatKategori",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/dosen/sesi": {
+      "get": {
+        "tags": [
+          "Dosen Sesi"
+        ],
+        "summary": "Lihat Sesi",
+        "operationId": "LihatSesi",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/login/mahasiswa": {
+      "post": {
+        "tags": [
+          "Mahasiswa Login"
+        ],
+        "summary": "Login Mhs",
+        "operationId": "LoginMhs",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/LoginMhsRequest"
+                  },
+                  {
+                    "example": {
+                      "email": "",
+                      "password": ""
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "email": "",
+                "password": ""
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false,
+        "security": []
+      }
+    },
+    "/mahasiswa/tugas-akhir/dashboard": {
+      "get": {
+        "tags": [
+          "Mahasiswa Dashboard"
+        ],
+        "summary": "Dashboard Mahasiswa",
+        "operationId": "DashboardMahasiswa",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/request-pembimbing": {
+      "post": {
+        "tags": [
+          "Mahasiswa Request Pembimbing"
+        ],
+        "summary": "Buat Request Pembimbing",
+        "operationId": "PostBuatRequestPembimbing",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BuatRequestPembimbingRequest1"
+                  },
+                  {
+                    "example": {
+                      "dosen_id": 1,
+                      "kategori_id": 2
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "dosen_id": 1,
+                "kategori_id": 2
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/cek-request-pembimbing": {
+      "get": {
+        "tags": [
+          "Mahasiswa Request Pembimbing"
+        ],
+        "summary": "Cek Status Request",
+        "operationId": "CekStatusRequest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/bimbingan/request-pembimbing": {
+      "get": {
+        "tags": [
+          "Mahasiswa Bimbingan"
+        ],
+        "summary": "List Request Pembimbing",
+        "operationId": "GetListRequestPembimbing",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/bimbingan/list-bimbingan": {
+      "get": {
+        "tags": [
+          "Mahasiswa Bimbingan"
+        ],
+        "summary": "List Bimbingan",
+        "operationId": "GetListBimbingan",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/bimbingan": {
+      "post": {
+        "tags": [
+          "Mahasiswa Bimbingan"
+        ],
+        "summary": "Buat Bimbingan",
+        "operationId": "BuatBimbingan",
+        "parameters": [],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BuatBimbinganRequest"
+                  },
+                  {
+                    "example": {
+                      "catatan": "Perbaikan pada metode penelitian di bab 3",
+                      "bab": 3,
+                      "tanggal_bimbingan": "2025-06-15"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "catatan": "Perbaikan pada metode penelitian di bab 3",
+                "bab": 3,
+                "tanggal_bimbingan": "2025-06-15"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/bimbingan/{id}": {
+      "put": {
+        "tags": [
+          "Mahasiswa Bimbingan"
+        ],
+        "summary": "Update Bimbingan",
+        "operationId": "UpdateBimbingan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateBimbinganRequest"
+                  },
+                  {
+                    "example": {
+                      "catatan": "Perbaikan pada metode penelitian di bab 3 update",
+                      "bab": 3,
+                      "tanggal_bimbingan": "2025-06-15"
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "catatan": "Perbaikan pada metode penelitian di bab 3 update",
+                "bab": 3,
+                "tanggal_bimbingan": "2025-06-15"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [
+          "Mahasiswa Bimbingan"
+        ],
+        "summary": "Hapus Bimbingan",
+        "operationId": "HapusBimbingan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/nilai-bimbingan": {
+      "get": {
+        "tags": [
+          "Mahasiswa Nilai Bimbingan"
+        ],
+        "summary": "Lihat Nilai Bimbingan",
+        "operationId": "GetLihatNilaiBimbingan",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/kategori": {
+      "get": {
+        "tags": [
+          "Mahasiswa Kategori Mahasiswa"
+        ],
+        "summary": "Lihat Kategori",
+        "operationId": "GetLihatKategori",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/tugas-akhir/daftar": {
+      "post": {
+        "tags": [
+          "Mahasiswa Tugas Akhir"
+        ],
+        "summary": "Daftar Ujian TA",
+        "operationId": "DaftarUjianTA",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "encoding": {},
+              "schema": {
+                "required": [
+                  "judul_tugas_akhir",
+                  "naskah_ta",
+                  "krs",
+                  "persetujuan_pembimbing",
+                  "transkrip_nilai",
+                  "sertifikat_kompetensi",
+                  "toeic",
+                  "berita_acara_semhas",
+                  "surat_perpanjangan_studi"
+                ],
+                "type": "object",
+                "properties": {
+                  "judul_tugas_akhir": {
+                    "type": "string"
+                  },
+                  "naskah_ta": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "krs": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "persetujuan_pembimbing": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "transkrip_nilai": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "sertifikat_kompetensi": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "toeic": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "berita_acara_semhas": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "surat_perpanjangan_studi": {
+                    "type": "string",
+                    "description": "opsional",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/tugas-akhir/{id}/update": {
+      "post": {
+        "tags": [
+          "Mahasiswa Tugas Akhir"
+        ],
+        "summary": "Update Ujian TA",
+        "operationId": "UpdateUjianTA",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "encoding": {},
+              "schema": {
+                "required": [
+                  "judul_tugas_akhir",
+                  "naskah_ta",
+                  "krs",
+                  "persetujuan_pembimbing",
+                  "transkrip_nilai",
+                  "sertifikat_kompetensi",
+                  "toeic",
+                  "berita_acara_semhas",
+                  "surat_perpanjangan_studi"
+                ],
+                "type": "object",
+                "properties": {
+                  "judul_tugas_akhir": {
+                    "type": "string"
+                  },
+                  "naskah_ta": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "krs": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "persetujuan_pembimbing": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "transkrip_nilai": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "sertifikat_kompetensi": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "toeic": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "berita_acara_semhas": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "surat_perpanjangan_studi": {
+                    "type": "string",
+                    "description": "opsional",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/tugas-akhir/cek-dosen-pembimbing": {
+      "get": {
+        "tags": [
+          "Mahasiswa Tugas Akhir"
+        ],
+        "summary": "Cek Dosen Pembimbing",
+        "operationId": "CekDosenPembimbing",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/tugas-akhir/aktif": {
+      "get": {
+        "tags": [
+          "Mahasiswa Tugas Akhir"
+        ],
+        "summary": "Lihat Tugas Akhir Aktif",
+        "operationId": "LihatTugasAkhirAktif",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/berkas/ujian-ta": {
+      "get": {
+        "tags": [
+          "Mahasiswa Berkas"
+        ],
+        "summary": "Lihat Berkas TA",
+        "operationId": "LihatBerkasTA",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/ujian-ta": {
+      "get": {
+        "tags": [
+          "Mahasiswa Ujian Tugas Akhir"
+        ],
+        "summary": "Lihat Info Ujian TA",
+        "operationId": "LihatInfoUjianTA",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/ujian-ta/nilai-ujian": {
+      "get": {
+        "tags": [
+          "Mahasiswa Ujian Tugas Akhir"
+        ],
+        "summary": "Lihat Nilai Ujian",
+        "operationId": "LihatNilaiUjian",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/ujian-ta/jadwal-ujian": {
+      "get": {
+        "tags": [
+          "Mahasiswa Ujian Tugas Akhir"
+        ],
+        "summary": "Lihat Jadwal Ujian",
+        "operationId": "LihatJadwalUjian",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/proposal": {
+      "get": {
+        "tags": [
+          "Mahasiswa Proposal"
+        ],
+        "summary": "Lihat Proposal",
+        "operationId": "LihatProposal",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "Mahasiswa Proposal"
+        ],
+        "summary": "Upload Proposal",
+        "operationId": "UploadProposal",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "encoding": {},
+              "schema": {
+                "required": [
+                  "judul_proposal",
+                  "file_proposal",
+                  "file_transkrip"
+                ],
+                "type": "object",
+                "properties": {
+                  "judul_proposal": {
+                    "type": "string"
+                  },
+                  "file_proposal": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "file_transkrip": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/mahasiswa/proposal/{id}": {
+      "post": {
+        "tags": [
+          "Mahasiswa Proposal"
+        ],
+        "summary": "Update Proposal",
+        "operationId": "UpdateProposal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "encoding": {},
+              "schema": {
+                "required": [
+                  "judul_proposal",
+                  "file_proposal",
+                  "file_transkrip"
+                ],
+                "type": "object",
+                "properties": {
+                  "judul_proposal": {
+                    "type": "string"
+                  },
+                  "file_proposal": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "file_transkrip": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginAdminRequest": {
+        "title": "LoginAdminRequest",
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "email": "",
+          "password": ""
+        }
+      },
+      "BuatRequestPembimbingRequest": {
+        "title": "BuatRequestPembimbingRequest",
+        "required": [
+          "tugas_akhir_id",
+          "dosen_id"
+        ],
+        "type": "object",
+        "properties": {
+          "tugas_akhir_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dosen_id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "example": {
+          "tugas_akhir_id": 1,
+          "dosen_id": 2
+        }
+      },
+      "UpdateRequestPembimbingRequest": {
+        "title": "UpdateRequestPembimbingRequest",
+        "required": [
+          "tugas_akhir_id",
+          "dosen_id"
+        ],
+        "type": "object",
+        "properties": {
+          "tugas_akhir_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dosen_id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "example": {
+          "tugas_akhir_id": 1,
+          "dosen_id": 1
+        }
+      },
+      "UpdateValidasiBerkasProposalRequest": {
+        "title": "UpdateValidasiBerkasProposalRequest",
+        "required": [
+          "status_valid_berkas",
+          "catatan_perbaikan"
+        ],
+        "type": "object",
+        "properties": {
+          "status_valid_berkas": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": ""
+          },
+          "catatan_perbaikan": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "status_valid_berkas": [
+            1,
+            1
+          ],
+          "catatan_perbaikan": "Berkas 1 diterima, berkas 2 perlu perbaikan format."
+        }
+      },
+      "TambahDosenPengujiRequest": {
+        "title": "TambahDosenPengujiRequest",
+        "required": [
+          "tugas_akhir_id",
+          "list_dosen"
+        ],
+        "type": "object",
+        "properties": {
+          "tugas_akhir_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "list_dosen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListDosen"
+            },
+            "description": ""
+          }
+        },
+        "example": {
+          "tugas_akhir_id": 1,
+          "list_dosen": [
+            {
+              "dosen_id": 1,
+              "jabatan_penguji": "ketua"
+            },
+            {
+              "dosen_id": 2,
+              "jabatan_penguji": "sekretaris"
+            },
+            {
+              "dosen_id": 3,
+              "jabatan_penguji": "penguji"
+            }
+          ]
+        }
+      },
+      "ListDosen": {
+        "title": "ListDosen",
+        "required": [
+          "dosen_id",
+          "jabatan_penguji"
+        ],
+        "type": "object",
+        "properties": {
+          "dosen_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "jabatan_penguji": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "dosen_id": 1,
+          "jabatan_penguji": "ketua"
+        }
+      },
+      "UpdateDosenPengujiRequest": {
+        "title": "UpdateDosenPengujiRequest",
+        "required": [
+          "list_dosen"
+        ],
+        "type": "object",
+        "properties": {
+          "list_dosen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListDosen"
+            },
+            "description": ""
+          }
+        },
+        "example": {
+          "list_dosen": [
+            {
+              "dosen_id": 1,
+              "jabatan_penguji": "ketua"
+            },
+            {
+              "dosen_id": 2,
+              "jabatan_penguji": "sekretaris"
+            },
+            {
+              "dosen_id": 3,
+              "jabatan_penguji": "penguji"
+            }
+          ]
+        }
+      },
+      "ValidasiBerkasUjianRequest": {
+        "title": "ValidasiBerkasUjianRequest",
+        "required": [
+          "status_valid_berkas",
+          "catatan_perbaikan"
+        ],
+        "type": "object",
+        "properties": {
+          "status_valid_berkas": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": ""
+          },
+          "catatan_perbaikan": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "status_valid_berkas": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "catatan_perbaikan": "Semua berkas telah sesuai persyaratan."
+        }
+      },
+      "UpdateTahunAjaranRequest": {
+        "title": "UpdateTahunAjaranRequest",
+        "required": [
+          "tahun_ajaran"
+        ],
+        "type": "object",
+        "properties": {
+          "tahun_ajaran": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "tahun_ajaran": "2028/2029"
+        }
+      },
+      "UpdateSemesterRequest": {
+        "title": "UpdateSemesterRequest",
+        "required": [
+          "nama_semester"
+        ],
+        "type": "object",
+        "properties": {
+          "nama_semester": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "nama_semester": "Ganjil"
+        }
+      },
+      "CreateRuangRequest": {
+        "title": "CreateRuangRequest",
+        "required": [
+          "nama_ruang"
+        ],
+        "type": "object",
+        "properties": {
+          "nama_ruang": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "nama_ruang": "Ruang AI"
+        }
+      },
+      "UpdateRuangRequest": {
+        "title": "UpdateRuangRequest",
+        "required": [
+          "nama_ruang"
+        ],
+        "type": "object",
+        "properties": {
+          "nama_ruang": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "nama_ruang": "Ruang AI Update"
+        }
+      },
+      "SetAksesMahasiswaRequest": {
+        "title": "SetAksesMahasiswaRequest",
+        "required": [
+          "ids",
+          "akses_ta"
+        ],
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": ""
+          },
+          "akses_ta": {
+            "type": "boolean"
+          }
+        },
+        "example": {
+          "ids": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "akses_ta": true
+        }
+      },
+      "SetAksesDosenRequest": {
+        "title": "SetAksesDosenRequest",
+        "required": [
+          "ids",
+          "akses_ta"
+        ],
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": ""
+          },
+          "akses_ta": {
+            "type": "boolean"
+          }
+        },
+        "example": {
+          "ids": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "akses_ta": true
+        }
+      },
+      "TambahSesiRequest": {
+        "title": "TambahSesiRequest",
+        "required": [
+          "nama_sesi",
+          "waktu_mulai",
+          "waktu_selesai"
+        ],
+        "type": "object",
+        "properties": {
+          "nama_sesi": {
+            "type": "string"
+          },
+          "waktu_mulai": {
+            "type": "string"
+          },
+          "waktu_selesai": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "nama_sesi": "Sesi Pagi",
+          "waktu_mulai": "08:00:00",
+          "waktu_selesai": "10:00:00"
+        }
+      },
+      "UpdateSesiRequest": {
+        "title": "UpdateSesiRequest",
+        "required": [
+          "nama_sesi",
+          "waktu_mulai",
+          "waktu_selesai"
+        ],
+        "type": "object",
+        "properties": {
+          "nama_sesi": {
+            "type": "string"
+          },
+          "waktu_mulai": {
+            "type": "string"
+          },
+          "waktu_selesai": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "nama_sesi": "Sesi Pagi",
+          "waktu_mulai": "08:00:00",
+          "waktu_selesai": "10:00:00"
+        }
+      },
+      "UpdateStatusFormRequest": {
+        "title": "UpdateStatusFormRequest",
+        "required": [
+          "is_open"
+        ],
+        "type": "object",
+        "properties": {
+          "is_open": {
+            "type": "boolean"
+          }
+        },
+        "example": {
+          "is_open": true
+        }
+      },
+      "TambahKategoriRequest": {
+        "title": "TambahKategoriRequest",
+        "required": [
+          "nama_kategori"
+        ],
+        "type": "object",
+        "properties": {
+          "nama_kategori": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "nama_kategori": "AI"
+        }
+      },
+      "EditKategoriRequest": {
+        "title": "EditKategoriRequest",
+        "required": [
+          "nama_kategori"
+        ],
+        "type": "object",
+        "properties": {
+          "nama_kategori": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "nama_kategori": "AI Update"
+        }
+      },
+      "SimpanJadwalUjianRequest": {
+        "title": "SimpanJadwalUjianRequest",
+        "required": [
+          "tugas_akhir_id",
+          "tanggal_ujian",
+          "ruang_id",
+          "sesi_id",
+          "status_ujian"
+        ],
+        "type": "object",
+        "properties": {
+          "tugas_akhir_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tanggal_ujian": {
+            "type": "string"
+          },
+          "ruang_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sesi_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status_ujian": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "tugas_akhir_id": 1,
+          "tanggal_ujian": "{{2025-06-20}}",
+          "ruang_id": 1,
+          "sesi_id": 1,
+          "status_ujian": "aktif"
+        }
+      },
+      "UpdateJadwalUjianRequest": {
+        "title": "UpdateJadwalUjianRequest",
+        "required": [
+          "tanggal_ujian",
+          "ruang_id",
+          "sesi_id",
+          "status_ujian"
+        ],
+        "type": "object",
+        "properties": {
+          "tanggal_ujian": {
+            "type": "string"
+          },
+          "ruang_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sesi_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status_ujian": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "tanggal_ujian": "{{2025-06-20}}",
+          "ruang_id": 1,
+          "sesi_id": 1,
+          "status_ujian": "aktif"
+        }
+      },
+      "CekJadwalTersediaRequest": {
+        "title": "CekJadwalTersediaRequest",
+        "required": [
+          "tanggal_ujian",
+          "ruang_id",
+          "sesi_id",
+          "ujian_ta_id"
+        ],
+        "type": "object",
+        "properties": {
+          "tanggal_ujian": {
+            "type": "string"
+          },
+          "ruang_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sesi_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ujian_ta_id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "example": {
+          "tanggal_ujian": "2025-07-15",
+          "ruang_id": 1,
+          "sesi_id": 1,
+          "ujian_ta_id": 1
+        }
+      },
+      "LoginDosenRequest": {
+        "title": "LoginDosenRequest",
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "email": "",
+          "password": ""
+        }
+      },
+      "UpdateApprovalRequestRequest": {
+        "title": "UpdateApprovalRequestRequest",
+        "required": [
+          "status_request"
+        ],
+        "type": "object",
+        "properties": {
+          "status_request": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "example": {
+          "status_request": 1
+        }
+      },
+      "VerifikasiBimbinganRequest": {
+        "title": "VerifikasiBimbinganRequest",
+        "required": [
+          "status_verifikasi"
+        ],
+        "type": "object",
+        "properties": {
+          "status_verifikasi": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "example": {
+          "status_verifikasi": 1
+        }
+      },
+      "SimpanNilaiBimbinganRequest": {
+        "title": "SimpanNilaiBimbinganRequest",
+        "required": [
+          "rerata_bimbingan",
+          "disiplin",
+          "komunikasi",
+          "skill_pengetahuan",
+          "tingkah_laku",
+          "catatan_akhir_bimbingan"
+        ],
+        "type": "object",
+        "properties": {
+          "rerata_bimbingan": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "disiplin": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "komunikasi": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skill_pengetahuan": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tingkah_laku": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "catatan_akhir_bimbingan": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "rerata_bimbingan": 85,
+          "disiplin": 90,
+          "komunikasi": 80,
+          "skill_pengetahuan": 85,
+          "tingkah_laku": 88,
+          "catatan_akhir_bimbingan": "Mahasiswa memiliki kemampuan yang baik dalam mengerjakan tugas akhir. Disiplin dan komunikasi perlu ditingkatkan."
+        }
+      },
+      "UpdateNilaiBimbinganRequest": {
+        "title": "UpdateNilaiBimbinganRequest",
+        "required": [
+          "rerata_bimbingan",
+          "disiplin",
+          "komunikasi",
+          "skill_pengetahuan",
+          "tingkah_laku",
+          "catatan_akhir_bimbingan"
+        ],
+        "type": "object",
+        "properties": {
+          "rerata_bimbingan": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "disiplin": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "komunikasi": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skill_pengetahuan": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tingkah_laku": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "catatan_akhir_bimbingan": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "rerata_bimbingan": 88,
+          "disiplin": 85,
+          "komunikasi": 82,
+          "skill_pengetahuan": 90,
+          "tingkah_laku": 87,
+          "catatan_akhir_bimbingan": "Mahasiswa menunjukkan perkembangan yang baik. Skill pengetahuan sangat menonjol, komunikasi perlu ditingkatkan."
+        }
+      },
+      "SimpanNilaiUjianRequest": {
+        "title": "SimpanNilaiUjianRequest",
+        "required": [
+          "tugas_akhir_id",
+          "kualitas_tata_laporan",
+          "kemampuan_teknis",
+          "kualitas_produk",
+          "presentasi",
+          "rerata_ujian_ta",
+          "revisi"
+        ],
+        "type": "object",
+        "properties": {
+          "tugas_akhir_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kualitas_tata_laporan": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kemampuan_teknis": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kualitas_produk": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "presentasi": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rerata_ujian_ta": {
+            "type": "number"
+          },
+          "revisi": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "tugas_akhir_id": 1,
+          "kualitas_tata_laporan": 85,
+          "kemampuan_teknis": 88,
+          "kualitas_produk": 90,
+          "presentasi": 82,
+          "rerata_ujian_ta": 86.25,
+          "revisi": "Perbaiki format penulisan daftar pustaka dan tambahkan penjelasan lebih detail pada bagian metodologi penelitian."
+        }
+      },
+      "UpdateNilaiUjianRequest": {
+        "title": "UpdateNilaiUjianRequest",
+        "required": [
+          "kualitas_tata_laporan",
+          "kemampuan_teknis",
+          "kualitas_produk",
+          "presentasi",
+          "rerata_ujian_ta",
+          "revisi"
+        ],
+        "type": "object",
+        "properties": {
+          "kualitas_tata_laporan": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kemampuan_teknis": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kualitas_produk": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "presentasi": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rerata_ujian_ta": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revisi": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "kualitas_tata_laporan": 87,
+          "kemampuan_teknis": 85,
+          "kualitas_produk": 92,
+          "presentasi": 84,
+          "rerata_ujian_ta": 87,
+          "revisi": "Perbaiki bagian kesimpulan agar lebih mencerminkan hasil penelitian. Tambahkan referensi terbaru minimal 3 jurnal internasional."
+        }
+      },
+      "UpdateStatusKelulusanRequest": {
+        "title": "UpdateStatusKelulusanRequest",
+        "required": [
+          "status_kelulusan"
+        ],
+        "type": "object",
+        "properties": {
+          "status_kelulusan": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "example": {
+          "status_kelulusan": 1
+        }
+      },
+      "LoginMhsRequest": {
+        "title": "LoginMhsRequest",
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "email": "",
+          "password": ""
+        }
+      },
+      "BuatRequestPembimbingRequest1": {
+        "title": "BuatRequestPembimbingRequest1",
+        "required": [
+          "dosen_id",
+          "kategori_id"
+        ],
+        "type": "object",
+        "properties": {
+          "dosen_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kategori_id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "example": {
+          "dosen_id": 1,
+          "kategori_id": 2
+        }
+      },
+      "BuatBimbinganRequest": {
+        "title": "BuatBimbinganRequest",
+        "required": [
+          "catatan",
+          "bab",
+          "tanggal_bimbingan"
+        ],
+        "type": "object",
+        "properties": {
+          "catatan": {
+            "type": "string"
+          },
+          "bab": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tanggal_bimbingan": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "catatan": "Perbaikan pada metode penelitian di bab 3",
+          "bab": 3,
+          "tanggal_bimbingan": "2025-06-15"
+        }
+      },
+      "UpdateBimbinganRequest": {
+        "title": "UpdateBimbinganRequest",
+        "required": [
+          "catatan",
+          "bab",
+          "tanggal_bimbingan"
+        ],
+        "type": "object",
+        "properties": {
+          "catatan": {
+            "type": "string"
+          },
+          "bab": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tanggal_bimbingan": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "catatan": "Perbaikan pada metode penelitian di bab 3 update",
+          "bab": 3,
+          "tanggal_bimbingan": "2025-06-15"
+        }
+      }
+    },
+    "securitySchemes": {
+      "httpBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "httpBearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Admin Login"
+    },
+    {
+      "name": "Admin Dashbord"
+    },
+    {
+      "name": "Admin Request Pembimbing"
+    },
+    {
+      "name": "Admin Fitur Bimbingan"
+    },
+    {
+      "name": "Admin Fitur Proposal",
+      "description": "Status validasi berkas:1 = diterima 2 = ditolak"
+    },
+    {
+      "name": "Admin Seminar Proposal"
+    },
+    {
+      "name": "Admin Dosen Penguji"
+    },
+    {
+      "name": "Admin Plotting Penguji"
+    },
+    {
+      "name": "Admin Pendaftar Ujian"
+    },
+    {
+      "name": "Admin Tahun Ajaran"
+    },
+    {
+      "name": "Admin Semester"
+    },
+    {
+      "name": "Admin Ruang"
+    },
+    {
+      "name": "Admin User Management"
+    },
+    {
+      "name": "Admin Sesi"
+    },
+    {
+      "name": "Admin Status Form"
+    },
+    {
+      "name": "Admin Kategori"
+    },
+    {
+      "name": "Admin Jadwal Ujian"
+    },
+    {
+      "name": "Admin Tugas Akhir"
+    },
+    {
+      "name": "Dosen Login"
+    },
+    {
+      "name": "Dosen Dashboard"
+    },
+    {
+      "name": "Dosen Request Pembimbing"
+    },
+    {
+      "name": "Dosen Bimbingan"
+    },
+    {
+      "name": "Dosen Nilai Bimbingan"
+    },
+    {
+      "name": "Dosen Ujian Tugas Akhir"
+    },
+    {
+      "name": "Dosen Nilai Ujian TA"
+    },
+    {
+      "name": "Dosen Status Kelulusan",
+      "description": "parameter status kelulusan:\n\n`1`: Lulus tanpa revisi\n\n`2`: Lulus dengan revisi (tanpa diujikan lagi)\n\n`3`: Belum lulus, perlu revisi dan diujikan lagi\n\n`4`: Tidak lulus, harus mengulang tugas akhir dan diujikan lagi"
+    },
+    {
+      "name": "Dosen Kategori"
+    },
+    {
+      "name": "Dosen Sesi"
+    },
+    {
+      "name": "Mahasiswa Login"
+    },
+    {
+      "name": "Mahasiswa Dashboard"
+    },
+    {
+      "name": "Mahasiswa Request Pembimbing"
+    },
+    {
+      "name": "Mahasiswa Bimbingan"
+    },
+    {
+      "name": "Mahasiswa Nilai Bimbingan"
+    },
+    {
+      "name": "Mahasiswa Kategori Mahasiswa"
+    },
+    {
+      "name": "Mahasiswa Tugas Akhir"
+    },
+    {
+      "name": "Mahasiswa Berkas"
+    },
+    {
+      "name": "Mahasiswa Ujian Tugas Akhir"
+    },
+    {
+      "name": "Mahasiswa Proposal"
+    }
+  ]
+}
