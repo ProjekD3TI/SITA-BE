@@ -503,7 +503,20 @@ class TugasAkhirController extends Controller
                 });
             }
 
+            // Urutkan: status_request = 2 (ditolak) paling atas, lalu id desc
+            $query->orderByRaw("
+                        CASE
+                            WHEN (
+                                SELECT status_request FROM request_pembimbing
+                                WHERE tugas_akhir_id = tugas_akhir.id
+                                LIMIT 1
+                            ) = 2 THEN 0
+                            ELSE 1
+                        END
+                    ")->orderByDesc('id');
+
             $tugasAkhir = $query->paginate(10);
+
             $notificationCount = TugasAkhir::with('requestPembimbing')
                 ->where('status_aktif', 1)
                 ->whereHas('requestPembimbing', function ($q) {
@@ -511,6 +524,7 @@ class TugasAkhirController extends Controller
                         ->whereIn('status_request', [0, 2]); // 0 = menunggu, 2 = ditolak
                 })
                 ->count();
+
             $data = collect($tugasAkhir->items())->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
@@ -669,7 +683,15 @@ class TugasAkhirController extends Controller
             ]);
 
             // Cek apakah Tugas Akhir dengan ID tersebut ada
-            $tugasAkhir = TugasAkhir::findOrFail($tugasAkhirId);
+            $tugasAkhir = TugasAkhir::with('dosenPenguji')->findOrFail($tugasAkhirId);
+
+            // CEK: Jika sudah ada dosen penguji, tidak boleh update dosen pembimbing
+            $dosenPembimbingId = $tugasAkhir->dosen_pembimbing_id;
+            $pengujiId = $tugasAkhir->dosenPenguji->pluck('id')->toArray();
+
+            if ($dosenPembimbingId && in_array($dosenPembimbingId, $pengujiId)) {
+                return ApiResponse::error('Tidak dapat mengubah dosen pembimbing karena dosen pembimbing saat ini sudah menjadi dosen penguji.', 400);
+            }
 
             // Update dosen pembimbing
             $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_pembimbing_id'];
@@ -719,7 +741,7 @@ class TugasAkhirController extends Controller
                 });
             }
 
-            $tugasAkhir = $query->orderBy('id', 'asc')->paginate(10);
+            $tugasAkhir = $query->orderBy('id', 'desc')->paginate(10);
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
@@ -779,7 +801,7 @@ class TugasAkhirController extends Controller
 
             // Ambil hanya kolom yang diminta dari tabel bimbingan
             $bimbinganQuery = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
-                ->orderBy('tanggal_bimbingan', 'asc')
+                ->orderBy('id', 'desc')
                 ->paginate(10, ['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
 
             $bimbinganData = collect($bimbinganQuery->items())->map(function ($bimbingan) {
@@ -887,6 +909,10 @@ class TugasAkhirController extends Controller
                 });
             }
 
+            // Query Anomali
+            $query->orderByRaw("CASE WHEN NOT EXISTS ( SELECT 1 FROM dosen_penguji WHERE dosen_penguji.tugas_akhir_id = tugas_akhir.id ) THEN 0 ELSE 1 END")
+                ->orderByDesc('id');
+
             $tugasAkhir = $query->paginate(10);
 
             // ✅ PERBAIKAN: Hitung notification count
@@ -906,9 +932,8 @@ class TugasAkhirController extends Controller
                 $sudahLulus = in_array($item->status_kelulusan, [1, 2]);
 
                 return [
-                    'sudah_lulus' => $sudahLulus,
                     'tugas_akhir_id' => $item->id,
-                    'status_kelulusan' => $item->status_kelulusan, // ✅ TAMBAHAN: Include status kelulusan
+                    'sudah_lulus' => $sudahLulus,
                     'mahasiswa' => [
                         'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
@@ -930,11 +955,6 @@ class TugasAkhirController extends Controller
                         : [],
                 ];
             });
-
-            // ✅ TAMBAHAN: Hitung statistik kelulusan
-            $totalSudahLulus = TugasAkhir::where('status_aktif', 1)
-                ->whereIn('status_kelulusan', [1, 2])
-                ->count();
 
             $result = [
                 'notification' => $notificationCount,
@@ -1044,7 +1064,7 @@ class TugasAkhirController extends Controller
                 });
             }
 
-            // Fitur filter status (0,1,2 saja, null tidak masuk)
+            // Fitur filter status (0,1,2 saja, null gadiajak)
             if ($request->has('status')) {
                 $statusValidList = array_filter(
                     explode(',', $request->status),
@@ -1055,6 +1075,8 @@ class TugasAkhirController extends Controller
                 }
             }
 
+            $query->orderByRaw("CASE WHEN status_valid = 0 THEN 0 ELSE 1 END")->orderByDesc('id');
+
             $tugasAkhir = $query->paginate(10);
 
             $statusForm = StatusForm::where('nama_form', 'Tugas Akhir')
@@ -1064,6 +1086,7 @@ class TugasAkhirController extends Controller
             $notificationCount = TugasAkhir::where('status_aktif', 1)
                 ->where('status_valid', 0)
                 ->count();
+
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
@@ -1271,6 +1294,10 @@ class TugasAkhirController extends Controller
                 });
             }
 
+            // Query Anomali: Urutkan berdasarkan apakah ada ujian aktif atau tidak
+            $query->orderByRaw("CASE WHEN NOT EXISTS ( SELECT 1 FROM ujian_ta WHERE ujian_ta.tugas_akhir_id = tugas_akhir.id AND ujian_ta.status_ujian = 'aktif' ) THEN 0 ELSE 1 END")
+                ->orderByDesc('id');
+
             $tugasAkhir = $query->paginate(10);
             $notificationCount = TugasAkhir::where('status_aktif', 1)
                 ->where('status_valid', 1)
@@ -1423,9 +1450,6 @@ class TugasAkhirController extends Controller
                 'ujian_ta' => $ujianTA ? [
                     'ujian_ta_id' => $ujianTA->id,
                     'tanggal_ujian' => $ujianTA->tanggal_ujian,
-                    // 'tanggal_ujian_formatted' => $ujianTA->tanggal_ujian
-                    //     ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
-                    //     : null,
                     'sesi' => $ujianTA->sesi ? [
                         'sesi_id' => $ujianTA->sesi->id,
                         'nama_sesi' => $ujianTA->sesi->nama_sesi,

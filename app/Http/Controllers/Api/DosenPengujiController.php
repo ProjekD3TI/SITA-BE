@@ -136,6 +136,11 @@ class DosenPengujiController extends Controller
 
             $tugasAkhir = TugasAkhir::findOrFail($tugasAkhirId);
 
+            // CEK: Jika mahasiswa sudah lulus (status_kelulusan 1 atau 2), tidak boleh update dosen penguji
+            if (in_array($tugasAkhir->status_kelulusan, [1, 2])) {
+                return ApiResponse::error('Tidak dapat mengubah dosen penguji karena mahasiswa sudah lulus.', 400);
+            }
+
             if (!$tugasAkhir->proposal_id) {
                 return ApiResponse::error('Tugas Akhir harus memiliki proposal terlebih dahulu sebelum menambahkan dosen penguji', 400);
             }

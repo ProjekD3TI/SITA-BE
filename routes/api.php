@@ -242,7 +242,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
         // Fitur Bimbingan (Plotting List Dosen Pembimbing & Detail Plotting Pembimbing & Update Plotting Pembimbing)
         Route::get('/admin_ta/tugas-akhir/plotting', [TugasAkhirController::class, 'tabelPlottingPembimbingForAdmin']);
-        Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/show/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingForAdmin']);
+        Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingForAdmin']);
         Route::post('/admin_ta/tugas-akhir/plotting-pembimbing', [TugasAkhirController::class, 'storePlottingPembimbingByAdmin']);
         Route::put('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
 
@@ -292,7 +292,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Plotting penguji
         Route::get('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'getReadyTAForAdmin']);
         Route::post('/admin_ta/dosen-penguji', [DosenPengujiController::class, 'storeForAdmin']);
-        Route::put('/admin_ta/dosen-penguji/{id}', [DosenPengujiController::class, 'updateForAdmin']);
+        Route::put('/admin_ta/dosen-penguji/{tugasAkhirId}', [DosenPengujiController::class, 'updateForAdmin']);
 
         // Status Form
         Route::get('/admin_ta/status-form', [StatusFormController::class, 'getStatusFormByAdmin']);
@@ -302,10 +302,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::apiResource('/admin_ta/sesi', SesiController::class);
 
         // User Management
-        Route::get('/admin_ta/mahasiswa-ta', [AdminTaController::class, 'getMahasiswa']);
-        Route::put('/admin_ta/mahasiswa-ta', [AdminTaController::class, 'setAksesTAMahasiswa']);
-        Route::get('/admin_ta/dosen-ta', [AdminTaController::class, 'getDosen']);
-        Route::put('/admin_ta/dosen-ta', [AdminTaController::class, 'setAksesTADosen']);
+        Route::get('/admin_ta/mahasiswa-ta', [AdminTaController::class, 'tabelListMahasiswaForAdmin']);
+        Route::put('/admin_ta/mahasiswa-ta', [AdminTaController::class, 'setAksesTAMahasiswaByAdmin']);
+        Route::get('/admin_ta/dosen-ta', [AdminTaController::class, 'tabelListDosenForAdmin']);
+        Route::put('/admin_ta/dosen-ta', [AdminTaController::class, 'setAksesTADosenByAdmin']);
 
         // Route Ruang
         Route::apiResource('/admin_ta/ruang', RuangController::class);

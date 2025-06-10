@@ -47,6 +47,9 @@ class ProposalController extends Controller
                 $query->where('status_proposal', $request->status_proposal);
             }
 
+            // Urutkan: status_proposal = 0 (menunggu) paling atas, lalu id desc
+            $query->orderByRaw("CASE WHEN status_proposal = 0 THEN 0 ELSE 1 END")->orderByDesc('id');
+
             $listProposal = $query->paginate(10);
             $notificationCount = Proposal::where('status_proposal', 0)->count();
 
@@ -231,6 +234,18 @@ class ProposalController extends Controller
 
             // Tambahkan filter status_proposal = 1
             $query->where('status_proposal', 1);
+
+            // Urutkan: yang belum ada nilai_proposal di atas, lalu id desc
+            $query->orderByRaw("
+    CASE
+        WHEN (
+            SELECT nilai_proposal FROM tugas_akhir
+            WHERE tugas_akhir.proposal_id = proposal.id
+            LIMIT 1
+        ) IS NULL THEN 0
+        ELSE 1
+    END
+")->orderByDesc('id');
             $listProposal = $query->paginate(10);
 
             $data = collect($listProposal->items())->map(function ($item) {
