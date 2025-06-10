@@ -241,14 +241,14 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 
         // Fitur Bimbingan (Plotting List Dosen Pembimbing & Detail Plotting Pembimbing & Update Plotting Pembimbing)
-        Route::get('/admin_ta/tugas-akhir/plotting', [TugasAkhirController::class, 'tabelPlottingPembimbingForAdmin']);
-        Route::get('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingForAdmin']);
-        Route::post('/admin_ta/tugas-akhir/plotting-pembimbing', [TugasAkhirController::class, 'storePlottingPembimbingByAdmin']);
-        Route::put('/admin_ta/tugas-akhir/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
+        Route::get('/admin_ta/plotting-pembimbing', [TugasAkhirController::class, 'tabelPlottingPembimbingForAdmin']);
+        Route::get('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingForAdmin']);
+        Route::post('/admin_ta/plotting-pembimbing', [TugasAkhirController::class, 'storePlottingPembimbingByAdmin']);
+        Route::put('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
 
         // Fitur Bimbingan (List Bimbingan & Detail Bimbingan)
-        Route::get('/admin_ta/tugas-akhir/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganForAdmin']);
-        Route::get('/admin_ta/tugas-akhir/detail-bimbingan/{tugasAkhirId}', [TugasAkhirController::class, 'detailBimbinganForAdmin']);
+        Route::get('/admin_ta/bimbingan', [TugasAkhirController::class, 'tabelListBimbinganForAdmin']);
+        Route::get('/admin_ta/bimbingan/{tugasAkhirId}', [TugasAkhirController::class, 'detailBimbinganForAdmin']);
 
         // Fitur Proposal (List Pengajuan Proposal & Detail Pengajuan Proposal & Validasi Berkas)
         Route::get('/admin_ta/pendaftar-proposal', [ProposalController::class, 'tabelListPengajuanProposalForAdmin']);
@@ -279,9 +279,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Route::get('/admin_ta/list-berita-acara', [TugasAkhirController::class, 'tabelBeritaAcaraByAdmin']);
 
         // Kategori
-        Route::post('/admin_ta/tambah-kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
+        Route::post('/admin_ta/kategori', [KategoriController::class, 'tambahKategoriByAdmin']);
         Route::get('/admin_ta/kategori', [KategoriController::class, 'lihatKategori']);
-        Route::put('/admin_ta/edit-kategori/{id}', [KategoriController::class, 'editKategoriByAdmin']);
+        Route::put('/admin_ta/kategori/{id}', [KategoriController::class, 'editKategoriByAdmin']);
 
         // Plotting Pembimbing
         Route::post('/admin_ta/request-pembimbing', [RequestPembimbingController::class, 'storeForAdmin']);
