@@ -572,12 +572,12 @@ class TugasAkhirController extends Controller
                 'kategori:id,nama_kategori',
                 'tahunAjaran:id,tahun_ajaran',
                 'dosenPembimbing:id,name',
+                'dosenPenguji:id' // tambahkan eager load dosenPenguji
             ])
                 ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->get();
 
-            // ✅ PERBAIKAN: Filter dosen dengan multiple kondisi
             $daftarDosen = Dosen::select('name', 'nik', 'id', 'akses_ta')
                 ->where('status', 1)
                 ->orderBy('name', 'asc')
@@ -600,6 +600,8 @@ class TugasAkhirController extends Controller
                         'dosen_pembimbing_id' => $item->dosenPembimbing->id ?? null,
                         'name' => $item->dosenPembimbing->name ?? null,
                     ],
+                    // Tambahkan flag sudah ada dosen penguji
+                    'has_dosen_penguji' => $item->dosenPenguji && $item->dosenPenguji->count() > 0,
                 ];
             });
 
