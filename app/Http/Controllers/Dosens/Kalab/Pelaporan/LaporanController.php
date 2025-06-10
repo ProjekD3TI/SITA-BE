@@ -281,24 +281,47 @@ class LaporanController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
+
         $data = [
             'status' => $request->status,
             'tanggapan' => $request->tanggapan,
         ];
-        
+
         $laporan->update($data);
 
+        // Format the tanggapan for email
+        $formattedTanggapan = '';
+        $tanggapanData = $request->tanggapan;
+
+        if (is_string($tanggapanData) && $this->isJson($tanggapanData)) {
+            $items = json_decode($tanggapanData, true);
+            foreach ($items as $item) {
+                $date = date('d-m-Y H:i', strtotime($item['timestamp']));
+                $formattedTanggapan .= "<strong>{$item['user']} ({$date}):</strong><br>{$item['text']}<br><br>";
+            }
+        } elseif (is_array($tanggapanData)) {
+            foreach ($tanggapanData as $item) {
+                $date = date('d-m-Y H:i', strtotime($item['timestamp']));
+                $formattedTanggapan .= "<strong>{$item['user']} ({$date}):</strong><br>{$item['text']}<br><br>";
+            }
+        } else {
+            $formattedTanggapan = $tanggapanData;
+        }
+
+        // Remove the last <br><br> if exists
+        $formattedTanggapan = rtrim($formattedTanggapan, "<br><br>");
+
         Mail::send('pelaporan.send-kalab', [
-            'nomor_laporan' => $laporan -> nomor_laporan,
-            'nama_pelapor' => $laporan -> nama_pelapor,
-            'tanggal_kejadian' => $laporan -> tanggal_kejadian,
-            'status' => $request -> status,
-            'tanggapan' => $request -> tanggapan
+            'nomor_laporan' => $laporan->nomor_laporan,
+            'nama_pelapor' => $laporan->nama_pelapor,
+            'tanggal_kejadian' => $laporan->tanggal_kejadian,
+            'status' => $request->status,
+            'tanggapan' => $formattedTanggapan
         ], function($message) use ($laporan) {
             $message->to($laporan->email);
             $message->subject('Tanggapan Laporan Portal D3TI');
         });
-        
+
         return response()->json(['message' => 'laporan berhasil diupdate'], 200);
     }
 }
