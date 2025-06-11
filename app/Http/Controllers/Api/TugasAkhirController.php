@@ -128,8 +128,12 @@ class TugasAkhirController extends Controller
                     $originalName = $request->file($field)->getClientOriginalName();
                     // Simpan ke folder private
                     $filePath = $request->file($field)->storeAs("private/tugas_akhir/{$tugasAkhir->id}", $originalName);
+
                     // Path yang disimpan di DB harus sama dengan lokasi file di storage
                     $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$originalName}";
+                    if (Storage::exists($privatePath)) {
+                        Storage::delete($privatePath);
+                    }
 
                     $tugasAkhir->berkas()->create([
                         'nama_berkas' => $namaBerkas,
@@ -2019,36 +2023,40 @@ class TugasAkhirController extends Controller
                 return ApiResponse::error('Anda bukan sekretaris pada tugas akhir ini.', 403);
             }
 
-            $tugasAkhir->status_kelulusan = $request->status_kelulusan;
+            //  Jika ini sektretaris, pastikan sudah ada 2 dosen penguji lain yang menginput nilai
+            $pengujiLain = $tugasAkhir->dosenPenguji
+                ->filter(function ($penguji) use ($dosenId) {
+                    return $penguji->id != $dosenId && $penguji->pivot->nilai_ujian_ta_id;
+                })
+                ->count();
 
-            // Jika status_kelulusan = 3, set status_valid berkas naskah TA menjadi 2 (ditolak)
-            if ($request->status_kelulusan == 3) {
-                foreach ($tugasAkhir->berkas as $berkas) {
-                    if (strtolower($berkas->nama_berkas) === strtolower('Naskah Tugas Akhir')) {
-                        $berkas->status_valid = 2;
-                        $berkas->save();
-                    }
-                }
+            if ($pengujiLain < 2) {
+                return ApiResponse::error('Sekretaris hanya bisa submit status kelulusan setelah 2 dosen penguji lain sudah menginput nilai.', 403);
             }
 
-            // Jika status_kelulusan = 4, lakukan reset TA
-            if ($request->status_kelulusan == 4) {
-                // Hapus semua berkas TA
+            $tugasAkhir->status_kelulusan = $request->status_kelulusan;
+
+            // Treatment untuk status 3 & 4: semua berkas status_valid = 3, semua ujian TA aktif jadi non-aktif
+            if (in_array($request->status_kelulusan, [3, 4])) {
                 foreach ($tugasAkhir->berkas as $berkas) {
-                    if (Storage::exists($berkas->file_path)) {
-                        Storage::delete($berkas->file_path);
-                    }
-                    $berkas->delete();
+                    $berkas->status_valid = 3; // 3 = perlu revisi
+                    $berkas->save();
                 }
-                // Nonaktifkan semua ujian TA aktif
-                foreach ($tugasAkhir->ujianTA as $ujian) {
-                    if ($ujian->status_ujian === 'aktif') {
-                        $ujian->status_ujian = 'non-aktif';
-                        $ujian->save();
-                    }
+                if ($tugasAkhir->status_ujian === 'aktif') {
+                    $tugasAkhir->status_ujian = 'non-aktif';
+                    $tugasAkhir->save();
                 }
-                // Reset status_valid
-                $tugasAkhir->status_valid = null;
+
+                $tugasAkhir->status_valid = null; // biar bisa daftar ulang
+            }
+
+
+            // Jika status_kelulusan = 1 (lulus tanpa revisi), hapus semua catatan revisi dosen penguji
+            if ($request->status_kelulusan == 1) {
+                foreach ($tugasAkhir->dosenPenguji as $penguji) {
+                    $penguji->pivot->revisi = null;
+                    $penguji->pivot->save();
+                }
             }
 
             $tugasAkhir->save();

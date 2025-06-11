@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('berkasable_id');
             $table->string('nama_berkas'); // Jenis file, misal: krs, file_proposal
             $table->string('file_path'); // Path file di storage
-            $table->tinyInteger('status_valid')->default(0); // 0 = menunggu, 1 = valid, 2 = tidak valid
+            $table->tinyInteger('status_valid')->default(0); // 0 = menunggu, 1 = valid, 2 = tidak valid, 3 = berkas perlu revisi
             $table->timestamps();
 
             $table->index(['berkasable_type', 'berkasable_id']);

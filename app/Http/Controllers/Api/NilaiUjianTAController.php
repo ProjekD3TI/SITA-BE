@@ -106,6 +106,18 @@ class NilaiUjianTAController extends Controller
                 return ApiResponse::error('Anda bukan dosen penguji pada tugas akhir ini.', 403);
             }
 
+            //  Jika ini sektretaris, pastikan sudah ada 2 dosen penguji lain yang menginput nilai
+            if ($dosenPenguji->jabatan_penguji === 'sekretaris') {
+                $pengujiLain = DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)
+                    ->where('id', '!=', $dosenPenguji->id)
+                    ->whereNotNull('nilai_ujian_ta_id')
+                    ->count();
+
+                if ($pengujiLain < 2) {
+                    return ApiResponse::error('Sekretaris hanya bisa submit nilai setelah 2 dosen penguji lain sudah menginput nilai.', 403);
+                }
+            }
+
             // Update kalau sudah ada biar tidak duplikat
             if ($dosenPenguji->nilai_ujian_ta_id) {
                 return ApiResponse::error('Nilai sudah pernah diinput. Gunakan update.', 400);

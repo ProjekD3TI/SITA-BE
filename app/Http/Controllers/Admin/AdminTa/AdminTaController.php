@@ -137,17 +137,33 @@ class AdminTaController extends Controller
                 ];
             });
 
-            // Ambil daftar angkatan unik
-            $angkatanList = User::where('status', 1)
+            // Ambil daftar angkatan unik (urut desc)
+            $angkatanListAll = User::where('status', 1)
                 ->selectRaw("DISTINCT(CONCAT('20', SUBSTRING(nim, 4, 2))) as angkatan")
                 ->orderByDesc('angkatan')
                 ->pluck('angkatan')
                 ->filter()
+                ->map(fn($v) => (int) $v)
+                ->sortDesc()
                 ->values();
+
+            // Ambil angkatan terbaru
+            $angkatanTerbaru = $angkatanListAll->first();
+
+            // Ambil 5 tahun ke belakang dari angkatan terbaru
+            $angkatanLimit = collect();
+            if ($angkatanTerbaru) {
+                for ($i = 0; $i < 5; $i++) {
+                    $angkatanLimit->push($angkatanTerbaru - $i);
+                }
+            }
+
+            // Filter angkatan_list agar hanya 5 tahun terakhir
+            $angkatan_list = $angkatanListAll->filter(fn($v) => $angkatanLimit->contains($v))->values();
 
             // Return dengan struktur pagination & daftar angkatan
             $result = [
-                'angkatan_list' => $angkatanList,
+                'angkatan_list' => $angkatan_list,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $mahasiswa->currentPage(),

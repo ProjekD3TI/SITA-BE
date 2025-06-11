@@ -68,7 +68,7 @@ class BerkasController extends Controller
 
         // File path dan download
         $filePath = ltrim($berkas->file_path, '/');
-        if (Storage::exists($filePath)) {
+        if (!Storage::exists($filePath)) {
             return response()->json(['message' => 'File tidak ditemukan'], 404);
         }
         return Storage::download($filePath, basename($filePath));
