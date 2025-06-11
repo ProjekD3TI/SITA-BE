@@ -2082,11 +2082,16 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function updateStatusKelulusanByDosenPembimbing(Request $request, $tugasAkhirId)
+    public function updateStatusKelulusanDanNilaiByDosenPenguji(Request $request, $tugasAkhirId)
     {
         try {
             $request->validate([
-                'status_kelulusan' => 'required|in:1,2,3,4'
+                'kualitas_tata_laporan' => 'required|numeric|min:0|max:100',
+                'kemampuan_teknis' => 'required|numeric|min:0|max:100',
+                'kualitas_produk' => 'required|numeric|min:0|max:100',
+                'presentasi' => 'required|numeric|min:0|max:100',
+                'rerata_ujian_ta' => 'required|numeric|min:0|max:100',
+                'revisi' => 'nullable|string',
             ]);
 
             $dosenId = Auth::id();
@@ -2096,56 +2101,81 @@ class TugasAkhirController extends Controller
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
             }
 
-            // Cek apakah dosen yang sedang login adalah sekretaris
-            $cekPembimbing = $tugasAkhir->dosenPenguji
-                ->filter(function ($penguji) use ($dosenId) {
-                    return $penguji->id == $dosenId && ($penguji->pivot->jabatan_penguji ?? null) === 'sekretaris';
-                })
-                ->isNotEmpty();
-
-            if (!$cekPembimbing) {
-                return ApiResponse::error('Anda bukan sekretaris pada tugas akhir ini.', 403);
+            $dosenPenguji = $tugasAkhir->dosenPenguji->firstWhere('id', $dosenId);
+            if (!$dosenPenguji) {
+                return ApiResponse::error('Anda bukan dosen penguji pada tugas akhir ini.', 403);
             }
 
-            //  Jika ini sektretaris, pastikan sudah ada 2 dosen penguji lain yang menginput nilai
-            $pengujiLain = $tugasAkhir->dosenPenguji
-                ->filter(function ($penguji) use ($dosenId) {
-                    return $penguji->id != $dosenId && $penguji->pivot->nilai_ujian_ta_id;
-                })
-                ->count();
+            // Jika sekretaris, cek 2 penguji lain sudah input nilai
+            if (($dosenPenguji->pivot->jabatan_penguji ?? null) === 'sekretaris') {
+                $pengujiLain = $tugasAkhir->dosenPenguji
+                    ->filter(function ($penguji) use ($dosenId) {
+                        return $penguji->id != $dosenId && $penguji->pivot->nilai_ujian_ta_id;
+                    })
+                    ->count();
 
-            if ($pengujiLain < 2) {
-                return ApiResponse::error('Sekretaris hanya bisa submit status kelulusan setelah 2 dosen penguji lain sudah menginput nilai.', 403);
-            }
-
-            $tugasAkhir->status_kelulusan = $request->status_kelulusan;
-
-            // Treatment untuk status 3 & 4: semua berkas status_valid = 3, semua ujian TA aktif jadi non-aktif
-            if (in_array($request->status_kelulusan, [3, 4])) {
-                foreach ($tugasAkhir->berkas as $berkas) {
-                    $berkas->status_valid = 3; // 3 = perlu revisi
-                    $berkas->save();
+                if ($pengujiLain < 2) {
+                    return ApiResponse::error('Sekretaris hanya bisa submit setelah 2 dosen penguji lain sudah menginput nilai.', 403);
                 }
-                foreach ($tugasAkhir->ujianTA as $ujian) {
-                    if ($ujian->status_ujian === 'aktif') {
-                        $ujian->status_ujian = 'non-aktif';
-                        $ujian->save();
+            }
+
+            // Simpan nilai ujian TA (update jika sudah ada)
+            $nilaiUjianTA = $dosenPenguji->pivot->nilaiUjianTA;
+            if ($nilaiUjianTA) {
+                $nilaiUjianTA->update([
+                    'kualitas_tata_laporan' => $request->kualitas_tata_laporan,
+                    'kemampuan_teknis' => $request->kemampuan_teknis,
+                    'kualitas_produk' => $request->kualitas_produk,
+                    'presentasi' => $request->presentasi,
+                    'rerata_ujian_ta' => $request->rerata_ujian_ta,
+                ]);
+            } else {
+                $nilaiUjianTA = $dosenPenguji->pivot->nilaiUjianTA()->create([
+                    'kualitas_tata_laporan' => $request->kualitas_tata_laporan,
+                    'kemampuan_teknis' => $request->kemampuan_teknis,
+                    'kualitas_produk' => $request->kualitas_produk,
+                    'presentasi' => $request->presentasi,
+                    'rerata_ujian_ta' => $request->rerata_ujian_ta,
+                ]);
+                $dosenPenguji->pivot->nilai_ujian_ta_id = $nilaiUjianTA->id;
+            }
+            $dosenPenguji->pivot->revisi = $request->revisi;
+            $dosenPenguji->pivot->save();
+
+
+            // Jika sekretaris, update status kelulusan
+            if (($dosenPenguji->pivot->jabatan_penguji ?? null) === 'sekretaris') {
+                $request->validate([
+                    'status_kelulusan' => 'required|in:1,2,3,4'
+                ]);
+                $tugasAkhir->status_kelulusan = $request->status_kelulusan;
+                // Treatment untuk status 3 & 4: semua berkas status_valid = 3, semua ujian TA aktif jadi non-aktif
+                if (in_array($request->status_kelulusan, [3, 4])) {
+                    foreach ($tugasAkhir->berkas as $berkas) {
+                        $berkas->status_valid = 3; // 3 = perlu revisi
+                        $berkas->save();
+                    }
+                    foreach ($tugasAkhir->ujianTA as $ujian) {
+                        if ($ujian->status_ujian === 'aktif') {
+                            $ujian->status_ujian = 'non-aktif';
+                            $ujian->save();
+                        }
+                    }
+
+                    $tugasAkhir->status_valid = null; // biar bisa daftar ulang
+                }
+
+                // Jika status_kelulusan = 1 (lulus tanpa revisi), hapus semua catatan revisi dosen penguji
+                if ($request->status_kelulusan == 1) {
+                    foreach ($tugasAkhir->dosenPenguji as $penguji) {
+                        $penguji->pivot->revisi = null;
+                        $penguji->pivot->save();
                     }
                 }
 
-                $tugasAkhir->status_valid = null; // biar bisa daftar ulang
+                $tugasAkhir->save();
             }
 
-
-            // Jika status_kelulusan = 1 (lulus tanpa revisi), hapus semua catatan revisi dosen penguji
-            if ($request->status_kelulusan == 1) {
-                foreach ($tugasAkhir->dosenPenguji as $penguji) {
-                    $penguji->pivot->revisi = null;
-                    $penguji->pivot->save();
-                }
-            }
-
-            $tugasAkhir->save();
 
             return ApiResponse::success(
                 new TugasAkhirResource($tugasAkhir),

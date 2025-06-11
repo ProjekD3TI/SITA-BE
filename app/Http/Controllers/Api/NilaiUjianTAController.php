@@ -84,112 +84,112 @@ class NilaiUjianTAController extends Controller
         }
     }
 
-    public function storeNilaiByDosenPenguji(Request $request)
-    {
-        try {
-            $request->validate([
-                'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
-                'kualitas_tata_laporan' => 'required|numeric|min:0|max:100',
-                'kemampuan_teknis' => 'required|numeric|min:0|max:100',
-                'kualitas_produk' => 'required|numeric|min:0|max:100',
-                'presentasi' => 'required|numeric|min:0|max:100',
-                'rerata_ujian_ta' => 'required|numeric|min:0|max:100',
-                'revisi' => 'nullable|string', // tambahkan ini
-            ]);
+    // public function storeNilaiByDosenPenguji(Request $request)
+    // {
+    //     try {
+    //         $request->validate([
+    //             'tugas_akhir_id' => 'required|exists:tugas_akhir,id',
+    //             'kualitas_tata_laporan' => 'required|numeric|min:0|max:100',
+    //             'kemampuan_teknis' => 'required|numeric|min:0|max:100',
+    //             'kualitas_produk' => 'required|numeric|min:0|max:100',
+    //             'presentasi' => 'required|numeric|min:0|max:100',
+    //             'rerata_ujian_ta' => 'required|numeric|min:0|max:100',
+    //             'revisi' => 'nullable|string', // tambahkan ini
+    //         ]);
 
-            $dosenId = Auth::id();
-            $dosenPenguji = DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)
-                ->where('dosen_id', $dosenId)
-                ->first();
+    //         $dosenId = Auth::id();
+    //         $dosenPenguji = DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)
+    //             ->where('dosen_id', $dosenId)
+    //             ->first();
 
-            if (!$dosenPenguji) {
-                return ApiResponse::error('Anda bukan dosen penguji pada tugas akhir ini.', 403);
-            }
+    //         if (!$dosenPenguji) {
+    //             return ApiResponse::error('Anda bukan dosen penguji pada tugas akhir ini.', 403);
+    //         }
 
-            //  Jika ini sektretaris, pastikan sudah ada 2 dosen penguji lain yang menginput nilai
-            if ($dosenPenguji->jabatan_penguji === 'sekretaris') {
-                $pengujiLain = DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)
-                    ->where('id', '!=', $dosenPenguji->id)
-                    ->whereNotNull('nilai_ujian_ta_id')
-                    ->count();
+    //         //  Jika ini sektretaris, pastikan sudah ada 2 dosen penguji lain yang menginput nilai
+    //         if ($dosenPenguji->jabatan_penguji === 'sekretaris') {
+    //             $pengujiLain = DosenPenguji::where('tugas_akhir_id', $request->tugas_akhir_id)
+    //                 ->where('id', '!=', $dosenPenguji->id)
+    //                 ->whereNotNull('nilai_ujian_ta_id')
+    //                 ->count();
 
-                if ($pengujiLain < 2) {
-                    return ApiResponse::error('Sekretaris hanya bisa submit nilai setelah 2 dosen penguji lain sudah menginput nilai.', 403);
-                }
-            }
+    //             if ($pengujiLain < 2) {
+    //                 return ApiResponse::error('Sekretaris hanya bisa submit nilai setelah 2 dosen penguji lain sudah menginput nilai.', 403);
+    //             }
+    //         }
 
-            // Update kalau sudah ada biar tidak duplikat
-            if ($dosenPenguji->nilai_ujian_ta_id) {
-                return ApiResponse::error('Nilai sudah pernah diinput. Gunakan update.', 400);
-            }
+    //         // Update kalau sudah ada biar tidak duplikat
+    //         if ($dosenPenguji->nilai_ujian_ta_id) {
+    //             return ApiResponse::error('Nilai sudah pernah diinput. Gunakan update.', 400);
+    //         }
 
-            // Simpan nilai ujian TA
-            $nilaiUjianTA = $dosenPenguji->nilaiUjianTA()->create([
-                'kualitas_tata_laporan' => $request->kualitas_tata_laporan,
-                'kemampuan_teknis' => $request->kemampuan_teknis,
-                'kualitas_produk' => $request->kualitas_produk,
-                'presentasi' => $request->presentasi,
-                'rerata_ujian_ta' => $request->rerata_ujian_ta,
-            ]);
+    //         // Simpan nilai ujian TA
+    //         $nilaiUjianTA = $dosenPenguji->nilaiUjianTA()->create([
+    //             'kualitas_tata_laporan' => $request->kualitas_tata_laporan,
+    //             'kemampuan_teknis' => $request->kemampuan_teknis,
+    //             'kualitas_produk' => $request->kualitas_produk,
+    //             'presentasi' => $request->presentasi,
+    //             'rerata_ujian_ta' => $request->rerata_ujian_ta,
+    //         ]);
 
-            $dosenPenguji->nilai_ujian_ta_id = $nilaiUjianTA->id;
-            $dosenPenguji->revisi = $request->revisi;
-            $dosenPenguji->save();
+    //         $dosenPenguji->nilai_ujian_ta_id = $nilaiUjianTA->id;
+    //         $dosenPenguji->revisi = $request->revisi;
+    //         $dosenPenguji->save();
 
-            return ApiResponse::success(new NilaiUjianTAResource($nilaiUjianTA), 'Nilai ujian TA berhasil disimpan');
+    //         return ApiResponse::success(new NilaiUjianTAResource($nilaiUjianTA), 'Nilai ujian TA berhasil disimpan');
 
-        } catch (ValidationException $e) {
-            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
-        } catch (\Exception $e) {
-            return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
-        }
-    }
+    //     } catch (ValidationException $e) {
+    //         return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+    //     } catch (\Exception $e) {
+    //         return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
+    //     }
+    // }
 
-    public function updateNilaiByDosenPenguji(Request $request, $tugasAkhirId)
-    {
-        try {
-            $validatedData = $request->validate([
-                'kualitas_tata_laporan' => 'required|numeric|min:0|max:100',
-                'kemampuan_teknis' => 'required|numeric|min:0|max:100',
-                'kualitas_produk' => 'required|numeric|min:0|max:100',
-                'presentasi' => 'required|numeric|min:0|max:100',
-                'rerata_ujian_ta' => 'required|numeric|min:0|max:100',
-                'revisi' => 'nullable|string', // tambahkan ini
-            ]);
+    // public function updateNilaiByDosenPenguji(Request $request, $tugasAkhirId)
+    // {
+    //     try {
+    //         $validatedData = $request->validate([
+    //             'kualitas_tata_laporan' => 'required|numeric|min:0|max:100',
+    //             'kemampuan_teknis' => 'required|numeric|min:0|max:100',
+    //             'kualitas_produk' => 'required|numeric|min:0|max:100',
+    //             'presentasi' => 'required|numeric|min:0|max:100',
+    //             'rerata_ujian_ta' => 'required|numeric|min:0|max:100',
+    //             'revisi' => 'nullable|string', // tambahkan ini
+    //         ]);
 
-            $dosenId = Auth::id();
-            $dosenPenguji = DosenPenguji::where('tugas_akhir_id', $tugasAkhirId)
-                ->where('dosen_id', $dosenId)
-                ->first();
+    //         $dosenId = Auth::id();
+    //         $dosenPenguji = DosenPenguji::where('tugas_akhir_id', $tugasAkhirId)
+    //             ->where('dosen_id', $dosenId)
+    //             ->first();
 
-            if (!$dosenPenguji) {
-                return ApiResponse::error('Anda bukan dosen penguji pada tugas akhir ini.', 403);
-            }
+    //         if (!$dosenPenguji) {
+    //             return ApiResponse::error('Anda bukan dosen penguji pada tugas akhir ini.', 403);
+    //         }
 
-            $nilaiUjianTA = $dosenPenguji->nilaiUjianTA;
-            if (!$nilaiUjianTA) {
-                return ApiResponse::error('Nilai belum ada, gunakan create.', 404);
-            }
+    //         $nilaiUjianTA = $dosenPenguji->nilaiUjianTA;
+    //         if (!$nilaiUjianTA) {
+    //             return ApiResponse::error('Nilai belum ada, gunakan create.', 404);
+    //         }
 
-            // Update nilai ujian TA
-            $nilaiUjianTA->update([
-                'kualitas_tata_laporan' => $validatedData['kualitas_tata_laporan'],
-                'kemampuan_teknis' => $validatedData['kemampuan_teknis'],
-                'kualitas_produk' => $validatedData['kualitas_produk'],
-                'presentasi' => $validatedData['presentasi'],
-                'rerata_ujian_ta' => $validatedData['rerata_ujian_ta'],
-            ]);
+    //         // Update nilai ujian TA
+    //         $nilaiUjianTA->update([
+    //             'kualitas_tata_laporan' => $validatedData['kualitas_tata_laporan'],
+    //             'kemampuan_teknis' => $validatedData['kemampuan_teknis'],
+    //             'kualitas_produk' => $validatedData['kualitas_produk'],
+    //             'presentasi' => $validatedData['presentasi'],
+    //             'rerata_ujian_ta' => $validatedData['rerata_ujian_ta'],
+    //         ]);
 
-            // Update revisi di pivot dosen_penguji
-            $dosenPenguji->revisi = $request->revisi;
-            $dosenPenguji->save();
+    //         // Update revisi di pivot dosen_penguji
+    //         $dosenPenguji->revisi = $request->revisi;
+    //         $dosenPenguji->save();
 
-            return ApiResponse::success(new NilaiUjianTAResource($nilaiUjianTA), 'Nilai ujian TA & revisi berhasil diperbarui');
+    //         return ApiResponse::success(new NilaiUjianTAResource($nilaiUjianTA), 'Nilai ujian TA & revisi berhasil diperbarui');
 
-        } catch (ValidationException $e) {
-            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
-        } catch (\Exception $e) {
-            return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
-        }
-    }
+    //     } catch (ValidationException $e) {
+    //         return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+    //     } catch (\Exception $e) {
+    //         return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
+    //     }
+    // }
 }

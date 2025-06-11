@@ -156,15 +156,15 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::put('/dosen/tugas-akhir/nilai-bimbingan/{tugasAkhirId}/update', [NilaiBimbinganController::class, 'updateNilaiBimbinganByDosen']);
 
     // Sistem Tugas-akhir (Nilai Ujian TA)
-    Route::post('/dosen/tugas-akhir/nilai-ujian-ta', [NilaiUjianTAController::class, 'storeNilaiByDosenPenguji']);
-    Route::put('/dosen/tugas-akhir/nilai-ujian-ta/{tugasAkhirId}', [NilaiUjianTAController::class, 'updateNilaiByDosenPenguji']);
+    // Route::post('/dosen/tugas-akhir/nilai-ujian-ta', [NilaiUjianTAController::class, 'storeNilaiByDosenPenguji']);
+    // Route::put('/dosen/tugas-akhir/nilai-ujian-ta/{tugasAkhirId}', [NilaiUjianTAController::class, 'updateNilaiByDosenPenguji']);
 
     // Sistem Tugas-akhir (Fitur Ujian Tugas Akhir ~ List Ujian TA untuk Dosen & Detail Ujian TA)
     Route::get('/dosen/tugas-akhir/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
     Route::get('/dosen/tugas-akhir/detail-ujian-ta/{tugasAkhirId}', [TugasAkhirController::class, 'detailUjianForDosen']);
 
     // Sistem Tugas akhir (Tugas Akhir)
-    Route::put('/dosen/tugas-akhir/status-kelulusan/{tugasAkhirId}', [TugasAkhirController::class, 'updateStatusKelulusanByDosenPembimbing']);
+    Route::put('/dosen/tugas-akhir/submit-nilai-dan-status/{tugasAkhirId}', [TugasAkhirController::class, 'updateStatusKelulusanDanNilaiByDosenPenguji']);
 
     Route::get('/dosen/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByDosen']);
     // Kategori
