@@ -10,7 +10,9 @@ use App\Models\User;
 use Illuminate\Validation\ValidationException;
 use Exception;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Concerns\ToArray;
+use FPDM;
+use Carbon\Carbon;
+
 
 class AdminTaController extends Controller
 {
@@ -269,6 +271,59 @@ class AdminTaController extends Controller
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
+    }
+
+    public function cetakBeritaAcaraUjian($tugasAkhirId)
+    {
+        $tugasAkhir = TugasAkhir::with([
+            'mahasiswa:id,name,nim',
+            'ujianTA.sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
+            'ujianTA.ruang:id,nama_ruang',
+            'dosenPenguji:id,name,nik',
+        ])->find($tugasAkhirId);
+
+        if (!$tugasAkhir) {
+            return response()->json(['message' => 'Tugas Akhir tidak ditemukan'], 404);
+        }
+
+        $ujianTA = $tugasAkhir->ujianTA->where('status_ujian', 'aktif')->first();
+        if (!$ujianTA) {
+            return response()->json(['message' => 'Jadwal ujian tidak ditemukan'], 404);
+        }
+
+        $penguji = $tugasAkhir->dosenPenguji;
+        $ketua = $penguji->firstWhere('pivot.jabatan_penguji', 'ketua');
+        $sekretaris = $penguji->firstWhere('pivot.jabatan_penguji', 'sekretaris');
+        $pengujiBiasa = $penguji->firstWhere('pivot.jabatan_penguji', 'penguji');
+
+        Carbon::setLocale('id');
+        $fields = [
+            'nama_mahasiswa' => $tugasAkhir->mahasiswa->name,
+            'NIM' => $tugasAkhir->mahasiswa->nim,
+            'tanggal_ujian' => Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y'),
+            'jam_mulai_ujian' => $ujianTA->sesi->waktu_mulai ?? '-',
+            'tanggal_ujian_ttd' => Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y'),
+            'ketua_penguji' => $ketua?->name ?? '-',
+            'nik_ketua_penguji' => $ketua?->nik ?? '-',
+            'sekretaris_penguji' => $sekretaris?->name ?? '-',
+            'nik_sekretaris_penguji' => $sekretaris?->nik ?? '-',
+            'penguji' => $pengujiBiasa?->name ?? '-',
+            'nik_penguji' => $pengujiBiasa?->nik ?? '-',
+        ];
+
+        $templatePath = storage_path('app/template_berita_acara.pdf');
+        if (!file_exists($templatePath)) {
+            return response()->json(['message' => "Template tidak ditemukan di: $templatePath"], 404);
+        }
+
+        $pdf = new FPDM($templatePath);
+        $pdf->Load($fields, true);
+        $pdf->Merge();
+
+        // Output langsung ke browser, tidak disimpan di storage
+        return response($pdf->Output('S', 'berita_acara_ujian.pdf'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="berita_acara_ujian.pdf"');
     }
 
 }

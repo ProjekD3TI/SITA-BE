@@ -1432,6 +1432,7 @@ class TugasAkhirController extends Controller
                 }
                 return [
                     'tugas_akhir_id' => $item->id,
+                    'berita_acara_url' => url('/api/admin_ta/cetak-berita-acara-ujian/' . $item->id),
                     'mahasiswa' => [
                         'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,

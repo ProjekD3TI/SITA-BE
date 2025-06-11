@@ -233,6 +233,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role:admin_ta'])->group(function () {
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
 
+        // Route::post('/admin_ta/cetak-berita-acara-ujian', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
+        Route::get('/admin_ta/cetak-berita-acara-ujian/{tugasAkhirId}', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
+
         // Tugas-akhir
         Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'tabelTugasAkhirForAdmin']);
         // Route::get('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'showTugasAkhirForAdmin']);
