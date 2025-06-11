@@ -52,7 +52,8 @@ class NilaiUjianTAController extends Controller
             })->toArray();
 
             return ApiResponse::success([
-                'dosen_penguji' => $dosenPengujiArr
+                'dosen_penguji' => $dosenPengujiArr,
+                'status_kelulusan' => $tugasAkhir->status_kelulusan, // <-- Tambahkan ini
             ], 'Data nilai ujian berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data nilai ujian gagal diambil: ' . $e->getMessage(), 500);
