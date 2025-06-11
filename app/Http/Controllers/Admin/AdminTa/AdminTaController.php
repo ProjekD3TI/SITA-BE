@@ -112,10 +112,13 @@ class AdminTaController extends Controller
                 });
             }
 
-            // Filter akses_ta
-            if ($request->has('akses_ta') && $request->akses_ta !== null && $request->akses_ta !== '') {
-                $query->where('akses_ta', (int) $request->akses_ta);
+            // Filter by akses_ta jika ada
+            if ($request->has('akses_ta') && $request->akses_ta !== '') {
+                $statusList = explode(',', $request->akses_ta);
+                $statusList = array_map('trim', $statusList);
+                $query->whereIn('akses_ta', $statusList);
             }
+
             // Filter angkatan
             if ($request->has('angkatan') && $request->angkatan) {
                 $angkatanList = explode(',', $request->angkatan);
@@ -208,9 +211,12 @@ class AdminTaController extends Controller
         try {
             $query = Dosen::where('status', 1);
 
-            // Filter akses_ta jika ada di request
-            if ($request->has('akses_ta') && $request->akses_ta !== null && $request->akses_ta !== '') {
-                $query->where('akses_ta', (int) $request->akses_ta);
+
+            // Filter by akses_ta jika ada
+            if ($request->has('akses_ta') && $request->akses_ta !== '') {
+                $statusList = explode(',', $request->akses_ta);
+                $statusList = array_map('trim', $statusList);
+                $query->whereIn('akses_ta', $statusList);
             }
 
             // Search by nama, nik, atau nim

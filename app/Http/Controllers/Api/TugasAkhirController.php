@@ -35,8 +35,10 @@ class TugasAkhirController extends Controller
             ]);
 
             // Filter by status_aktif jika ada
-            if ($request->has('status_aktif')) {
-                $query->where('status_aktif', $request->status_aktif);
+            if ($request->has('status_aktif') && $request->status_aktif !== '') {
+                $statusList = explode(',', $request->status_aktif);
+                $statusList = array_map('trim', $statusList);
+                $query->whereIn('status_aktif', $statusList);
             }
 
             // Search by nama mahasiswa atau judul tugas akhir
@@ -51,8 +53,7 @@ class TugasAkhirController extends Controller
             }
 
             // Pagination
-            $perPage = $request->get('per_page', 10);
-            $tugasAkhir = $query->orderByDesc('id')->paginate($perPage);
+            $tugasAkhir = $query->orderByDesc('id')->paginate(10);
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
@@ -590,16 +591,7 @@ class TugasAkhirController extends Controller
             }
 
             // Urutkan: status_request = 2 (ditolak) paling atas, lalu id desc
-            $query->orderByRaw("
-                        CASE
-                            WHEN (
-                                SELECT status_request FROM request_pembimbing
-                                WHERE tugas_akhir_id = tugas_akhir.id
-                                LIMIT 1
-                            ) = 2 THEN 0
-                            ELSE 1
-                        END
-                    ")->orderByDesc('id');
+            $query->orderByRaw("CASE WHEN dosen_pembimbing_id IS NULL AND ( SELECT status_request FROM request_pembimbing WHERE tugas_akhir_id = tugas_akhir.id LIMIT 1 ) = 2 THEN 0 WHEN dosen_pembimbing_id IS NOT NULL THEN 2 ELSE 1 END")->orderByDesc('id');
 
             $tugasAkhir = $query->paginate(10);
 
@@ -867,7 +859,7 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function detailBimbinganForAdmin(Request $request, $tugasAkhirId)
+    public function detailBimbinganForAdmin($tugasAkhirId)
     {
         try {
             $tugasAkhir = TugasAkhir::with([

@@ -238,8 +238,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
         // Tugas-akhir
         Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'tabelTugasAkhirForAdmin']);
-        // Route::get('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'showTugasAkhirForAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatusForAdmin']);
+        // Route::get('/admin_ta/tugas-akhir/{id}', [TugasAkhirController::class, 'showTugasAkhirForAdmin']);
         // Route::get('/admin_ta/tugas-akhir/daftar', [TugasAkhirController::class, 'getRegisterTAForAdmin']);
 
 
