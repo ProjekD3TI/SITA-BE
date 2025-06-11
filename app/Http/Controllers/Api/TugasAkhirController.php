@@ -232,15 +232,12 @@ class TugasAkhirController extends Controller
             foreach ($berkasMap as $namaBerkas => $field) {
                 if ($request->hasFile($field)) {
                     $originalName = $request->file($field)->getClientOriginalName();
-                    // Simpan ke folder private
+                    $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$originalName}";
+
+                    // Simpan file ke storage
                     $filePath = $request->file($field)->storeAs("private/tugas_akhir/{$tugasAkhir->id}", $originalName);
 
-                    // Path yang disimpan di DB harus sama dengan lokasi file di storage
-                    $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$originalName}";
-                    if (Storage::exists($privatePath)) {
-                        Storage::delete($privatePath);
-                    }
-
+                    // Catat ke DB
                     $tugasAkhir->berkas()->create([
                         'nama_berkas' => $namaBerkas,
                         'file_path' => $privatePath,
@@ -303,11 +300,17 @@ class TugasAkhirController extends Controller
             foreach ($berkasMap as $namaBerkas => $field) {
                 if ($request->hasFile($field)) {
                     $originalName = $request->file($field)->getClientOriginalName();
-                    $filePath = $request->file($field)->storeAs("private/tugas_akhir/{$tugasAkhir->id}", $originalName);
                     $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$originalName}";
+
+                    // Simpan file ke storage (selalu upload file baru)
+                    $filePath = $request->file($field)->storeAs("private/tugas_akhir/{$tugasAkhir->id}", $originalName);
 
                     $berkas = $tugasAkhir->berkas()->where('nama_berkas', $namaBerkas)->first();
                     if ($berkas) {
+                        // Hapus file lama jika ada dan berbeda
+                        if ($berkas->file_path && $berkas->file_path !== $privatePath && \Storage::exists($berkas->file_path)) {
+                            \Storage::delete($berkas->file_path);
+                        }
                         $berkas->file_path = $privatePath;
                         $berkas->status_valid = 0;
                         $berkas->save();
