@@ -2042,9 +2042,11 @@ class TugasAkhirController extends Controller
                     $berkas->status_valid = 3; // 3 = perlu revisi
                     $berkas->save();
                 }
-                if ($tugasAkhir->status_ujian === 'aktif') {
-                    $tugasAkhir->status_ujian = 'non-aktif';
-                    $tugasAkhir->save();
+                foreach ($tugasAkhir->ujianTA as $ujian) {
+                    if ($ujian->status_ujian === 'aktif') {
+                        $ujian->status_ujian = 'non-aktif';
+                        $ujian->save();
+                    }
                 }
 
                 $tugasAkhir->status_valid = null; // biar bisa daftar ulang
