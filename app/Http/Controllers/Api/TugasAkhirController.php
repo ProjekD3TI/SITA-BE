@@ -695,61 +695,61 @@ class TugasAkhirController extends Controller
         }
     }
 
-    // public function storePlottingPembimbingByAdmin(Request $request)
-    // {
-    //     try {
-    //         $validatedData = $request->validate([
-    //             'tugas_akhir_id' => 'required|integer|exists:tugas_akhir,id',
-    //             'dosen_pembimbing_id' => 'required|integer',
-    //         ]);
+    public function storePlottingPembimbingByAdmin(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'tugas_akhir_id' => 'required|integer|exists:tugas_akhir,id',
+                'dosen_pembimbing_id' => 'required|integer',
+            ]);
 
-    //         // Cek apakah tugas akhir ada
-    //         $tugasAkhir = TugasAkhir::find($validatedData['tugas_akhir_id']);
-    //         if (!$tugasAkhir) {
-    //             return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
-    //         }
+            // Cek apakah tugas akhir ada
+            $tugasAkhir = TugasAkhir::find($validatedData['tugas_akhir_id']);
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
+            }
 
-    //         // Cek dosen akses TA
-    //         $dosen = Dosen::where('id', $validatedData['dosen_pembimbing_id'])
-    //             ->where('akses_ta', 1)
-    //             ->where('status', 1)
-    //             ->first();
+            // Cek dosen akses TA
+            $dosen = Dosen::where('id', $validatedData['dosen_pembimbing_id'])
+                ->where('akses_ta', 1)
+                ->where('status', 1)
+                ->first();
 
-    //         if (!$dosen) {
-    //             return ApiResponse::error('Dosen tidak ditemukan atau tidak memiliki akses Tugas Akhir', 404);
-    //         }
+            if (!$dosen) {
+                return ApiResponse::error('Dosen tidak ditemukan atau tidak memiliki akses Tugas Akhir', 404);
+            }
 
-    //         // Update dosen pembimbing di tugas akhir
-    //         $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_pembimbing_id'];
-    //         $tugasAkhir->save();
+            // Update dosen pembimbing di tugas akhir
+            $tugasAkhir->dosen_pembimbing_id = $validatedData['dosen_pembimbing_id'];
+            $tugasAkhir->save();
 
-    //         // Tolak semua request pembimbing yang statusnya masih 0 (menunggu) untuk tugas akhir ini
-    //         RequestPembimbing::where('tugas_akhir_id', $tugasAkhir->id)
-    //             ->where('status_request', 0)
-    //             ->update([
-    //                 'status_request' => 2, // 2 = ditolak
-    //                 'tanggal_respon' => now(),
-    //             ]);
+            // Tolak semua request pembimbing yang statusnya masih 0 (menunggu) untuk tugas akhir ini
+            RequestPembimbing::where('tugas_akhir_id', $tugasAkhir->id)
+                ->where('status_request', 0)
+                ->update([
+                    'status_request' => 2, // 2 = ditolak
+                    'tanggal_respon' => now(),
+                ]);
 
-    //         // Return tugas akhir dengan relasi dosen pembimbing
-    //         $tugasAkhir->load('dosenPembimbing');
+            // Return tugas akhir dengan relasi dosen pembimbing
+            $tugasAkhir->load('dosenPembimbing');
 
-    //         return ApiResponse::success([
-    //             'tugas_akhir' => [
-    //                 'id' => $tugasAkhir->id,
-    //                 'dosen_pembimbing' => [
-    //                     'id' => $tugasAkhir->dosenPembimbing->id,
-    //                     'name' => $tugasAkhir->dosenPembimbing->name,
-    //                 ]
-    //             ]
-    //         ], 'Dosen pembimbing berhasil ditetapkan', 200);
+            return ApiResponse::success([
+                'tugas_akhir' => [
+                    'id' => $tugasAkhir->id,
+                    'dosen_pembimbing' => [
+                        'id' => $tugasAkhir->dosenPembimbing->id,
+                        'name' => $tugasAkhir->dosenPembimbing->name,
+                    ]
+                ]
+            ], 'Dosen pembimbing berhasil ditetapkan', 200);
 
-    //     } catch (ValidationException $e) {
-    //         return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
-    //     } catch (Exception $e) {
-    //         return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
-    //     }
-    // }
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
 
     public function putPlottingPembimbingByAdmin(Request $request, $tugasAkhirId)
     {
