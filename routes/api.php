@@ -246,8 +246,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Fitur Bimbingan (Plotting List Dosen Pembimbing & Detail Plotting Pembimbing & Update Plotting Pembimbing)
         Route::get('/admin_ta/plotting', [TugasAkhirController::class, 'tabelPlottingPembimbingForAdmin']);
         Route::get('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'plottingPembimbingForAdmin']);
-        Route::post('/admin_ta/plotting-pembimbing', [TugasAkhirController::class, 'storePlottingPembimbingByAdmin']);
         Route::put('/admin_ta/plotting-pembimbing/{tugasAkhirId}', [TugasAkhirController::class, 'putPlottingPembimbingByAdmin']);
+        // Route::post('/admin_ta/plotting-pembimbing', [TugasAkhirController::class, 'storePlottingPembimbingByAdmin']);
 
         // Fitur Bimbingan (List Bimbingan & Detail Bimbingan)
         Route::get('/admin_ta/list-bimbingan', [TugasAkhirController::class, 'tabelListBimbinganForAdmin']);
