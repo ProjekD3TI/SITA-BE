@@ -454,7 +454,7 @@ class ProposalController extends Controller
                 'file_transkrip' => 'nullable|file|mimes:pdf',
             ]);
 
-            $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
+            $proposal = Proposal::with(['tugasAkhir', 'berkas'])->findOrFail($id);
 
             $proposal->judul_proposal = $validatedData['judul_proposal'];
             $isUpload = false;
@@ -463,6 +463,10 @@ class ProposalController extends Controller
             if ($request->hasFile('file_proposal')) {
                 $berkasProposal = $proposal->berkas()->where('nama_berkas', 'Naskah Proposal Tugas Akhir')->first();
                 if ($berkasProposal) {
+                    // Hapus file lama jika ada
+                    if ($berkasProposal->file_path && \Storage::exists(ltrim($berkasProposal->file_path, '/'))) {
+                        \Storage::delete(ltrim($berkasProposal->file_path, '/'));
+                    }
                     $originalName = $request->file('file_proposal')->getClientOriginalName();
                     $filePath = $request->file('file_proposal')->storeAs("private/proposal/{$proposal->id}", $originalName);
                     $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
@@ -476,6 +480,10 @@ class ProposalController extends Controller
             if ($request->hasFile('file_transkrip')) {
                 $berkasTranskrip = $proposal->berkas()->where('nama_berkas', 'Transkrip Nilai Mahasiswa')->first();
                 if ($berkasTranskrip) {
+                    // Hapus file lama jika ada
+                    if ($berkasTranskrip->file_path && \Storage::exists(ltrim($berkasTranskrip->file_path, '/'))) {
+                        \Storage::delete(ltrim($berkasTranskrip->file_path, '/'));
+                    }
                     $originalName = $request->file('file_transkrip')->getClientOriginalName();
                     $filePath = $request->file('file_transkrip')->storeAs("private/proposal/{$proposal->id}", $originalName);
                     $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
