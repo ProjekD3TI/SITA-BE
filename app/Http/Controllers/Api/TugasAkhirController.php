@@ -26,13 +26,118 @@ use Illuminate\Validation\ValidationException;
 
 class TugasAkhirController extends Controller
 {
-    public function indexForAdmin()
+    public function tabelTugasAkhirForAdmin(Request $request)
     {
         try {
-            $requests = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->get();
-            return ApiResponse::success(TugasAkhirResource::collection($requests));
+            $query = TugasAkhir::with([
+                'mahasiswa:id,nim,name',
+                'kategori:id,nama_kategori'
+            ]);
+
+            // Filter by status_aktif jika ada
+            if ($request->has('status_aktif')) {
+                $query->where('status_aktif', $request->status_aktif);
+            }
+
+            // Search by nama mahasiswa atau judul tugas akhir
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('mahasiswa', function ($q2) use ($search) {
+                        $q2->where('name', 'like', '%' . $search . '%');
+                    })
+                        ->orWhere('judul_tugas_akhir', 'like', '%' . $search . '%');
+                });
+            }
+
+            // Pagination
+            $perPage = $request->get('per_page', 10);
+            $tugasAkhir = $query->orderByDesc('id')->paginate($perPage);
+
+            $data = $tugasAkhir->map(function ($item) {
+                return [
+                    'tugas_akhir_id' => $item->id,
+                    'mahasiswa' => [
+                        'id' => $item->mahasiswa->id ?? null,
+                        'nim' => $item->mahasiswa->nim ?? null,
+                        'name' => $item->mahasiswa->name ?? null,
+                    ],
+                    'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
+                    'kategori' => [
+                        'id' => $item->kategori->id ?? null,
+                        'name' => $item->kategori->nama_kategori ?? null,
+                    ],
+                    'status_aktif' => $item->status_aktif,
+                ];
+            });
+
+            $result = [
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $tugasAkhir->currentPage(),
+                    'last_page' => $tugasAkhir->lastPage(),
+                    'per_page' => $tugasAkhir->perPage(),
+                    'total' => $tugasAkhir->total(),
+                ],
+            ];
+
+            return ApiResponse::success($result, 'Data Tugas Akhir berhasil diambil');
         } catch (Exception $e) {
             return ApiResponse::error($e->getMessage(), 500);
+        }
+    }
+
+    public function showTugasAkhirForAdmin($id)
+    {
+        try {
+            $tugasAkhir = TugasAkhir::with([
+                'mahasiswa:id,name',
+                'semester:id,nama_semester',
+                'tahunAjaran:id,tahun_ajaran',
+                'dosenPembimbing:id,name',
+                'berkas'
+            ])->findOrFail($id);
+
+            // Ambil hanya berkas naskah tugas akhir
+            $naskahBerkas = $tugasAkhir->berkas
+                ->where('nama_berkas', 'Naskah Tugas Akhir')
+                ->map(function ($berkas) {
+                    return [
+                        'id' => $berkas->id,
+                        'nama_berkas' => $berkas->nama_berkas,
+                        'file_path' => $berkas->file_path,
+                        'download_url' => $berkas ? route('berkas.download', ['berkas' => $berkas->id]) : null,
+                    ];
+                })
+                ->values();
+
+            $data = [
+                'tugas_akhir_id' => $tugasAkhir->id,
+                'mahasiswa' => [
+                    'id' => $tugasAkhir->mahasiswa->id ?? null,
+                    'name' => $tugasAkhir->mahasiswa->name ?? null,
+                ],
+                'semester' => [
+                    'id' => $tugasAkhir->semester->id ?? null,
+                    'name' => $tugasAkhir->semester->nama_semester ?? null,
+                ],
+                'tahun_ajaran' => [
+                    'id' => $tugasAkhir->tahunAjaran->id ?? null,
+                    'name' => $tugasAkhir->tahunAjaran->tahun_ajaran ?? null,
+                ],
+                'dosen_pembimbing' => [
+                    'id' => $tugasAkhir->dosenPembimbing->id ?? null,
+                    'name' => $tugasAkhir->dosenPembimbing->name ?? null,
+                ],
+                'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir,
+                'nilai_akhir' => $tugasAkhir->nilai_akhir,
+                'status_aktif' => $tugasAkhir->status_aktif,
+                'berkas_naskah' => $naskahBerkas,
+            ];
+
+            return ApiResponse::success($data, 'Detail Tugas Akhir berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
         }
     }
 
@@ -55,21 +160,22 @@ class TugasAkhirController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'status_aktif' => 'required|in:0,1,2',
+                'status_aktif' => 'required|in:0,1',
             ]);
 
-            // Find the record by ID with eager loading
-            $tugasAkhir = TugasAkhir::with(['dosenPembimbing', 'bimbingan'])->find($id);
+            $tugasAkhir = TugasAkhir::find($id);
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
             }
 
-            // Update the status_aktif
             $tugasAkhir->status_aktif = $validatedData['status_aktif'];
             $tugasAkhir->save();
 
-            return ApiResponse::success(new TugasAkhirResource($tugasAkhir), 'Pendaftaran Ujian TA sukses');
+            return ApiResponse::success([
+                'id' => $tugasAkhir->id,
+                'status_aktif' => $tugasAkhir->status_aktif,
+            ], 'Status Tugas Akhir berhasil diubah');
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
@@ -216,33 +322,6 @@ class TugasAkhirController extends Controller
             }
 
             return ApiResponse::success(new TugasAkhirResource($tugasAkhir->load('berkas')), 'Berkas Ujian TA berhasil diupdate');
-        } catch (ValidationException $e) {
-            return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
-        } catch (Exception $e) {
-            return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
-        }
-    }
-
-    public function updateValidationStatusForAdmin(Request $request, $id)
-    {
-        try {
-            $validatedData = $request->validate([
-                'status_valid' => 'required|in:1,2', // 1 = valid, 2 = invalid
-            ]);
-
-            // Find the TugasAkhir record
-            $tugasAkhir = TugasAkhir::find($id);
-
-            if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
-            }
-
-            // Update the validation status
-            $tugasAkhir->status_valid = $validatedData['status_valid'];
-            $tugasAkhir->save();
-
-            $statusMessage = $validatedData['status_valid'] == 1 ? 'valid' : 'invalid';
-            return ApiResponse::success(new TugasAkhirResource($tugasAkhir), "Tugas Akhir status diubah menjadi $statusMessage");
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
@@ -1716,7 +1795,6 @@ class TugasAkhirController extends Controller
 
 
     // ========================== FITUR MAHASISWA ==========================
-
     public function ujianTAForMahasiswa()
     {
         try {
@@ -1727,7 +1805,8 @@ class TugasAkhirController extends Controller
                 'kategori:id,nama_kategori',
                 'tahunAjaran:id,tahun_ajaran',
                 'berkas',
-                'bimbingan'
+                'bimbingan',
+                'dosenPenguji:id,name' // Tambahkan eager load dosenPenguji
             ])
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status_aktif', 1)
@@ -1752,6 +1831,9 @@ class TugasAkhirController extends Controller
                 })
                 ->values();
 
+            // Cek apakah sudah ada dosen penguji
+            $hasDosenPenguji = $tugasAkhir->dosenPenguji && $tugasAkhir->dosenPenguji->count() > 0;
+
             $result = [
                 'status_form' => [
                     'id' => $statusForm->id,
@@ -1773,6 +1855,7 @@ class TugasAkhirController extends Controller
                         'nama' => $tugasAkhir->tahunAjaran->tahun_ajaran,
                     ] : null,
                     'status_valid' => $tugasAkhir->status_valid,
+                    'has_dosen_penguji' => $hasDosenPenguji,
                 ],
                 'bimbingan' => [
                     'total_bimbingan' => $tugasAkhir->bimbingan
