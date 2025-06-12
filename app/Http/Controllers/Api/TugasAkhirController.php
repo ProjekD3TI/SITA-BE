@@ -2024,6 +2024,7 @@ class TugasAkhirController extends Controller
                         'berkas_id' => $berkas->id,
                         'nama_berkas' => $berkas->nama_berkas,
                         'file_path' => $berkas->file_path,
+                        'download_url' => $berkas ? route('berkas.download', ['berkas' => $berkas->id]) : null,
                     ];
                 })
                 ->values();
