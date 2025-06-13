@@ -203,9 +203,10 @@ class ProposalController extends Controller
             $query = Proposal::with([
                 'tugasAkhir.mahasiswa:id,nim,name',
                 'tugasAkhir.kategori',
+                'tugasAkhir.dosenPembimbing:id,name', // agar FE dapat dospem
             ]);
 
-            $kategori = Kategori::select('id', 'nama_kategori')->get();
+            // $kategori = Kategori::select('id', 'nama_kategori')->get();
 
             // Fitur search nim/nama mahasiswa atau judul proposal
             if ($request->search) {
@@ -217,24 +218,37 @@ class ProposalController extends Controller
             }
 
             // Fitur search kategori
-            if ($request->kategori) {
-                $kategoriList = explode(',', $request->kategori);
-                $query->whereHas('tugasAkhir.kategori', function ($q) use ($kategoriList) {
-                    $q->where(function ($subQuery) use ($kategoriList) {
-                        foreach ($kategoriList as $index => $kategori) {
-                            $kategori = trim($kategori);
-                            if ($index === 0) {
-                                $subQuery->where('nama_kategori', 'like', '%' . $kategori . '%');
-                            } else {
-                                $subQuery->orWhere('nama_kategori', 'like', '%' . $kategori . '%');
-                            }
-                        }
-                    });
-                });
-            }
+            // if ($request->kategori) {
+            //     $kategoriList = explode(',', $request->kategori);
+            //     $query->whereHas('tugasAkhir.kategori', function ($q) use ($kategoriList) {
+            //         $q->where(function ($subQuery) use ($kategoriList) {
+            //             foreach ($kategoriList as $index => $kategori) {
+            //                 $kategori = trim($kategori);
+            //                 if ($index === 0) {
+            //                     $subQuery->where('nama_kategori', 'like', '%' . $kategori . '%');
+            //                 } else {
+            //                     $subQuery->orWhere('nama_kategori', 'like', '%' . $kategori . '%');
+            //                 }
+            //             }
+            //         });
+            //     });
+            // }
 
             // Tambahkan filter status_proposal = 1
             $query->where('status_proposal', 1);
+
+            // Filter status_nilai: sudah/ belum
+            if ($request->has('status_nilai')) {
+                if ($request->status_nilai === 'sudah') {
+                    $query->whereHas('tugasAkhir', function ($q) {
+                        $q->whereNotNull('nilai_proposal');
+                    });
+                } elseif ($request->status_nilai === 'belum') {
+                    $query->whereHas('tugasAkhir', function ($q) {
+                        $q->whereNull('nilai_proposal');
+                    });
+                }
+            }
 
             // Urutkan: yang belum ada nilai_proposal di atas, lalu id desc
             $query->orderByRaw(" CASE WHEN ( SELECT nilai_proposal FROM tugas_akhir WHERE tugas_akhir.proposal_id = proposal.id LIMIT 1 ) IS NULL THEN 0 ELSE 1 END ")->orderByDesc('id');
@@ -251,20 +265,20 @@ class ProposalController extends Controller
                         'nim' => $item->tugasAkhir->mahasiswa->nim ?? null,
                         'name' => $item->tugasAkhir->mahasiswa->name ?? null,
                     ],
-                    'kategori' => [
-                        'kategori_id' => $item->tugasAkhir->kategori->id ?? null,
-                        'nama_kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
-                    ],
+                    'dosen_pembimbing' => $item->tugasAkhir->dosenPembimbing ? [
+                        'id' => $item->tugasAkhir->dosenPembimbing->id,
+                        'name' => $item->tugasAkhir->dosenPembimbing->name,
+                    ] : null,
                 ];
             });
 
             $result = [
-                'list_kategori' => $kategori->map(function ($item) {
-                    return [
-                        'kategori_id' => $item->id,
-                        'nama_kategori' => $item->nama_kategori,
-                    ];
-                })->values(),
+                // 'list_kategori' => $kategori->map(function ($item) {
+                //     return [
+                //         'kategori_id' => $item->id,
+                //         'nama_kategori' => $item->nama_kategori,
+                //     ];
+                // })->values(),
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $listProposal->currentPage(),

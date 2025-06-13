@@ -389,9 +389,8 @@ class TugasAkhirController extends Controller
     public function setDashboardByMahasiswa()
     {
         try {
-
             $mahasiswaId = Auth::id();
-            $tugasAkhir = TugasAkhir::with(['proposal', 'bimbingan', 'ujianTA', 'requestPembimbing'])
+            $tugasAkhir = TugasAkhir::with(['proposal', 'bimbingan', 'ujianTA', 'requestPembimbing', 'dosenPenguji'])
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->where('status_aktif', 1)
                 ->first();
@@ -408,8 +407,11 @@ class TugasAkhirController extends Controller
             $ujianTA = $tugasAkhir->ujianTA
                 ->where('status_ujian', 'aktif')
                 ->first();
+
+            // Cek apakah sudah ada dosen penguji
+            $hasDosenPenguji = $tugasAkhir->dosenPenguji && $tugasAkhir->dosenPenguji->count() > 0;
+
             $data = [
-                'tugas_akhir_id' => $tugasAkhir->id,
                 'dosen_pembimbing' => $tugasAkhir->dosenPembimbing->name ?? null,
                 'proposal' => [
                     'id' => $tugasAkhir->proposal ? $tugasAkhir->id : null,
@@ -421,20 +423,21 @@ class TugasAkhirController extends Controller
                 'bimbingan' => [
                     'total_bimbingan' => $tugasAkhir->bimbingan->where('status_verifikasi', 1)->count() ?? null,
                     'progress_bimbingan' => $babTerbesar ?? null,
-
                 ],
                 'tanggal_ujian' => $ujianTA ? $ujianTA->tanggal_ujian : null,
-
                 'request_pembimbing' => [
                     'id' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->id : null,
                     'status' => $tugasAkhir->requestPembimbing ? $tugasAkhir->requestPembimbing->status_request : null
-
                 ],
-
+                'has_dosen_penguji' => $hasDosenPenguji,
+                // Tambahkan status_valid pada tugas akhir (jika ingin nested)
+                'tugas_akhir' => [
+                    'id' => $tugasAkhir->id,
+                    'status_valid' => $tugasAkhir->status_valid,
+                ],
             ];
 
             return ApiResponse::success($data, 'Data keperluan dashboard berhasil diambil');
-
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
@@ -1357,7 +1360,7 @@ class TugasAkhirController extends Controller
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
                 'dosenPenguji:id,name',
-                'ujianTA'
+                'ujianTA.tahunAjaran' // Tambahkan eager load tahunAjaran
             ])
                 ->where('status_aktif', 1)
                 ->where('status_valid', 1);
@@ -1462,7 +1465,8 @@ class TugasAkhirController extends Controller
                         'waktu_mulai' => $ujianTA->sesi->waktu_mulai ?? null,
                         'waktu_selesai' => $ujianTA->sesi->waktu_selesai ?? null,
                         'ruang' => $ujianTA->ruang->nama_ruang ?? null,
-                        'status_ujian' => $ujianTA->status_ujian ?? null
+                        'status_ujian' => $ujianTA->status_ujian ?? null,
+                        'tahun_ajaran' => $ujianTA->tahunAjaran->tahun_ajaran ?? null, // Tambahan tahun ajaran
                     ] : [],
                     'dosen_penguji' => $item->dosenPenguji
                         ? $item->dosenPenguji->map(function ($penguji) {
