@@ -236,7 +236,7 @@ class ProposalController extends Controller
 
             // Urutkan: yang belum ada nilai_proposal di atas, lalu id desc
             $query->orderByRaw(" CASE WHEN ( SELECT nilai_proposal FROM tugas_akhir WHERE tugas_akhir.proposal_id = proposal.id LIMIT 1 ) IS NULL THEN 0 ELSE 1 END ")->orderByDesc('id');
-            $listProposal = $query->paginate(2);
+            $listProposal = $query->paginate(10);
 
             $data = collect($listProposal->items())->map(function ($item) {
                 Carbon::setLocale('id');
