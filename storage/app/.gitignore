@@ -1,5 +1,6 @@
 *
-# !private/
-# !private/**
-!public/
+!private/
+!private/**
+# !public/
 # !.gitignore
+!template_berita_acara.pdf

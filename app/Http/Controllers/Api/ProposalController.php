@@ -9,9 +9,11 @@ use App\Models\Proposal;
 use App\Models\StatusForm;
 use App\Models\TugasAkhir;
 use Illuminate\Http\Request;
+use App\Exports\ProposalExport;
 use App\Http\Responses\ApiResponse;
-use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\ProposalResource;
 use Illuminate\Validation\ValidationException;
 
@@ -206,7 +208,6 @@ class ProposalController extends Controller
                 'tugasAkhir.dosenPembimbing:id,name', // agar FE dapat dospem
             ]);
 
-            // $kategori = Kategori::select('id', 'nama_kategori')->get();
 
             // Fitur search nim/nama mahasiswa atau judul proposal
             if ($request->search) {
@@ -216,23 +217,6 @@ class ProposalController extends Controller
                 })
                     ->orWhere('judul_proposal', 'like', '%' . $request->search . '%');
             }
-
-            // Fitur search kategori
-            // if ($request->kategori) {
-            //     $kategoriList = explode(',', $request->kategori);
-            //     $query->whereHas('tugasAkhir.kategori', function ($q) use ($kategoriList) {
-            //         $q->where(function ($subQuery) use ($kategoriList) {
-            //             foreach ($kategoriList as $index => $kategori) {
-            //                 $kategori = trim($kategori);
-            //                 if ($index === 0) {
-            //                     $subQuery->where('nama_kategori', 'like', '%' . $kategori . '%');
-            //                 } else {
-            //                     $subQuery->orWhere('nama_kategori', 'like', '%' . $kategori . '%');
-            //                 }
-            //             }
-            //         });
-            //     });
-            // }
 
             // Tambahkan filter status_proposal = 1
             $query->where('status_proposal', 1);
@@ -252,7 +236,7 @@ class ProposalController extends Controller
 
             // Urutkan: yang belum ada nilai_proposal di atas, lalu id desc
             $query->orderByRaw(" CASE WHEN ( SELECT nilai_proposal FROM tugas_akhir WHERE tugas_akhir.proposal_id = proposal.id LIMIT 1 ) IS NULL THEN 0 ELSE 1 END ")->orderByDesc('id');
-            $listProposal = $query->paginate(10);
+            $listProposal = $query->paginate(2);
 
             $data = collect($listProposal->items())->map(function ($item) {
                 Carbon::setLocale('id');
@@ -382,6 +366,17 @@ class ProposalController extends Controller
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
         }
+    }
+
+    public function exportProposalBelumSeminar(Request $request)
+    {
+        $search = $request->get('search');
+        $statusNilai = $request->get('status_nilai');
+
+        return Excel::download(
+            new ProposalExport($search, $statusNilai),
+            'seminar_proposal_filtered.xlsx'
+        );
     }
 
 

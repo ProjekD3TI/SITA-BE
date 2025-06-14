@@ -261,6 +261,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         // Fitur Proposal (List Seminar Proposal & Detail Seminar Proposal & Update Nilai dan Catatan)
         Route::get('/admin_ta/seminar-proposal', [ProposalController::class, 'tabelListSeminarProposalForAdmin']);
         Route::get('/admin_ta/seminar-proposal/{proposalId}', [ProposalController::class, 'detailSeminarProposalForAdmin']);
+        Route::get('/admin_ta/seminar-proposal/export/excel', [ProposalController::class, 'exportProposalBelumSeminar']);
         Route::put('/admin_ta/seminar-proposal/{proposalId}/nilai-catatan', [ProposalController::class, 'updateNilaidanCatatanForAdmin']);
 
         // Fitur Ujian TA (List Plotting Penguji & Detail Plotting Penguji)
@@ -276,6 +277,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
         Route::get('/admin_ta/penjadwalan-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPenjadwalanUjianByAdmin']);
         Route::post('/admin_ta/penjadwalan-ujian', [UjianTAController::class, 'storeJadwalUjianTAforAdmin']);
+        Route::get('/admin_ta/penjadwalan-ujian/export/excel', [TugasAkhirController::class, 'exportUjianTA']);
         Route::put('/admin_ta/penjadwalan-ujian/{id}', [UjianTAController::class, 'updateJadwalUjianTAforAdmin']);
         Route::post('/admin_ta/penjadwalan-ujian/{tugasAkhirId}/cek-jadwal-tersedia', [TugasAkhirController::class, 'checkAvailabilityForScheduling']);
         // Berita Acara Semhas

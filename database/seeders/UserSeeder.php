@@ -95,7 +95,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423066',
@@ -113,7 +113,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423069',
@@ -131,7 +131,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423073',
@@ -140,7 +140,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423074',
@@ -149,7 +149,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423075',
@@ -158,7 +158,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423076',
@@ -167,7 +167,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423078',
@@ -176,7 +176,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423080',
@@ -185,7 +185,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423081',
@@ -194,7 +194,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423082',
@@ -203,7 +203,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423083',
@@ -212,7 +212,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423084',
@@ -221,7 +221,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 0,
+                'akses_ta' => 1,
             ],
             [
                 'nim' => 'V3423086',
@@ -248,7 +248,7 @@ class UserSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'password' => bcrypt('123123123'),
                 'status' => 1,
-                'akses_ta' => 1,
+                'akses_ta' => 0,
             ],
             [
                 'nim' => 'V3423090',
@@ -277,6 +277,51 @@ class UserSeeder extends Seeder
                 'status' => 1,
                 'akses_ta' => 1,
             ],
+            [
+                'nim' => 'V3422001',
+                'name' => 'Naufal Fathurrahman',
+                'email' => 'naufal@student.uns.ac.id',
+                'no_telp' => '081234567890',
+                'password' => bcrypt('123123123'),
+                'status' => 1,
+                'akses_ta' => 1,
+            ],
+            [
+                'nim' => 'V3422002',
+                'name' => 'Ghazi Baba',
+                'email' => 'ghazi@student.uns.ac.id',
+                'no_telp' => '081234567890',
+                'password' => bcrypt('123123123'),
+                'status' => 1,
+                'akses_ta' => 1,
+            ],
+            [
+                'nim' => 'V3422003',
+                'name' => 'Gani Hidayatullah',
+                'email' => 'gani@student.uns.ac.id',
+                'no_telp' => '081234567890',
+                'password' => bcrypt('123123123'),
+                'status' => 1,
+                'akses_ta' => 1,
+            ],
+            [
+                'nim' => 'V3424001',
+                'name' => 'Rustam Fathurrahman',
+                'email' => 'Rustam@student.uns.ac.id',
+                'no_telp' => '081234567890',
+                'password' => bcrypt('123123123'),
+                'status' => 1,
+                'akses_ta' => 0,
+            ],
+            [
+                'nim' => 'V3424002',
+                'name' => 'Harits Adi Prasetyo',
+                'email' => 'harits@student.uns.ac.id',
+                'no_telp' => '081234567890',
+                'password' => bcrypt('123123123'),
+                'status' => 1,
+                'akses_ta' => 0,
+            ],
             // [
             //     'nim' => ,
             //     'name' => ,
@@ -284,14 +329,7 @@ class UserSeeder extends Seeder
             //     'no_telp' => '081234567890',
             //     'password' => bcrypt('123123123'),
             //     'status' => 1,
-            // ],
-            // [
-            //     'nim' => ,
-            //     'name' => ,
-            //     'email' => ,
-            //     'no_telp' => '081234567890',
-            //     'password' => bcrypt('123123123'),
-            //     'status' => 1,
+            //     'akses_ta' => 1,
             // ],
         ]);
         // User::factory(40)->create();

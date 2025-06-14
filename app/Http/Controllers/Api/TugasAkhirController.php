@@ -13,14 +13,14 @@ use App\Models\Bimbingan;
 use App\Models\StatusForm;
 use App\Models\TugasAkhir;
 use Illuminate\Http\Request;
+use App\Exports\UjianTAExport;
 use App\Models\RequestPembimbing;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Resources\BimbinganResource;
-use App\Http\Resources\TugasAkhirResource;
-use App\Http\Resources\NilaiBimbinganResource;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Resources\TugasAkhirResource;
 use Illuminate\Validation\ValidationException;
 
 
@@ -168,6 +168,19 @@ class TugasAkhirController extends Controller
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+
+            // Jika ingin mengaktifkan TA, cek apakah sudah ada TA aktif lain untuk mahasiswa ini
+            if ($validatedData['status_aktif'] == 1) {
+                $mahasiswaId = $tugasAkhir->mahasiswa_id;
+                $adaAktifLain = TugasAkhir::where('mahasiswa_id', $mahasiswaId)
+                    ->where('id', '!=', $tugasAkhir->id)
+                    ->where('status_aktif', 1)
+                    ->exists();
+
+                if ($adaAktifLain) {
+                    return ApiResponse::error('Mahasiswa ini sudah memiliki Tugas Akhir yang aktif. Nonaktifkan Tugas Akhir aktif lain terlebih dahulu.', 422);
+                }
             }
 
             $tugasAkhir->status_aktif = $validatedData['status_aktif'];
@@ -603,6 +616,7 @@ class TugasAkhirController extends Controller
 
             $notificationCount = TugasAkhir::with('requestPembimbing')
                 ->where('status_aktif', 1)
+                ->whereNull('dosen_pembimbing_id')
                 ->whereHas('requestPembimbing', function ($q) {
                     $q->where('status_request', '!=', 1)
                         ->whereIn('status_request', [0, 2]); // 0 = menunggu, 2 = ditolak
@@ -1805,6 +1819,16 @@ class TugasAkhirController extends Controller
         return $availableSesi;
     }
 
+    public function exportUjianTA(Request $request)
+    {
+        $search = $request->get('search');
+        $status = $request->get('status');
+
+        return Excel::download(
+            new UjianTAExport($search, $status),
+            'ujian_ta_filtered.xlsx'
+        );
+    }
     // ========================== END FITUR ADMIN ==========================
 
 

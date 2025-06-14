@@ -29,7 +29,7 @@ class BimbinganController extends Controller
             $validated = $request->validate([
                 'catatan' => 'required|string',
                 'bab' => 'required|integer',
-                'tanggal_bimbingan' => 'required|date'
+                'tanggal_bimbingan' => 'required|date|before_or_equal:today'
             ]);
 
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswa)

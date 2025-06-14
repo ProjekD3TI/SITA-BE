@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Admin\AdminTa;
 
-use App\Http\Controllers\Controller;
-use App\Http\Responses\ApiResponse;
+use FPDM;
+use Exception;
+use Carbon\Carbon;
+use App\Models\User;
 use App\Models\Dosen;
 use App\Models\TugasAkhir;
-use App\Models\User;
-use Illuminate\Validation\ValidationException;
-use Exception;
 use Illuminate\Http\Request;
-use FPDM;
-use Carbon\Carbon;
+use App\Http\Responses\ApiResponse;
+use App\Http\Controllers\Controller;
+use Illuminate\Validation\ValidationException;
 
 
 class AdminTaController extends Controller
@@ -127,7 +127,10 @@ class AdminTaController extends Controller
             }
 
             // Pagination (default 10 per page)
-            $mahasiswa = $query->orderByRaw('CAST(SUBSTRING(nim, 6) AS UNSIGNED) DESC')->paginate(10);
+            $mahasiswa = $query
+                ->orderByRaw('CAST(SUBSTRING(nim, 4, 2) AS UNSIGNED) DESC')
+                ->orderByRaw('CAST(SUBSTRING(nim, 6) AS UNSIGNED) ASC')
+                ->paginate(10);
 
             // Mapping data
             $data = $mahasiswa->getCollection()->map(function ($mhs) {
