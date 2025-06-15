@@ -235,7 +235,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
         // Route::post('/admin_ta/cetak-berita-acara-ujian', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
         Route::get('/admin_ta/cetak-berita-acara-ujian/{tugasAkhirId}', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
-
+        Route::get('/admin_ta/template-lembar-revisi', [AdminTaController::class, 'downloadLembarRevisi'])
+            ->withoutMiddleware(['api']); // Hapus middleware api
         // Tugas-akhir
         Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'tabelTugasAkhirForAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatusForAdmin']);
@@ -277,7 +278,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/penjadwalan-ujian', [TugasAkhirController::class, 'tabelPenjadwalanUjianByAdmin']);
         Route::get('/admin_ta/penjadwalan-ujian/{tugasAkhirId}', [TugasAkhirController::class, 'showPenjadwalanUjianByAdmin']);
         Route::post('/admin_ta/penjadwalan-ujian', [UjianTAController::class, 'storeJadwalUjianTAforAdmin']);
-        Route::get('/admin_ta/penjadwalan-ujian/export/excel', [TugasAkhirController::class, 'exportUjianTA']);
+        Route::get('/admin_ta/penjadwalan-ujian/export/excel', [UjianTAController::class, 'exportUjianTA']);
         Route::put('/admin_ta/penjadwalan-ujian/{id}', [UjianTAController::class, 'updateJadwalUjianTAforAdmin']);
         Route::post('/admin_ta/penjadwalan-ujian/{tugasAkhirId}/cek-jadwal-tersedia', [TugasAkhirController::class, 'checkAvailabilityForScheduling']);
         // Berita Acara Semhas

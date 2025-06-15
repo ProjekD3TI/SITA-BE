@@ -233,6 +233,10 @@ class ProposalController extends Controller
                     });
                 }
             }
+            $notificationCount = TugasAkhir::whereNull('nilai_proposal')
+                ->whereHas('proposal', function ($q) {
+                    $q->where('status_proposal', 1);
+                })->count();
 
             // Urutkan: yang belum ada nilai_proposal di atas, lalu id desc
             $query->orderByRaw(" CASE WHEN ( SELECT nilai_proposal FROM tugas_akhir WHERE tugas_akhir.proposal_id = proposal.id LIMIT 1 ) IS NULL THEN 0 ELSE 1 END ")->orderByDesc('id');
@@ -257,12 +261,7 @@ class ProposalController extends Controller
             });
 
             $result = [
-                // 'list_kategori' => $kategori->map(function ($item) {
-                //     return [
-                //         'kategori_id' => $item->id,
-                //         'nama_kategori' => $item->nama_kategori,
-                //     ];
-                // })->values(),
+                'notification' => $notificationCount,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $listProposal->currentPage(),

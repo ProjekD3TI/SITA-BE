@@ -9,9 +9,12 @@ use App\Models\TugasAkhir;
 use App\Models\TahunAjaran;
 use App\Models\DosenPenguji;
 use Illuminate\Http\Request;
+use App\Exports\UjianTAExport;
 use Illuminate\Support\Facades\DB;
 use App\Http\Responses\ApiResponse;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Resources\UjianTAResource;
 use App\Http\Resources\TugasAkhirResource;
 use Illuminate\Validation\ValidationException;
@@ -343,6 +346,24 @@ class UjianTAController extends Controller
             return ApiResponse::success($result, 'Data ujian TA berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Gagal mengambil data ujian TA: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function exportUjianTA(Request $request)
+    {
+        try {
+            $search = $request->get('search');
+            $status = $request->get('status');
+            $tahunAjaranId = $request->get('tahun_ajaran_id');
+
+            return Excel::download(
+                new UjianTAExport($search, $status, $tahunAjaranId),
+                'ujian_ta_filtered.xlsx'
+            );
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat export data: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

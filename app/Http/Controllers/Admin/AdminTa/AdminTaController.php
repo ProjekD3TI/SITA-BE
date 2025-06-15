@@ -335,4 +335,14 @@ class AdminTaController extends Controller
             ->header('Content-Disposition', 'attachment; filename="berita_acara_ujian.pdf"');
     }
 
+    public function downloadLembarRevisi()
+    {
+        $path = storage_path('app/template_lembar_revisi.pdf');
+        if (!file_exists($path)) {
+            abort(404, 'File tidak ditemukan');
+        }
+        return response()->download($path, 'template_lembar_revisi.pdf');
+    }
+
+
 }

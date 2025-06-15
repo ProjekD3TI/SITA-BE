@@ -12,6 +12,7 @@ use App\Models\UjianTA;
 use App\Models\Bimbingan;
 use App\Models\StatusForm;
 use App\Models\TugasAkhir;
+use App\Models\NilaiUjianTA;
 use Illuminate\Http\Request;
 use App\Exports\UjianTAExport;
 use App\Models\RequestPembimbing;
@@ -1374,7 +1375,8 @@ class TugasAkhirController extends Controller
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
                 'dosenPenguji:id,name',
-                'ujianTA.tahunAjaran' // Tambahkan eager load tahunAjaran
+                'ujianTA.tahunAjaran',
+                'tahunAjaran' // Tambahkan relasi tahunAjaran untuk TugasAkhir
             ])
                 ->where('status_aktif', 1)
                 ->where('status_valid', 1);
@@ -1387,6 +1389,13 @@ class TugasAkhirController extends Controller
                             ->orWhere('nim', 'like', '%' . $request->search . '%');
                     })
                         ->orWhere('judul_tugas_akhir', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            // === Filter tahun ajaran pada ujian_ta ===
+            if ($request->has('tahun_ajaran_id') && $request->tahun_ajaran_id) {
+                $query->whereHas('ujianTA', function ($q) use ($request) {
+                    $q->where('tahun_ajaran_id', $request->tahun_ajaran_id);
                 });
             }
 
@@ -1413,21 +1422,48 @@ class TugasAkhirController extends Controller
                 ->orderByDesc('id');
 
             $tugasAkhir = $query->paginate(10);
-            $notificationCount = TugasAkhir::where('status_aktif', 1)
-                ->where('status_valid', 1)
-                ->where(function ($query) {
-                    $query->where(function ($q) {
-                        // Kondisi 1: Belum ada ujian aktif sama sekali
-                        $q->whereDoesntHave('ujianTA', function ($q2) {
-                            $q2->where('status_ujian', 'aktif');
-                        });
-                    })
-                        ->orWhere(function ($q) {
-                            // Kondisi 2: Status kelulusan = 3 (belum lulus, revisi, diujikan lagi)
-                            $q->where('status_kelulusan', 3);
-                        });
+
+            // Update notification count dengan filter tahun ajaran pada ujian_ta
+            $notificationQuery = TugasAkhir::where('status_aktif', 1)
+                ->where('status_valid', 1);
+
+            // Terapkan filter tahun ajaran pada ujian_ta untuk notification count
+            if ($request->has('tahun_ajaran_id') && $request->tahun_ajaran_id) {
+                $notificationQuery->whereHas('ujianTA', function ($q) use ($request) {
+                    $q->where('tahun_ajaran_id', $request->tahun_ajaran_id);
+                });
+            }
+
+            $notificationCount = $notificationQuery->where(function ($query) {
+                $query->where(function ($q) {
+                    // Kondisi 1: Belum ada ujian aktif sama sekali
+                    $q->whereDoesntHave('ujianTA', function ($q2) {
+                        $q2->where('status_ujian', 'aktif');
+                    });
                 })
+                    ->orWhere(function ($q) {
+                        // Kondisi 2: Status kelulusan = 3 (belum lulus, revisi, diujikan lagi)
+                        $q->where('status_kelulusan', 3);
+                    });
+            })
                 ->count();
+
+            // === Ambil data tahun ajaran 5 tahun kebelakang ===
+            $currentYear = now()->year;
+            $tahunAjaranList = \App\Models\TahunAjaran::where(function ($query) use ($currentYear) {
+                // Ambil tahun ajaran yang mengandung tahun dalam 5 tahun terakhir
+                for ($i = 0; $i < 5; $i++) {
+                    $year = $currentYear - $i;
+                    if ($i == 0) {
+                        $query->where('tahun_ajaran', 'like', '%' . $year . '%');
+                    } else {
+                        $query->orWhere('tahun_ajaran', 'like', '%' . $year . '%');
+                    }
+                }
+            })
+                ->orderByDesc('tahun_ajaran')
+                ->get(['id', 'tahun_ajaran']);
+
             $data = collect($tugasAkhir->items())->map(function ($item) {
                 Carbon::setLocale('id');
                 $ujianTA = $item->ujianTA->where('status_ujian', 'aktif')->first();
@@ -1467,10 +1503,12 @@ class TugasAkhirController extends Controller
                     'judul_tugas_akhir' => $item->judul_tugas_akhir ?? null,
                     'status_kelulusan' => $item->status_kelulusan ?? null,
                     'status_kategori' => $status_kategori ?? null,
+                    'tahun_ajaran' => $item->tahunAjaran->tahun_ajaran ?? null,
                     'dosen_pembimbing' => [
                         'dosen_pembimbing_id' => $item->dosenPembimbing->id ?? null,
                         'name' => $item->dosenPembimbing->name ?? null,
                     ],
+                    'nilai_akhir' => $item->nilai_akhir ?? null,
                     'ujian_ta' => $ujianTA ? [
                         'ujian_ta_id' => $ujianTA->id,
                         'tanggal_ujian' => $ujianTA->tanggal_ujian
@@ -1480,7 +1518,7 @@ class TugasAkhirController extends Controller
                         'waktu_selesai' => $ujianTA->sesi->waktu_selesai ?? null,
                         'ruang' => $ujianTA->ruang->nama_ruang ?? null,
                         'status_ujian' => $ujianTA->status_ujian ?? null,
-                        'tahun_ajaran' => $ujianTA->tahunAjaran->tahun_ajaran ?? null, // Tambahan tahun ajaran
+                        'tahun_ajaran' => $ujianTA->tahunAjaran->tahun_ajaran ?? null,
                     ] : [],
                     'dosen_penguji' => $item->dosenPenguji
                         ? $item->dosenPenguji->map(function ($penguji) {
@@ -1496,6 +1534,7 @@ class TugasAkhirController extends Controller
 
             $result = [
                 'notification' => $notificationCount,
+                'tahun_ajaran_list' => $tahunAjaranList,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
@@ -1817,17 +1856,6 @@ class TugasAkhirController extends Controller
         }
 
         return $availableSesi;
-    }
-
-    public function exportUjianTA(Request $request)
-    {
-        $search = $request->get('search');
-        $status = $request->get('status');
-
-        return Excel::download(
-            new UjianTAExport($search, $status),
-            'ujian_ta_filtered.xlsx'
-        );
     }
     // ========================== END FITUR ADMIN ==========================
 
@@ -2199,7 +2227,6 @@ class TugasAkhirController extends Controller
                             $ujian->save();
                         }
                     }
-
                     $tugasAkhir->status_valid = null; // biar bisa daftar ulang
                 }
 
@@ -2212,6 +2239,37 @@ class TugasAkhirController extends Controller
                 }
 
                 $tugasAkhir->save();
+
+                // === Tambahan: Hitung nilai akhir jika semua nilai sudah ada ===
+                $nilaiProposal = $tugasAkhir->nilai_proposal;
+                $nilaiBimbingan = $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->rerata_bimbingan : null;
+
+                // Ambil 3 nilai ujian TA dari dosen penguji (pivot)
+                $dosenPenguji = $tugasAkhir->dosenPenguji()->withPivot('nilai_ujian_ta_id')->get();
+                $nilaiUjianTA = collect();
+                foreach ($dosenPenguji as $penguji) {
+                    if ($penguji->pivot->nilai_ujian_ta_id) {
+                        $nilaiUjianTAmodel = NilaiUjianTA::find($penguji->pivot->nilai_ujian_ta_id);
+                        if ($nilaiUjianTAmodel && $nilaiUjianTAmodel->rerata_ujian_ta !== null) {
+                            $nilaiUjianTA->push($nilaiUjianTAmodel->rerata_ujian_ta);
+                        }
+                    }
+                }
+                $nilaiUjianTA = $nilaiUjianTA->take(3);
+
+                if ($nilaiProposal !== null && $nilaiBimbingan !== null && $nilaiUjianTA->count() === 3) {
+                    $rerataUjianTA = $nilaiUjianTA->avg();
+                    $nilaiAkhir = round(
+                        ($nilaiProposal * 0.1) +
+                        ($nilaiBimbingan * 0.3) +
+                        ($rerataUjianTA * 0.6),
+                        2
+                    );
+                    $tugasAkhir->update([
+                        'nilai_akhir' => $nilaiAkhir,
+                    ]);
+                }
+                // === End tambahan ===
             }
 
 

@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Resources\NilaiBimbinganResource;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Responses\ApiResponse;
-use App\Models\NilaiBimbingan;
 use App\Models\TugasAkhir;
-use Illuminate\Validation\ValidationException;
-
+use App\Models\NilaiUjianTA;
 use Illuminate\Http\Request;
+use App\Models\NilaiBimbingan;
+use App\Http\Responses\ApiResponse;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+
+use App\Http\Resources\NilaiBimbinganResource;
+use Illuminate\Validation\ValidationException;
 
 class NilaiBimbinganController extends Controller
 {
@@ -78,6 +79,37 @@ class NilaiBimbinganController extends Controller
                 'nilai_bimbingan_id' => $nilaiBimbingan->id,
             ]);
 
+            // ================== Tambahan: Cek 3 dosen penguji sudah memberi nilai ==================
+            $dosenPenguji = $tugasAkhir->dosenPenguji()->withPivot('nilai_ujian_ta_id')->get();
+
+            $nilaiUjianTA = collect();
+            foreach ($dosenPenguji as $penguji) {
+                if ($penguji->pivot->nilai_ujian_ta_id) {
+                    $nilaiUjianTAmodel = NilaiUjianTA::find($penguji->pivot->nilai_ujian_ta_id);
+                    if ($nilaiUjianTAmodel && $nilaiUjianTAmodel->rerata_ujian_ta !== null) {
+                        $nilaiUjianTA->push($nilaiUjianTAmodel->rerata_ujian_ta);
+                    }
+                }
+            }
+            $nilaiUjianTA = $nilaiUjianTA->take(3);
+            $nilaiProposal = $tugasAkhir->nilai_proposal;
+
+
+            if ($nilaiProposal !== null && $nilaiBimbingan->rerata_bimbingan !== null && $nilaiUjianTA->count() === 3) {
+                $rerataUjianTA = $nilaiUjianTA->avg();
+                // Perhitungan dengan bobot
+                $nilaiAkhir = round(
+                    ($nilaiProposal * 0.1) +
+                    ($nilaiBimbingan->rerata_bimbingan * 0.3) +
+                    ($rerataUjianTA * 0.6),
+                    2
+                );
+                $tugasAkhir->update([
+                    'nilai_akhir' => $nilaiAkhir,
+                ]);
+            }
+            // ===================================================================
+
             return ApiResponse::success(new NilaiBimbinganResource($nilaiBimbingan), 'Data nilai bimbingan berhasil disimpan');
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
@@ -86,7 +118,7 @@ class NilaiBimbinganController extends Controller
         }
     }
 
-     public function updateNilaiBimbinganByDosen(Request $request, $tugasAkhirId)
+    public function updateNilaiBimbinganByDosen(Request $request, $tugasAkhirId)
     {
         $dosenId = Auth::id();
 
