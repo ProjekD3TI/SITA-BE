@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->foreignId('sesi_id')->constrained('sesi')->onDelete('restrict');
             $table->foreignId('semester_id')->constrained('semester')->onDelete('restrict');
             $table->foreignId('tahun_ajaran_id')->constrained('tahun_ajaran')->onDelete('restrict');
+            $table->tinyInteger('status_kelulusan')->default(null)->nullable();//1: Lulus tanpa revisi, 2: Lulus revisi tanpa diuji lagi, 3: Belum lulus revisi & diuji lagi, 4: Tidak lulus ulang TA & diuji lagi
             $table->enum('status_ujian', ['non-aktif', 'aktif'])->default('aktif');
             $table->timestamps();
         });

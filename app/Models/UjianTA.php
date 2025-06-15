@@ -17,6 +17,7 @@ class UjianTA extends Model
         'sesi_id',
         'semester_id',
         'tahun_ajaran_id',
+        'status_kelulusan',
         'status_ujian',
     ];
 

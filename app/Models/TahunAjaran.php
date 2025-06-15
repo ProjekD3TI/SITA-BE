@@ -10,7 +10,7 @@ class TahunAjaran extends Model
     use HasFactory;
 
     protected $table = 'tahun_ajaran';
-    protected $with = ['tugasAkhir', 'ujianTA'];
+    // protected $with = ['tugasAkhir', 'ujianTA'];
     protected $fillable = ['tahun_ajaran', 'is_default'];
 
     public function tugasAkhir()

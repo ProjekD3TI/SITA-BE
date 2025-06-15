@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->double('nilai_akhir', 5, 2)->default(null)->nullable();
             $table->text('catatan_proposal')->default(null)->nullable();
             $table->text('catatan_perbaikan')->default(null)->nullable();
-            $table->tinyInteger('status_kelulusan')->default(null)->nullable();//1: Lulus tanpa revisi, 2: Lulus revisi tanpa diuji lagi, 3: Belum lulus revisi & diuji lagi, 4: Tidak lulus ulang TA & diuji lagi
+            $table->tinyInteger('status_kelulusan')->default(null)->nullable();//1: Lulus tanpa revisi, 2: Lulus revisi tanpa diuji lagi, 3: Belum lulus revisi & diuji lagi, 4: Tidak lulus ulang TA
             $table->tinyInteger('status_valid')->default(null)->nullable(); // null:data belum lengkap, 0:menunggu validasi, 1:valid, 2:tidak valid
             $table->tinyInteger('status_aktif')->default(1); // 0:non-aktif, 1:aktif
             $table->timestamps();

@@ -23,6 +23,7 @@ class UjianTASeeder extends Seeder
             'semester_id' => 1,
             'tahun_ajaran_id' => 1,
             'status_ujian' => 'aktif',
+            'status_kelulusan' => 1,
         ]);
     }
 }
