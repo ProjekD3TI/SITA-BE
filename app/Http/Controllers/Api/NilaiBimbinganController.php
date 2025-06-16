@@ -83,11 +83,11 @@ class NilaiBimbinganController extends Controller
             // Ambil semua dosen penguji
             $dosenPengujiIds = $tugasAkhir->dosenPenguji->pluck('id');
             // Ambil ujian TA terbaru
-            $ujianTA = $tugasAkhir->ujianTA()->latest('tanggal_ujian')->first();
+            $ujianTA = $tugasAkhir->ujianTA()->latest('id')->first();
 
             $nilaiUjianTA = collect();
             if ($ujianTA) {
-                $nilaiUjianTA = \App\Models\NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
+                $nilaiUjianTA = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
                     ->whereIn('dosen_id', $dosenPengujiIds)
                     ->pluck('rerata_ujian_ta');
             }
@@ -153,6 +153,37 @@ class NilaiBimbinganController extends Controller
 
             // Perbarui nilai bimbingan
             $nilaiBimbingan->update($validatedData);
+
+            // ================== Tambahan: Cek 3 dosen penguji sudah memberi nilai ==================
+            $dosenPengujiIds = $tugasAkhir->dosenPenguji->pluck('id');
+            $ujianTA = $tugasAkhir->ujianTA()->latest('id')->first();
+
+            $nilaiUjianTA = collect();
+            if ($ujianTA) {
+                $nilaiUjianTA = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
+                    ->whereIn('dosen_id', $dosenPengujiIds)
+                    ->pluck('rerata_ujian_ta');
+            }
+
+            $nilaiProposal = $tugasAkhir->nilai_proposal;
+
+            if ($nilaiProposal !== null && $nilaiBimbingan->rerata_bimbingan !== null && $nilaiUjianTA->count() === 3) {
+                $rerataUjianTA = $nilaiUjianTA->avg();
+                $nilaiAkhir = round(
+                    ($nilaiProposal * 0.1) +
+                    ($nilaiBimbingan->rerata_bimbingan * 0.3) +
+                    ($rerataUjianTA * 0.6),
+                    2
+                );
+                $tugasAkhir->update([
+                    'nilai_akhir' => $nilaiAkhir,
+                ]);
+                if ($ujianTA) {
+                    $ujianTA->nilai_akhir = $nilaiAkhir;
+                    $ujianTA->save();
+                }
+            }
+            // ===================================================================
 
             return ApiResponse::success(new NilaiBimbinganResource($nilaiBimbingan), 'Data nilai bimbingan berhasil diperbarui');
         } catch (ValidationException $e) {

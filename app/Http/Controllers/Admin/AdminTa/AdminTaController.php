@@ -293,12 +293,12 @@ class AdminTaController extends Controller
         ])->find($ujianTaId);
 
         if (!$ujianTA) {
-            return response()->json(['message' => 'Jadwal ujian tidak ditemukan'], 404);
+            return ApiResponse::error('Ujian TA tidak ditemukan', 404);
         }
 
         $tugasAkhir = $ujianTA->tugasAkhir;
         if (!$tugasAkhir) {
-            return response()->json(['message' => 'Tugas Akhir tidak ditemukan'], 404);
+            return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
         }
 
         $penguji = $tugasAkhir->dosenPenguji;
@@ -311,7 +311,7 @@ class AdminTaController extends Controller
             'nama_mahasiswa' => $tugasAkhir->mahasiswa->name,
             'NIM' => $tugasAkhir->mahasiswa->nim,
             'tanggal_ujian' => $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y') : '-',
-            'jam_mulai_ujian' => $ujianTA->sesi->waktu_mulai ?? '-',
+            'jam_mulai_ujian' => $ujianTA->sesi && $ujianTA->sesi->waktu_mulai ? substr($ujianTA->sesi->waktu_mulai, 0, 5) : '-',
             'tanggal_ujian_ttd' => $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y') : '-',
             'ketua_penguji' => $ketua?->name ?? '-',
             'nik_ketua_penguji' => $ketua?->nik ?? '-',
@@ -323,7 +323,7 @@ class AdminTaController extends Controller
 
         $templatePath = storage_path('app/template_berita_acara.pdf');
         if (!file_exists($templatePath)) {
-            return response()->json(['message' => "Template tidak ditemukan di: $templatePath"], 404);
+            return ApiResponse::error("Template tidak ditemukan di: $templatePath", 404);
         }
 
         $pdf = new FPDM($templatePath);

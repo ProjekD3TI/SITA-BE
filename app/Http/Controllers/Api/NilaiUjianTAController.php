@@ -27,7 +27,7 @@ class NilaiUjianTAController extends Controller
                 ->firstOrFail();
 
             // Ambil ujian TA terbaru (latest)
-            $ujianTA = $tugasAkhir->ujianTA()->orderByDesc('tanggal_ujian')->first();
+            $ujianTA = $tugasAkhir->ujianTA()->orderByDesc('id')->first();
 
             if (!$ujianTA) {
                 return ApiResponse::success([
@@ -88,7 +88,7 @@ class NilaiUjianTAController extends Controller
             $result = [];
             foreach ($tugasAkhirList as $tugasAkhir) {
                 // Ambil semua ujian TA untuk tugas akhir ini
-                $ujianTAList = $tugasAkhir->ujianTA()->get();
+                $ujianTAList = $tugasAkhir->ujianTA->get();
 
                 $ujianArr = $ujianTAList->map(function ($ujianTA) use ($dosenId) {
                     $nilai = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)

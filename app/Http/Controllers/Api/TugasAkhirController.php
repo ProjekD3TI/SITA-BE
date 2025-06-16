@@ -1905,6 +1905,7 @@ class TugasAkhirController extends Controller
 
 
     // ========================== FITUR MAHASISWA ==========================
+
     public function ujianTAForMahasiswa()
     {
         try {
@@ -2338,7 +2339,7 @@ class TugasAkhirController extends Controller
                         'nilai_akhir' => $nilaiAkhir,
                     ]);
                     // Update nilai_akhir hanya pada ujianTA terbaru (latest) milik tugas akhir ini
-                    $latestUjianTA = $tugasAkhir->ujianTA()->orderByDesc('tanggal_ujian')->first();
+                    $latestUjianTA = $tugasAkhir->ujianTA()->orderByDesc('id')->first();
                     if ($latestUjianTA) {
                         $latestUjianTA->nilai_akhir = $nilaiAkhir;
                         $latestUjianTA->save();
