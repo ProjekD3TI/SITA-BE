@@ -462,6 +462,7 @@ class TugasAkhirController extends Controller
     {
         try {
             $dosenId = Auth::id();
+
             $tugasAkhir = TugasAkhir::with([
                 'bimbingan',
                 'ujianTA',
@@ -479,6 +480,7 @@ class TugasAkhirController extends Controller
                 ->get();
 
             $taYangDibimbing = $tugasAkhir->where('dosen_pembimbing_id', $dosenId);
+
             $requestPembimbing = RequestPembimbing::with(['tugasAkhir.mahasiswa', 'tugasAkhir.kategori'])
                 ->where('status_request', 0)
                 ->where('dosen_id', $dosenId)
@@ -486,24 +488,18 @@ class TugasAkhirController extends Controller
                 ->limit(5)
                 ->get();
 
-            $tablePermintaanBimbingan = $requestPembimbing
-                ->map(function ($item) {
-                    return [
-                        'id' => $item->id,
-                        'tugas_akhir_id' => $item->tugas_akhir_id,
-                        'dosen_id' => $item->dosen_id,
-                        'status_request' => $item->status_request,
-                        'nama' => $item->tugasAkhir->mahasiswa->name ?? null,
-                        'nim' => $item->tugasAkhir->mahasiswa->nim ?? null,
-                        'kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
-                    ];
-                });
+            $tablePermintaanBimbingan = $requestPembimbing->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'tugas_akhir_id' => $item->tugas_akhir_id,
+                    'dosen_id' => $item->dosen_id,
+                    'status_request' => $item->status_request,
+                    'nama' => $item->tugasAkhir->mahasiswa->name ?? null,
+                    'nim' => $item->tugasAkhir->mahasiswa->nim ?? null,
+                    'kategori' => $item->tugasAkhir->kategori->nama_kategori ?? null,
+                ];
+            });
 
-            if ($tugasAkhir->isEmpty()) {
-                return ApiResponse::success(null, 'Tidak ada tugas akhir');
-            }
-
-            // Sekarang $tugasAkhir adalah collection, map() aman digunakan
             $taPerBab = $taYangDibimbing->map(function ($item) {
                 return [
                     'id_ta' => $item->id,
@@ -513,7 +509,6 @@ class TugasAkhirController extends Controller
                 ];
             });
 
-            // Kelompokkan berdasarkan bab (1-5)
             $statistikBab = collect(range(1, 5))->map(function ($bab) use ($taPerBab) {
                 $taDiBab = $taPerBab->where('bab_tertinggi', $bab);
                 return [
@@ -523,13 +518,13 @@ class TugasAkhirController extends Controller
                 ];
             });
 
-            //jadwal ujian hari ini
             $ujianHariIni = $tugasAkhir->flatMap(function ($ta) {
                 return $ta->ujianTA
                     ->where('tanggal_ujian', now()->format('Y-m-d'))
                     ->where('status_ujian', 'aktif')
                     ->map(function ($ujian) use ($ta) {
                         return [
+                            'ujian_ta_id' => $ujian->id,
                             'tugas_akhir_id' => $ta->id,
                             'nim' => $ta->mahasiswa->nim,
                             'tanggal_ujian' => $ujian->tanggal_ujian,
@@ -540,6 +535,7 @@ class TugasAkhirController extends Controller
                         ];
                     });
             });
+
             $ujianTerjadwal = $tugasAkhir->sum(function ($ta) {
                 return $ta->ujianTA
                     ->where('status_ujian', 'aktif')
