@@ -19,7 +19,7 @@ class StatusFormSeeder extends Seeder
         ]);
         StatusForm::create([
             'nama_form' => 'Tugas Akhir',
-            'is_open' => false,
+            'is_open' => true,
         ]);
     }
 }

@@ -77,9 +77,9 @@ class TugasAkhir extends Model
         return $this->belongsToMany(Dosen::class, 'dosen_penguji', 'tugas_akhir_id', 'dosen_id')
             ->using(DosenPenguji::class)
             ->withPivot([
-                'revisi',
+                // 'revisi',
                 'catatan_semhas',
-                'nilai_ujian_ta_id',
+                // 'nilai_ujian_ta_id',
                 'jabatan_penguji'
             ])->withTimestamps();
     }

@@ -282,22 +282,23 @@ class AdminTaController extends Controller
         }
     }
 
-    public function cetakBeritaAcaraUjian($tugasAkhirId)
+    public function cetakBeritaAcaraUjian($ujianTaId)
     {
-        $tugasAkhir = TugasAkhir::with([
-            'mahasiswa:id,name,nim',
-            'ujianTA.sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
-            'ujianTA.ruang:id,nama_ruang',
-            'dosenPenguji:id,name,nik',
-        ])->find($tugasAkhirId);
+        // Ambil data UjianTA beserta relasi yang diperlukan
+        $ujianTA = \App\Models\UjianTA::with([
+            'tugasAkhir.mahasiswa:id,name,nim',
+            'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
+            'ruang:id,nama_ruang',
+            'tugasAkhir.dosenPenguji:id,name,nik',
+        ])->find($ujianTaId);
 
-        if (!$tugasAkhir) {
-            return response()->json(['message' => 'Tugas Akhir tidak ditemukan'], 404);
-        }
-
-        $ujianTA = $tugasAkhir->ujianTA->where('status_ujian', 'aktif')->first();
         if (!$ujianTA) {
             return response()->json(['message' => 'Jadwal ujian tidak ditemukan'], 404);
+        }
+
+        $tugasAkhir = $ujianTA->tugasAkhir;
+        if (!$tugasAkhir) {
+            return response()->json(['message' => 'Tugas Akhir tidak ditemukan'], 404);
         }
 
         $penguji = $tugasAkhir->dosenPenguji;
@@ -309,9 +310,9 @@ class AdminTaController extends Controller
         $fields = [
             'nama_mahasiswa' => $tugasAkhir->mahasiswa->name,
             'NIM' => $tugasAkhir->mahasiswa->nim,
-            'tanggal_ujian' => Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y'),
+            'tanggal_ujian' => $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y') : '-',
             'jam_mulai_ujian' => $ujianTA->sesi->waktu_mulai ?? '-',
-            'tanggal_ujian_ttd' => Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y'),
+            'tanggal_ujian_ttd' => $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y') : '-',
             'ketua_penguji' => $ketua?->name ?? '-',
             'nik_ketua_penguji' => $ketua?->nik ?? '-',
             'sekretaris_penguji' => $sekretaris?->name ?? '-',
@@ -329,7 +330,6 @@ class AdminTaController extends Controller
         $pdf->Load($fields, true);
         $pdf->Merge();
 
-        // Output langsung ke browser, tidak disimpan di storage
         return response($pdf->Output('S', 'berita_acara_ujian.pdf'))
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'attachment; filename="berita_acara_ujian.pdf"');

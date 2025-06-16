@@ -170,11 +170,98 @@ class UjianTAController extends Controller
         }
     }
 
+
     public function updateJadwalUjianTAforAdmin(Request $request, $id)
     {
         try {
             $ujianTA = UjianTA::findOrFail($id);
 
+            // Jika status_ujian non-aktif, buat baru, jangan update yang lama
+            if ($ujianTA->status_ujian === 'non-aktif') {
+                // Ambil data tugas akhir terkait
+                $tugasAkhir = TugasAkhir::with('dosenPenguji')->findOrFail($ujianTA->tugas_akhir_id);
+
+                $validated = $request->validate([
+                    'tanggal_ujian' => 'required|date|after_or_equal:today',
+                    'ruang_id' => 'required|exists:ruang,id',
+                    'sesi_id' => 'required|exists:sesi,id',
+                    'status_ujian' => 'required|in:aktif,non-aktif'
+                ]);
+
+                // Ambil semester dan tahun ajaran default
+                $semesterDefault = Semester::where('is_default', 1)->first();
+                $tahunAjaranDefault = TahunAjaran::where('is_default', 1)->first();
+                if ($semesterDefault) {
+                    $validated['semester_id'] = $semesterDefault->id;
+                }
+                if ($tahunAjaranDefault) {
+                    $validated['tahun_ajaran_id'] = $tahunAjaranDefault->id;
+                }
+                $validated['tugas_akhir_id'] = $tugasAkhir->id;
+
+                // Cek conflict ruang+sesi+tanggal
+                $cekRuangSesiConflict = UjianTA::where('tanggal_ujian', $validated['tanggal_ujian'])
+                    ->where('ruang_id', $validated['ruang_id'])
+                    ->where('sesi_id', $validated['sesi_id'])
+                    ->where('status_ujian', 'aktif')
+                    ->exists();
+                if ($cekRuangSesiConflict) {
+                    return ApiResponse::error('Kombinasi ruang, sesi, dan tanggal ini sudah terpakai', 422);
+                }
+
+                // Cek conflict dosen
+                $listDosenPenguji = $tugasAkhir->dosenPenguji->pluck('dosen_id')->toArray();
+                $cekDosenConflict = UjianTA::where('tanggal_ujian', $validated['tanggal_ujian'])
+                    ->where('sesi_id', $validated['sesi_id'])
+                    ->where('status_ujian', 'aktif')
+                    ->whereHas('tugasAkhir.dosenPenguji', function ($query) use ($listDosenPenguji) {
+                        $query->whereIn('dosen_id', $listDosenPenguji);
+                    })
+                    ->exists();
+                if ($cekDosenConflict) {
+                    // Beri info dosen mana yang bentrok dan di ruang mana
+                    $conflictData = UjianTA::where('tanggal_ujian', $validated['tanggal_ujian'])
+                        ->where('sesi_id', $validated['sesi_id'])
+                        ->where('status_ujian', 'aktif')
+                        ->whereHas('tugasAkhir.dosenPenguji', function ($query) use ($listDosenPenguji) {
+                            $query->whereIn('dosen_id', $listDosenPenguji);
+                        })
+                        ->with([
+                            'ruang:id,nama_ruang',
+                            'sesi:id,nama_sesi',
+                            'tugasAkhir.dosenPenguji' => function ($query) use ($listDosenPenguji) {
+                                $query->whereIn('dosen_id', $listDosenPenguji);
+                            }
+                        ])
+                        ->first();
+
+                    $conflictDosen = $conflictData->tugasAkhir->dosenPenguji->pluck('name')->join(', ');
+                    $conflictRuang = $conflictData->ruang->nama_ruang;
+                    $conflictSesi = $conflictData->sesi->nama_sesi;
+
+                    return ApiResponse::error(
+                        "Dosen penguji ($conflictDosen) sudah ujian pada tanggal dan sesi yang sama di $conflictRuang. Pilih sesi yang berbeda untuk ruang yang sama.",
+                        422
+                    );
+                }
+
+                // Buat jadwal ujian baru
+                $ujianTABaru = UjianTA::create($validated);
+
+                return ApiResponse::success(
+                    $ujianTABaru->load([
+                        'tugasAkhir.mahasiswa:id,nim,name',
+                        'tugasAkhir.dosenPenguji:id,name',
+                        'ruang:id,nama_ruang',
+                        'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
+                        'semester:id,nama_semester',
+                        'tahunAjaran:id,tahun_ajaran'
+                    ]),
+                    'Data ujian TA baru berhasil ditambahkan'
+                );
+            }
+
+            // --- Jika status_ujian aktif, lanjut update seperti biasa ---
             $validated = $request->validate([
                 'tanggal_ujian' => 'sometimes|required|date|after_or_equal:today',
                 'ruang_id' => 'sometimes|required|exists:ruang,id',
@@ -197,7 +284,7 @@ class UjianTAController extends Controller
                 }
             }
 
-            // ✅ PERBAIKAN: Cek conflict ruang + sesi + tanggal (kombinasi lengkap)
+            // Cek conflict ruang+sesi+tanggal
             $cekRuangSesiConflict = false;
             if (isset($validated['tanggal_ujian']) || isset($validated['ruang_id']) || isset($validated['sesi_id'])) {
                 $cekRuangSesiConflict = UjianTA::where('id', '!=', $id)
@@ -222,7 +309,7 @@ class UjianTAController extends Controller
 
             $listDosenPenguji = $tugasAkhir->dosenPenguji->pluck('dosen_id')->toArray();
 
-            // ✅ PERBAIKAN: Cek conflict dosen (tanggal + sesi sama, ruang boleh beda)
+            // Cek conflict dosen (tanggal + sesi sama, ruang boleh beda)
             $cekDosenConflict = false;
             if (isset($validated['tanggal_ujian']) || isset($validated['sesi_id'])) {
                 $cekDosenConflict = UjianTA::where('id', '!=', $id)
@@ -298,12 +385,13 @@ class UjianTAController extends Controller
                 return ApiResponse::success(null, 'Belum ada Tugas Akhir aktif');
             }
 
-            // Ambil ujian TA beserta relasi
+            // Ambil ujian TA terbaru (latest) beserta relasi
             $ujianTA = UjianTA::with([
                 'ruang:id,nama_ruang',
                 'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
             ])
                 ->where('tugas_akhir_id', $tugasAkhir->id)
+                ->orderByDesc('tanggal_ujian')
                 ->first();
 
             if (!$ujianTA) {

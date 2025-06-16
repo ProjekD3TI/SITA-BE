@@ -80,20 +80,19 @@ class NilaiBimbinganController extends Controller
             ]);
 
             // ================== Tambahan: Cek 3 dosen penguji sudah memberi nilai ==================
-            $dosenPenguji = $tugasAkhir->dosenPenguji()->withPivot('nilai_ujian_ta_id')->get();
+            // Ambil semua dosen penguji
+            $dosenPengujiIds = $tugasAkhir->dosenPenguji->pluck('id');
+            // Ambil ujian TA terbaru
+            $ujianTA = $tugasAkhir->ujianTA()->latest('tanggal_ujian')->first();
 
             $nilaiUjianTA = collect();
-            foreach ($dosenPenguji as $penguji) {
-                if ($penguji->pivot->nilai_ujian_ta_id) {
-                    $nilaiUjianTAmodel = NilaiUjianTA::find($penguji->pivot->nilai_ujian_ta_id);
-                    if ($nilaiUjianTAmodel && $nilaiUjianTAmodel->rerata_ujian_ta !== null) {
-                        $nilaiUjianTA->push($nilaiUjianTAmodel->rerata_ujian_ta);
-                    }
-                }
+            if ($ujianTA) {
+                $nilaiUjianTA = \App\Models\NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
+                    ->whereIn('dosen_id', $dosenPengujiIds)
+                    ->pluck('rerata_ujian_ta');
             }
-            $nilaiUjianTA = $nilaiUjianTA->take(3);
-            $nilaiProposal = $tugasAkhir->nilai_proposal;
 
+            $nilaiProposal = $tugasAkhir->nilai_proposal;
 
             if ($nilaiProposal !== null && $nilaiBimbingan->rerata_bimbingan !== null && $nilaiUjianTA->count() === 3) {
                 $rerataUjianTA = $nilaiUjianTA->avg();
@@ -107,6 +106,11 @@ class NilaiBimbinganController extends Controller
                 $tugasAkhir->update([
                     'nilai_akhir' => $nilaiAkhir,
                 ]);
+                // Tambahan: update nilai_akhir pada ujianTA terbaru
+                if ($ujianTA) {
+                    $ujianTA->nilai_akhir = $nilaiAkhir;
+                    $ujianTA->save();
+                }
             }
             // ===================================================================
 

@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Resources\NilaiUjianTAResource;
+use Carbon\Carbon;
 use App\Models\TugasAkhir;
 use App\Models\DosenPenguji;
+use App\Models\NilaiUjianTA;
 use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\NilaiUjianTAResource;
 use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
 
 
 class NilaiUjianTAController extends Controller
@@ -25,21 +26,26 @@ class NilaiUjianTAController extends Controller
                 ->where('status_aktif', 1)
                 ->firstOrFail();
 
-            // Ambil dosen penguji dari tabel pivot, beserta relasi dosen dan nilaiUjianTA
-            $dosenPenguji = DosenPenguji::where('tugas_akhir_id', $tugasAkhir->id)
-                ->with(['dosen', 'nilaiUjianTA'])
-                ->get();
+            // Ambil ujian TA terbaru (latest)
+            $ujianTA = $tugasAkhir->ujianTA()->orderByDesc('tanggal_ujian')->first();
 
-            if ($dosenPenguji->isEmpty()) {
-                return ApiResponse::error("Tidak ada dosen penguji untuk tugas akhir dengan ID {$tugasAkhir->id}", 404);
+            if (!$ujianTA) {
+                return ApiResponse::success([
+                    'ujian_ta' => null,
+                    'status_kelulusan_tugas_akhir' => $tugasAkhir->status_kelulusan,
+                ], 'Belum ada ujian TA');
             }
 
-            $dosenPengujiArr = $dosenPenguji->map(function ($penguji) {
-                $nilai = $penguji->nilaiUjianTA;
+            // Ambil dosen penguji
+            $dosenPenguji = $tugasAkhir->dosenPenguji()->get();
+
+            $dosenPengujiArr = $dosenPenguji->map(function ($penguji) use ($ujianTA) {
+                $nilai = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
+                    ->where('dosen_id', $penguji->id)
+                    ->first();
                 return [
-                    'id' => $penguji->dosen->id ?? null,
-                    'nama' => $penguji->dosen->name ?? null,
-                    'revisi' => $penguji->revisi ?? null,
+                    'id' => $penguji->id,
+                    'nama' => $penguji->name,
                     'nilai_ujian_ta' => [
                         'id' => $nilai->id ?? null,
                         'kualitas_tata_laporan' => $nilai->kualitas_tata_laporan ?? null,
@@ -47,13 +53,22 @@ class NilaiUjianTAController extends Controller
                         'kualitas_produk' => $nilai->kualitas_produk ?? null,
                         'presentasi' => $nilai->presentasi ?? null,
                         'rerata_ujian' => $nilai->rerata_ujian_ta ?? null,
+                        'revisi' => $nilai->revisi ?? null,
                     ]
                 ];
             })->toArray();
 
-            return ApiResponse::success([
+            $result = [
+                'ujian_ta_id' => $ujianTA->id,
+                'tanggal_ujian' => $ujianTA->tanggal_ujian,
+                'status_kelulusan' => $ujianTA->status_kelulusan,
+                'nilai_akhir' => $ujianTA->nilai_akhir,
                 'dosen_penguji' => $dosenPengujiArr,
-                'status_kelulusan' => $tugasAkhir->status_kelulusan, // <-- Tambahkan ini
+            ];
+
+            return ApiResponse::success([
+                'ujian_ta' => $result,
+                'status_kelulusan_tugas_akhir' => $tugasAkhir->status_kelulusan,
             ], 'Data nilai ujian berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data nilai ujian gagal diambil: ' . $e->getMessage(), 500);
@@ -65,20 +80,46 @@ class NilaiUjianTAController extends Controller
         $dosenId = Auth::id();
 
         try {
-            // Ambil tugas akhir yang memiliki dosen penguji sesuai dengan ID dosen
-            $tugasAkhir = TugasAkhir::whereHas('dosenPenguji', function ($query) use ($dosenId) {
+            // Ambil semua tugas akhir yang memiliki dosen penguji ini
+            $tugasAkhirList = TugasAkhir::whereHas('dosenPenguji', function ($query) use ($dosenId) {
                 $query->where('dosen_id', $dosenId);
-            })->with('nilaiUjianTA')->get();
+            })->get();
 
-            // Jika tidak ada tugas akhir, kembalikan error
-            if ($tugasAkhir->isEmpty()) {
-                return ApiResponse::error("Tidak ada tugas akhir yang terkait dengan dosen penguji dengan ID {$dosenId}", 404);
+            $result = [];
+            foreach ($tugasAkhirList as $tugasAkhir) {
+                // Ambil semua ujian TA untuk tugas akhir ini
+                $ujianTAList = $tugasAkhir->ujianTA()->get();
+
+                $ujianArr = $ujianTAList->map(function ($ujianTA) use ($dosenId) {
+                    $nilai = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
+                        ->where('dosen_id', $dosenId)
+                        ->first();
+                    return [
+                        'ujian_ta_id' => $ujianTA->id,
+                        'tanggal_ujian' => $ujianTA->tanggal_ujian,
+                        'status_kelulusan' => $ujianTA->status_kelulusan,
+                        'nilai_akhir' => $ujianTA->nilai_akhir,
+                        'nilai_ujian_ta' => [
+                            'id' => $nilai->id ?? null,
+                            'kualitas_tata_laporan' => $nilai->kualitas_tata_laporan ?? null,
+                            'kemampuan_teknis' => $nilai->kemampuan_teknis ?? null,
+                            'kualitas_produk' => $nilai->kualitas_produk ?? null,
+                            'presentasi' => $nilai->presentasi ?? null,
+                            'rerata_ujian' => $nilai->rerata_ujian_ta ?? null,
+                        ]
+                    ];
+                });
+
+                $result[] = [
+                    'tugas_akhir_id' => $tugasAkhir->id,
+                    'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir,
+                    'ujian_ta' => $ujianArr,
+                ];
             }
 
-            // Kembalikan data nilai ujian TA
             return ApiResponse::success([
                 'dosen_id' => $dosenId,
-                'tugas_akhir' => $tugasAkhir,
+                'tugas_akhir' => $result,
             ], 'Data nilai ujian berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Data nilai ujian gagal diambil: ' . $e->getMessage(), 500);

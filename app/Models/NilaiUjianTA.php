@@ -11,16 +11,23 @@ class NilaiUjianTA extends Model
 
     protected $table = 'nilai_ujian_ta';
     protected $fillable = [
+        'ujian_ta_id',
+        'dosen_id',
         'kualitas_tata_laporan',
         'kemampuan_teknis',
         'kualitas_produk',
         'presentasi',
         'rerata_ujian_ta',
+        'revisi',
     ];
 
-    public function dosenPenguji()
+    public function ujianTA()
     {
-        return $this->hasOne(DosenPenguji::class, 'nilai_ujian_ta_id', 'id');
+        return $this->belongsTo(UjianTA::class, 'ujian_ta_id');
     }
 
+    public function dosen()
+    {
+        return $this->belongsTo(Dosen::class, 'dosen_id');
+    }
 }

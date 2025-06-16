@@ -161,7 +161,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
 
     // Sistem Tugas-akhir (Fitur Ujian Tugas Akhir ~ List Ujian TA untuk Dosen & Detail Ujian TA)
     Route::get('/dosen/tugas-akhir/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
-    Route::get('/dosen/tugas-akhir/detail-ujian-ta/{tugasAkhirId}', [TugasAkhirController::class, 'detailUjianForDosen']);
+    Route::get('/dosen/tugas-akhir/detail-ujian-ta/{ujianTaId}', [TugasAkhirController::class, 'detailUjianForDosen']);
 
     // Sistem Tugas akhir (Tugas Akhir)
     Route::put('/dosen/tugas-akhir/submit-nilai-dan-status/{tugasAkhirId}', [TugasAkhirController::class, 'updateStatusKelulusanDanNilaiByDosenPenguji']);
@@ -234,7 +234,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
 
         // Route::post('/admin_ta/cetak-berita-acara-ujian', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
-        Route::get('/admin_ta/cetak-berita-acara-ujian/{tugasAkhirId}', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
+        Route::get('/admin_ta/cetak-berita-acara-ujian/{ujianTaId}', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
         Route::get('/admin_ta/template-lembar-revisi', [AdminTaController::class, 'downloadLembarRevisi'])
             ->withoutMiddleware(['api']); // Hapus middleware api
         // Tugas-akhir

@@ -13,9 +13,7 @@ class DosenPenguji extends Pivot
     protected $fillable = [
         'dosen_id',
         'tugas_akhir_id',
-        'nilai_ujian_ta_id',
         'jabatan_penguji',
-        'revisi',
         'catatan_semhas',
     ];
 
@@ -29,10 +27,5 @@ class DosenPenguji extends Pivot
     public function dosen()
     {
         return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
-    }
-
-    public function nilaiUjianTA()
-    {
-        return $this->belongsTo(NilaiUjianTA::class, 'nilai_ujian_ta_id', 'id');
     }
 }

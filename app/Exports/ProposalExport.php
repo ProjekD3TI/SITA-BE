@@ -5,8 +5,13 @@ namespace App\Exports;
 use App\Models\Proposal;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Events\AfterSheet;
 
-class ProposalExport implements FromCollection, WithHeadings
+class ProposalExport implements FromCollection, WithHeadings, WithStyles, WithEvents, ShouldAutoSize
 {
     protected $search;
     protected $statusNilai;
@@ -77,6 +82,55 @@ class ProposalExport implements FromCollection, WithHeadings
             'Judul Proposal',
             'Dosen Pembimbing',
             'Nilai Proposal',
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        // Header tebal dan rata tengah
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+            ],
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                // Header background kuning dan border
+                $event->sheet->getStyle('A1:E1')->applyFromArray([
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'color' => ['rgb' => 'FFF700'],
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
+                // Semua cell ada border
+                $highestRow = $event->sheet->getHighestRow();
+                $highestCol = $event->sheet->getHighestColumn();
+                $event->sheet->getStyle("A1:{$highestCol}{$highestRow}")->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
+                // Isi tabel (A2 dst) rata kiri
+                $event->sheet->getStyle("A2:{$highestCol}{$highestRow}")->applyFromArray([
+                    'alignment' => [
+                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                    ],
+                ]);
+            },
         ];
     }
 }

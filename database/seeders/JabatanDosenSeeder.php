@@ -19,6 +19,7 @@ class JabatanDosenSeeder extends Seeder
             ['dosen_id' => 2, 'jabatan_id' => 2, 'is_active' => 0],
             ['dosen_id' => 2, 'jabatan_id' => 1, 'is_active' => 0],
             ['dosen_id' => 3, 'jabatan_id' => 2, 'is_active' => 0],
+            ['dosen_id' => 3, 'jabatan_id' => 1, 'is_active' => 0],
             ['dosen_id' => 4, 'jabatan_id' => 1, 'is_active' => 0],
             ['dosen_id' => 5, 'jabatan_id' => 1, 'is_active' => 0],
             ['dosen_id' => 6, 'jabatan_id' => 1, 'is_active' => 0],
