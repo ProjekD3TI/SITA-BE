@@ -106,7 +106,7 @@ class RuangController extends Controller
         $ruang = DB::table('ruangs')
         ->leftJoin('gedung', 'ruangs.id_gedung', '=', 'gedung.id_gedung')
         ->leftJoin('lantai_gedung', 'gedung.id_lantai', '=', 'lantai_gedung.id_lantai')
-        ->select(
+        ->select(   
             'ruangs.*',
             'gedung.nama_gedung',
             'lantai_gedung.nama_lantai'
@@ -121,7 +121,7 @@ class RuangController extends Controller
             ], 404);
         }
         
-        $photos = DB::table('foto')
+        $photos = DB::table('fotos')
                     ->where('id_ruang', $id)
                     ->select('foto_id', 'foto_path')
                     ->get();
@@ -133,7 +133,6 @@ class RuangController extends Controller
             'photos' => $photos
         ], 200);
     }
-
 
     public function editRuang(Request $request, $id) {
         

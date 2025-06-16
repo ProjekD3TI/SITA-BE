@@ -19,25 +19,70 @@ class FixedScheduleController extends Controller
 {
     public function getSchedule(Request $request)
     {
-        $query = FixedSchedule::query();
-
+        $query = FixedSchedule::with(['sessions.session', 'ruang']);
+    
         if($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('pemakaian', 'like', "%{$searchTerm}%")
-                  ->orWhere('penanggung_jawab', 'like', "%{$searchTerm}%");
+                ->orWhere('penanggung_jawab', 'like', "%{$searchTerm}%");
             });
         }
+        
         $query->orderBy('created_at', 'desc');
         $schedules = $query->get();
-
+    
+        $transformedSchedules = $schedules->map(function ($schedule) {
+            // Filter out sessions without a session relation
+            $validSessions = $schedule->sessions->filter(function($item) {
+                return !is_null($item->session);
+            });
+            
+            $sessionGroups = $validSessions->groupBy('day_of_week');
+            
+            $sessionInfo = [];
+            foreach ($sessionGroups as $day => $sessions) {
+                $sortedSessions = $sessions->sortBy(function($item) {
+                    return $item->session->start_time;
+                });
+                
+                $firstSession = $sortedSessions->first();
+                $lastSession = $sortedSessions->last();
+                
+                $sessionInfo[] = [
+                    'hari' => $day,
+                    'jam_mulai' => $firstSession->session->start_time,
+                    'jam_selesai' => $lastSession->session->end_time,
+                    'all_sessions' => $sortedSessions->map(function($s) {
+                        return [
+                            'id' => $s->session->id,
+                            'name' => $s->session->name_session,
+                            'start_time' => $s->session->start_time,
+                            'end_time' => $s->session->end_time
+                        ];
+                    })->toArray()
+                ];
+            }
+    
+            return [
+                'id' => $schedule->id,
+                'pemakaian' => $schedule->pemakaian,
+                'penanggung_jawab' => $schedule->penanggung_jawab,
+                'start_date' => $schedule->start_date,
+                'end_date' => $schedule->end_date,
+                'created_at' => $schedule->created_at,
+                'sessions' => $sessionInfo,
+                'ruang' => $schedule->ruang ? $schedule->ruang->nama_ruang : null
+            ];
+        });
+    
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
-        $paginatedData = PaginationHelper::paginate($schedules, $perPage, $page, [
+        $paginatedData = PaginationHelper::paginate($transformedSchedules, $perPage, $page, [
             'path' => $request->url(),
             'query' => $request->query(),
         ]);
-
+    
         return response()->json([
             'status' => 'success',
             'message' => 'Data Jadwal Tetap',
@@ -50,7 +95,6 @@ class FixedScheduleController extends Controller
             ]
         ], 200);
     }
-
     public function createSchedule(Request $request) {
     $validator = Validator::make($request->all(), [
         'id_ruang' => 'required|exists:ruangs,id_ruang',

@@ -24,7 +24,9 @@ class BookingController extends Controller
             ->select(
                 'bookings.*',
                 'ruangs.nama_ruang',
-                'sessions.name_session'
+                'sessions.name_session',
+                'sessions.start_time',
+                'sessions.end_time'
             )
             ->where('bookings.id_student', auth()->id());
 
@@ -226,6 +228,10 @@ class BookingController extends Controller
     ], 201);
     }
 
+    /**
+     * Get all booking requests with dynamic status filtering
+     * This method now supports filtering by status parameter
+     */
     public function getRequestBooking(Request $request) {
         $query = Booking::query()
             ->leftJoin('ruangs', 'bookings.id_ruang', '=', 'ruangs.id_ruang')
@@ -234,9 +240,15 @@ class BookingController extends Controller
                 'bookings.*',
                 'ruangs.nama_ruang',
                 'sessions.name_session'
-            )
-            ->where('bookings.status', 'pending');
+            );
 
+        // Dynamic status filtering - only apply if status parameter is provided
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('bookings.status', $request->status);
+        }
+        // If no status filter is provided, show all bookings (removed hardcoded 'pending' filter)
+
+        // Search functionality
         if($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
@@ -244,6 +256,7 @@ class BookingController extends Controller
                 ->orWhere('sessions.name_session', 'like', "%{$searchTerm}%");
             });
         }
+
         $query->orderBy('bookings.created_at', 'desc');
         $bookings = $query->get();
         
@@ -257,6 +270,52 @@ class BookingController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Data Booking',
+            'data' => $paginatedData->items(),
+            'pagination' => [
+                'total' => $paginatedData->total(),
+                'per_page' => $paginatedData->perPage(),
+                'current_page' => $paginatedData->currentPage(),
+                'last_page' => $paginatedData->lastPage(),
+            ]
+        ], 200);
+    }
+
+    /**
+     * Alternative method specifically for pending bookings only
+     * Keep this if you need a separate endpoint for pending bookings
+     */
+    public function getPendingBookings(Request $request) {
+        $query = Booking::query()
+            ->leftJoin('ruangs', 'bookings.id_ruang', '=', 'ruangs.id_ruang')
+            ->leftJoin('sessions', 'bookings.start_session', '=', 'sessions.id')
+            ->select(
+                'bookings.*',
+                'ruangs.nama_ruang',
+                'sessions.name_session'
+            )
+            ->where('bookings.status', 'pending'); // Hardcoded pending filter
+
+        if($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('ruangs.nama_ruang', 'like', "%{$searchTerm}%")
+                ->orWhere('sessions.name_session', 'like', "%{$searchTerm}%");
+            });
+        }
+        
+        $query->orderBy('bookings.created_at', 'desc');
+        $bookings = $query->get();
+        
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $paginatedData = PaginationHelper::paginate($bookings, $perPage, $page, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data Booking Pending',
             'data' => $paginatedData->items(),
             'pagination' => [
                 'total' => $paginatedData->total(),

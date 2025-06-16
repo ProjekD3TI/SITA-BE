@@ -38,7 +38,7 @@ class RfidTagController extends Controller
         $rfid = $query->get();
 
         $paginatedData = PaginationHelper::paginate($rfid, $perPage, $page, [
-            'path' => $request->url(),
+            'path' => $request->url(),  
             'query' => $request->query(),
         ]);
 

@@ -17,11 +17,5 @@ class Foto extends Model
         'foto_path',  // Path lokasi file foto
     ];
 
-    /**
-     * Relasi ke model Ruang (sebuah foto milik satu ruang)
-     */
-    public function ruang()
-    {
-        return $this->belongsTo(Ruang::class, 'id_ruang', 'id_ruang');
-    }
+
 }

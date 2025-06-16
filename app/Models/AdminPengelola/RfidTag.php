@@ -18,12 +18,12 @@ class RfidTag extends Model
         'rfid_code',
     ];
     public function mahasiswa()
-    {
-        return $this->belongsTo(\App\Models\User::class, 'mahasiswa_id');
+    {   
+        return $this->belongsTo(\App\Models\User::class, 'id_student');
     }
     
     public function dosen()
     {
-        return $this->belongsTo(\App\Models\Dosen::class, 'dosen_id');
+        return $this->belongsTo(\App\Models\Dosen::class, 'id_dosen');
     }
 }

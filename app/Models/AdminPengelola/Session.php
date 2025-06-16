@@ -15,4 +15,8 @@ class Session extends Model
         'start_time',
         'end_time',
     ];
+    public function fixedScheduleSessions()
+    {
+        return $this->hasMany(FixedScheduleSession::class, 'id_session');
+    }
 }

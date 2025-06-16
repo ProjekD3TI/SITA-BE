@@ -71,7 +71,11 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
 
+    
+    Route::get('/mahaiswa/fixed_schedule', [FixedScheduleController::class, 'getSchedule']);
     Route::get('/mahasiswa/booking', [BookingController::class, 'getUserBooking']);
+    Route::get('/mahasiswa/session', [SessionController::class, 'getSession']);
+    Route::get('/mahasiswa/ruang', [RuangController::class, 'showRuang']);
     Route::post('/mahasiswa/booking/create', [BookingController::class, 'createBooking']);
     
     // Route::post('/mahasiswa/logout', [AuthController::class, 'logout']);
@@ -100,6 +104,11 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Route Dosen Biasa
     Route::middleware(['auth:sanctum', 'jabatan.dosen:Dosen'])->group(function () {
         Route::get('/dosen/dashboard', [DosenController::class, 'dashboard']);
+        Route::get('/dosen/fixed_schedule', [FixedScheduleController::class, 'getSchedule']);
+        Route::get('/dosen/booking', [BookingController::class, 'getUserBooking']);
+        Route::get('/dosen/session', [SessionController::class, 'getSession']);
+        Route::get('/dosen/ruang', [RuangController::class, 'showRuang']);
+        Route::post('/dosen/booking/create', [BookingController::class, 'createBooking']);
     });
 
     // Route Kalab
