@@ -7,8 +7,11 @@ use Exception;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Dosen;
+use App\Models\UjianTA;
 use App\Models\TugasAkhir;
 use Illuminate\Http\Request;
+use App\Models\JabatanDosen;
+use App\Models\NilaiUjianTA;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
@@ -284,55 +287,140 @@ class AdminTaController extends Controller
 
     public function cetakBeritaAcaraUjian($ujianTaId)
     {
-        // Ambil data UjianTA beserta relasi yang diperlukan
-        $ujianTA = \App\Models\UjianTA::with([
-            'tugasAkhir.mahasiswa:id,name,nim',
-            'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
-            'ruang:id,nama_ruang',
-            'tugasAkhir.dosenPenguji:id,name,nik',
-        ])->find($ujianTaId);
+        try {
+            // Ambil data Ujian TA beserta relasi yang dibutuhkan
+            $ujianTA = UjianTA::with([
+                'tugasAkhir.mahasiswa',
+                'tugasAkhir.dosenPembimbing',
+                'tugasAkhir.dosenPenguji',
+                'tugasAkhir.nilaiBimbingan',
+                'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
+                'ruang:id,nama_ruang',
+            ])->findOrFail($ujianTaId);
 
-        if (!$ujianTA) {
-            return ApiResponse::error('Ujian TA tidak ditemukan', 404);
+            $tugasAkhir = $ujianTA->tugasAkhir;
+
+            // Ambil nilai proposal dan bimbingan
+            $nilaiProposal = $tugasAkhir->nilai_proposal ?? null;
+            $nilaiBimbingan1 = $tugasAkhir->nilaiBimbingan->rerata_bimbingan ?? null;
+            $nilaiBimbingan2 = $tugasAkhir->nilaiBimbingan->rerata_bimbingan ?? null; // Jika ada dua, sesuaikan
+            $totalNilaiTugasAkhir = $ujianTA->nilai_akhir ?? null;
+
+            // Ambil nilai ujian dari dosen penguji
+            $nilaiUjianTA = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)->get();
+
+            // Rata-rata nilai ujian (dibulatkan 2 desimal)
+            $nilaiRataRataUjian = round($nilaiUjianTA->avg('rerata_ujian_ta'), 2);
+
+            // Nilai per jabatan penguji
+            $penguji = $tugasAkhir->dosenPenguji;
+            $ketua = $penguji->firstWhere('pivot.jabatan_penguji', 'ketua');
+            $sekretaris = $penguji->firstWhere('pivot.jabatan_penguji', 'sekretaris');
+            $pengujiBiasa = $penguji->where('pivot.jabatan_penguji', 'penguji');
+
+            $nilaiKetua = $nilaiUjianTA->where('dosen_id', optional($ketua)->id)->first();
+            $nilaiSekretaris = $nilaiUjianTA->where('dosen_id', optional($sekretaris)->id)->first();
+            $nilaiPenguji = $nilaiUjianTA->whereIn('dosen_id', $pengujiBiasa->pluck('id'))->pluck('rerata_ujian_ta')->avg();
+
+            // Ambil kepala program studi (jabatan_id = 3)
+            $kepalaProdi = JabatanDosen::with('dosen')
+                ->where('jabatan_id', 3)
+                ->where('is_active', 1)
+                ->first();
+
+            // Ambil divisi tugas akhir (jabatan_id = 5)
+            $divisiTA = JabatanDosen::with('dosen')
+                ->where('jabatan_id', 5)
+                ->where('is_active', 1)
+                ->first();
+
+            // Data identitas
+            $judul_tugas_akhir = $tugasAkhir->judul_tugas_akhir ?? '-';
+            $nama_mahasiswa = $tugasAkhir->mahasiswa->name ?? '-';
+            $nim_mahasiswa = $tugasAkhir->mahasiswa->nim ?? '-';
+            $nama_divisi_tugas_akhir = "Nanang"; // Sesuaikan jika ada field
+            $nama_kepala_program_studi = "Eko"; // Sesuaikan jika ada field
+
+            Carbon::setLocale('id');
+            $tanggal_ujian = $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y') : '-';
+            $waktu_ujian = $ujianTA->sesi && $ujianTA->sesi->waktu_mulai ? substr($ujianTA->sesi->waktu_mulai, 0, 5) : '-';
+
+            $fields = [
+                'judul_tugas_akhir-1' => $judul_tugas_akhir,
+                'judul_tugas_akhir-2' => $judul_tugas_akhir,
+                'judul_tugas_akhir-3' => $judul_tugas_akhir,
+                'nama_kepala_program_studi' => $kepalaProdi ? $kepalaProdi->dosen->name : null,
+                'nip_kepala_program_studi' => $kepalaProdi ? $kepalaProdi->dosen->nik : null,
+                'nama_divisi_tugas_akhir' => $divisiTA ? $divisiTA->dosen->name : null,
+                'nip_divisi_tugas_akhir' => $divisiTA ? $divisiTA->dosen->nik : null,
+                'nama_ketua_penguji-1' => $ketua?->name ?? '-',
+                'nama_ketua_penguji-3' => $ketua?->name ?? '-',
+                'nama_ketua_penguji-4' => $ketua?->name ?? '-',
+                'nama_mahasiswa-1' => $nama_mahasiswa,
+                'nama_mahasiswa-2' => $nama_mahasiswa,
+                'nama_mahasiswa-3' => $nama_mahasiswa,
+                'nama_mahasiswa-4' => $nama_mahasiswa,
+                'nama_penguji-1' => $pengujiBiasa->first()?->name ?? '-',
+                'nama_penguji-3' => $pengujiBiasa->first()?->name ?? '-',
+                'nama_penguji-4' => $pengujiBiasa->first()?->name ?? '-',
+                'nama_penguji-5' => $pengujiBiasa->first()?->name ?? '-',
+                'nama_sekretaris_penguji-1' => $sekretaris?->name ?? '-',
+                'nama_sekretaris_penguji-3' => $sekretaris?->name ?? '-',
+                'nama_sekretaris_penguji-4' => $sekretaris?->name ?? '-',
+                'nik_ketua_penguji-1' => $ketua?->nik ?? '-',
+                'nik_ketua_penguji-3' => $ketua?->nik ?? '-',
+                'nik_ketua_penguji-4' => $ketua?->nik ?? '-',
+                'nik_penguji-1' => $pengujiBiasa->first()?->nik ?? '-',
+                'nik_penguji-3' => $pengujiBiasa->first()?->nik ?? '-',
+                'nik_penguji-4' => $pengujiBiasa->first()?->nik ?? '-',
+                'nik_penguji-5' => $pengujiBiasa->first()?->nik ?? '-',
+                'nik_sekretaris_penguji-1' => $sekretaris?->nik ?? '-',
+                'nik_sekretaris_penguji-3' => $sekretaris?->nik ?? '-',
+                'nik_sekretaris_penguji-4' => $sekretaris?->nik ?? '-',
+                'nim_mahasiswa-1' => $nim_mahasiswa,
+                'nim_mahasiswa-2' => $nim_mahasiswa,
+                'nim_mahasiswa-3' => $nim_mahasiswa,
+                'nim_mahasiswa-4' => $nim_mahasiswa,
+                'tanggal_ujian-1' => $tanggal_ujian,
+                'tanggal_ujian-2' => $tanggal_ujian,
+                'tanggal_ujian-3' => $tanggal_ujian,
+                'tanggal_ujian-4' => $tanggal_ujian,
+                'tanggal_ujian-5' => $tanggal_ujian,
+                'tanggal_ujian-6' => $tanggal_ujian,
+                'tanggal_ujian-7' => $tanggal_ujian,
+                'tanggal_ujian-8' => $tanggal_ujian,
+                'waktu_ujian-1' => $waktu_ujian,
+                'waktu_ujian-2' => $waktu_ujian,
+                'waktu_ujian-3' => $waktu_ujian,
+                'waktu_ujian-4' => $waktu_ujian,
+                // Nilai
+                'nilai_bimbingan_ta-1' => $nilaiBimbingan1,
+                'nilai_bimbingan_ta-2' => $nilaiBimbingan2,
+                'nilai_proposal_ta' => $nilaiProposal,
+                'nilai_rata-rata_ujian' => $nilaiRataRataUjian,
+                'nilai_ujian_ketua_penguji' => $nilaiKetua ? $nilaiKetua->rerata_ujian_ta : null,
+                'nilai_ujian_penguji' => $nilaiPenguji,
+                'nilai_ujian_sekretaris_penguji' => $nilaiSekretaris ? $nilaiSekretaris->rerata_ujian_ta : null,
+                'rata-rata_nilai_ujian_ta' => $nilaiRataRataUjian,
+                'total_nilai_tugas_akhir' => $totalNilaiTugasAkhir,
+            ];
+
+            // Generate PDF jika template tersedia
+            $templatePath = storage_path('app/template_berita_acara.pdf');
+            if (!file_exists($templatePath)) {
+                return ApiResponse::error("Template tidak ditemukan di: $templatePath", 404);
+            }
+
+            $pdf = new FPDM($templatePath);
+            $pdf->Load($fields, true);
+            $pdf->Merge();
+
+            return response($pdf->Output('S', 'berita_acara_ujian.pdf'))
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="berita_acara_ujian.pdf"');
+        } catch (Exception $e) {
+            return ApiResponse::error('Gagal mengambil data berita acara ujian: ' . $e->getMessage(), 500);
         }
-
-        $tugasAkhir = $ujianTA->tugasAkhir;
-        if (!$tugasAkhir) {
-            return ApiResponse::error('Tugas akhir tidak ditemukan', 404);
-        }
-
-        $penguji = $tugasAkhir->dosenPenguji;
-        $ketua = $penguji->firstWhere('pivot.jabatan_penguji', 'ketua');
-        $sekretaris = $penguji->firstWhere('pivot.jabatan_penguji', 'sekretaris');
-        $pengujiBiasa = $penguji->firstWhere('pivot.jabatan_penguji', 'penguji');
-
-        Carbon::setLocale('id');
-        $fields = [
-            'nama_mahasiswa' => $tugasAkhir->mahasiswa->name,
-            'NIM' => $tugasAkhir->mahasiswa->nim,
-            'tanggal_ujian' => $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y') : '-',
-            'jam_mulai_ujian' => $ujianTA->sesi && $ujianTA->sesi->waktu_mulai ? substr($ujianTA->sesi->waktu_mulai, 0, 5) : '-',
-            'tanggal_ujian_ttd' => $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y') : '-',
-            'ketua_penguji' => $ketua?->name ?? '-',
-            'nik_ketua_penguji' => $ketua?->nik ?? '-',
-            'sekretaris_penguji' => $sekretaris?->name ?? '-',
-            'nik_sekretaris_penguji' => $sekretaris?->nik ?? '-',
-            'penguji' => $pengujiBiasa?->name ?? '-',
-            'nik_penguji' => $pengujiBiasa?->nik ?? '-',
-        ];
-
-        $templatePath = storage_path('app/template_berita_acara.pdf');
-        if (!file_exists($templatePath)) {
-            return ApiResponse::error("Template tidak ditemukan di: $templatePath", 404);
-        }
-
-        $pdf = new FPDM($templatePath);
-        $pdf->Load($fields, true);
-        $pdf->Merge();
-
-        return response($pdf->Output('S', 'berita_acara_ujian.pdf'))
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="berita_acara_ujian.pdf"');
     }
 
     public function downloadLembarRevisi()

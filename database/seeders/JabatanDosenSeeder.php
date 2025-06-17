@@ -14,9 +14,9 @@ class JabatanDosenSeeder extends Seeder
     public function run(): void
     {
         $jabatan_dosens = [
-            ['dosen_id' => 1, 'jabatan_id' => 3, 'is_active' => 0],
+            ['dosen_id' => 1, 'jabatan_id' => 3, 'is_active' => 1],
             ['dosen_id' => 1, 'jabatan_id' => 1, 'is_active' => 0],
-            ['dosen_id' => 2, 'jabatan_id' => 2, 'is_active' => 0],
+            ['dosen_id' => 2, 'jabatan_id' => 5, 'is_active' => 1],
             ['dosen_id' => 2, 'jabatan_id' => 1, 'is_active' => 0],
             ['dosen_id' => 3, 'jabatan_id' => 2, 'is_active' => 0],
             ['dosen_id' => 3, 'jabatan_id' => 1, 'is_active' => 0],
