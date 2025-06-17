@@ -53,13 +53,15 @@ class UjianTAExport implements FromCollection, WithHeadings, WithStyles, WithEve
 
             // Fitur search nim, nama, judul tugas akhir
             if ($this->search) {
-                $ujianQuery->whereHas('tugasAkhir.mahasiswa', function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('nim', 'like', '%' . $this->search . '%');
-                })
+                $ujianQuery->where(function ($mainQuery) {
+                    $mainQuery->whereHas('tugasAkhir.mahasiswa', function ($q) {
+                        $q->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('nim', 'like', '%' . $this->search . '%');
+                    })
                     ->orWhereHas('tugasAkhir', function ($q) {
                         $q->where('judul_tugas_akhir', 'like', '%' . $this->search . '%');
                     });
+                });
             }
 
             // Filter tahun ajaran pada ujian_ta
@@ -74,6 +76,9 @@ class UjianTAExport implements FromCollection, WithHeadings, WithStyles, WithEve
                 if ($status === 'menunggu') {
                     $filterMenunggu = true;
                     $ujianQuery->whereRaw('1=0'); // Kosongkan hasil
+                } elseif ($status === 'terjadwal') {
+                    $ujianQuery->where('status_ujian', 'aktif')
+                              ->whereNull('status_kelulusan'); // Tambahkan kondisi status kelulusan NULL
                 } elseif ($status === 'revisi_lulus' || $status === 'revisi-lulus' || $status === 'revisi') {
                     $ujianQuery->where('status_kelulusan', 3);
                 } elseif (in_array($status, ['1', '2', '3', '4'])) {

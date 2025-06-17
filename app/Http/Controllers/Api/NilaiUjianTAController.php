@@ -24,7 +24,11 @@ class NilaiUjianTAController extends Controller
             // Ambil tugas akhir mahasiswa yang aktif
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswaId)
                 ->where('status_aktif', 1)
-                ->firstOrFail();
+                ->first();
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tidak ada tugas akhir aktif.', 404);
+            }
 
             // Ambil ujian TA terbaru (latest)
             $ujianTA = $tugasAkhir->ujianTA()->orderByDesc('id')->first();

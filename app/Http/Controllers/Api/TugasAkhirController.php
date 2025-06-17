@@ -985,7 +985,7 @@ class TugasAkhirController extends Controller
                 'proposal:id,judul_proposal',
                 'bimbingan'
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->withCount([
                     'bimbingan as bimbingan_count' => function ($query) {
                         $query->where('status_verifikasi', 1);
@@ -1162,7 +1162,7 @@ class TugasAkhirController extends Controller
                 'dosenPembimbing:id,name',
                 'berkas'
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->whereIn('status_valid', [0, 1, 2]); // Hanya ambil yang belum validasi atau ditolak
 
             // Fitur search nim, nama, judul tugas akhir
@@ -1379,19 +1379,20 @@ class TugasAkhirController extends Controller
                 'tugasAkhir.tahunAjaran'
             ])
                 ->whereHas('tugasAkhir', function ($q) {
-                    $q->where('status_aktif', 1)
-                        ->whereIn('status_valid', [1, 3]);
+                    $q->whereIn('status_valid', [1, 3]);
                 });
 
             // Fitur search nim, nama, judul tugas akhir
             if ($request->search) {
-                $query->whereHas('tugasAkhir.mahasiswa', function ($q) use ($request) {
-                    $q->where('name', 'like', '%' . $request->search . '%')
-                        ->orWhere('nim', 'like', '%' . $request->search . '%');
-                })
+                $query->where(function ($mainQuery) use ($request) {
+                    $mainQuery->whereHas('tugasAkhir.mahasiswa', function ($q) use ($request) {
+                        $q->where('name', 'like', '%' . $request->search . '%')
+                            ->orWhere('nim', 'like', '%' . $request->search . '%');
+                    })
                     ->orWhereHas('tugasAkhir', function ($q) use ($request) {
                         $q->where('judul_tugas_akhir', 'like', '%' . $request->search . '%');
                     });
+                });
             }
 
             // Filter tahun ajaran pada ujian_ta
@@ -1407,6 +1408,9 @@ class TugasAkhirController extends Controller
                     $filterMenunggu = true;
                     // Jangan ambil data UjianTA, hanya ambil data TA yang belum dijadwalkan
                     $query->whereRaw('1=0'); // Kosongkan hasil
+                } elseif ($status === 'terjadwal') {
+                    $query->where('status_ujian', 'aktif')
+                          ->whereNull('status_kelulusan'); // Tambahkan kondisi status kelulusan NULL
                 } elseif ($status === 'revisi_lulus' || $status === 'revisi-lulus' || $status === 'revisi') {
                     $query->where('status_kelulusan', 3);
                 } elseif (in_array($status, ['1', '2', '3', '4'])) {
@@ -1999,10 +2003,9 @@ class TugasAkhirController extends Controller
                 'ruang'
             ])
                 ->whereHas('tugasAkhir', function ($q) use ($dosenId) {
-                    $q->where('status_aktif', 1)
-                        ->whereHas('dosenPenguji', function ($q2) use ($dosenId) {
-                            $q2->where('dosen_id', $dosenId);
-                        });
+                    $q->whereHas('dosenPenguji', function ($q2) use ($dosenId) {
+                        $q2->where('dosen_id', $dosenId);
+                    });
                 });
 
             // Fitur search berdasarkan nama mahasiswa, NIM, atau judul tugas akhir
@@ -2286,9 +2289,6 @@ class TugasAkhirController extends Controller
                                 $berkas->status_valid = 3; // 3 = perlu revisi
                                 $berkas->save();
                             }
-                        } elseif ($request->status_kelulusan == 4) {
-                            $berkas->status_valid = null; // null = reset
-                            $berkas->save();
                         }
                     }
                     foreach ($tugasAkhir->ujianTA as $ujian) {
@@ -2300,9 +2300,29 @@ class TugasAkhirController extends Controller
                     if ($request->status_kelulusan == 3) {
                         $tugasAkhir->status_valid = 3; // biar bisa revisi
                     } elseif ($request->status_kelulusan == 4) {
-                        $tugasAkhir->status_valid = null; // biar bisa daftar ulang
+                        // $tugasAkhir->status_valid = null; // biar bisa daftar ulang
+                        $tugasAkhir->status_aktif = 0; // non-aktifkan TA
                     }
                     $tugasAkhir->save();
+                }
+
+                // Jika status_kelulusan = 4 (tidak lulus), set semua nilai_ujian_ta menjadi 50
+                if ($request->status_kelulusan == 4) {
+                    $dosenPengujiIds = $tugasAkhir->dosenPenguji->pluck('id');
+                    $nilaiUjianTAList = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
+                        ->whereIn('dosen_id', $dosenPengujiIds)
+                        ->get();
+
+                    foreach ($nilaiUjianTAList as $nilai) {
+                        $nilai->update([
+                            'kualitas_tata_laporan' => 50,
+                            'kemampuan_teknis' => 50,
+                            'kualitas_produk' => 50,
+                            'presentasi' => 50,
+                            'rerata_ujian_ta' => 50,
+                            'revisi' => null,
+                        ]);
+                    }
                 }
 
                 // Jika status_kelulusan = 1 (lulus tanpa revisi), hapus semua catatan revisi dosen penguji
