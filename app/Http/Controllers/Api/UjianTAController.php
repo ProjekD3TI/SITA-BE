@@ -391,7 +391,8 @@ class UjianTAController extends Controller
                 'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
             ])
                 ->where('tugas_akhir_id', $tugasAkhir->id)
-                ->orderByDesc('tanggal_ujian')
+                ->where('status_ujian', 'aktif')
+                ->orderByDesc('id')
                 ->first();
 
             if (!$ujianTA) {

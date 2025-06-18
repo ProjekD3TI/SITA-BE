@@ -14,8 +14,21 @@ class SemesterController extends Controller
     public function index()
     {
         try {
-            $semester = Semester::all();
-            $data = SemesterResource::collection($semester);
+            // Option 1: Gunakan select untuk memilih kolom yang diinginkan saja
+            // $data = Semester::select('id', 'nama_semester', 'is_default')->get();
+
+            // Option 2: Atau bisa juga gunakan map pada hasil query
+            $data = Semester::all()->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nama_semester' => $item->nama_semester,
+                    'is_default' => $item->is_default,
+                ];
+            });
+
+            // Gunakan Resource jika ingin kontrol lebih lanjut
+            // $data = SemesterResource::collection($semester);
+
             return ApiResponse::success($data, 'Data semester berhasil diambil');
         } catch (\Exception $e) {
             return ApiResponse::error('Gagal mengambil data ' . $e->getMessage(), 500);

@@ -1377,10 +1377,7 @@ class TugasAkhirController extends Controller
                 'sesi',
                 'ruang',
                 'tugasAkhir.tahunAjaran'
-            ])
-                ->whereHas('tugasAkhir', function ($q) {
-                    $q->whereIn('status_valid', [1, 3]);
-                });
+            ]);
 
             // Fitur search nim, nama, judul tugas akhir
             if ($request->search) {
@@ -1389,9 +1386,9 @@ class TugasAkhirController extends Controller
                         $q->where('name', 'like', '%' . $request->search . '%')
                             ->orWhere('nim', 'like', '%' . $request->search . '%');
                     })
-                    ->orWhereHas('tugasAkhir', function ($q) use ($request) {
-                        $q->where('judul_tugas_akhir', 'like', '%' . $request->search . '%');
-                    });
+                        ->orWhereHas('tugasAkhir', function ($q) use ($request) {
+                            $q->where('judul_tugas_akhir', 'like', '%' . $request->search . '%');
+                        });
                 });
             }
 
@@ -1410,7 +1407,7 @@ class TugasAkhirController extends Controller
                     $query->whereRaw('1=0'); // Kosongkan hasil
                 } elseif ($status === 'terjadwal') {
                     $query->where('status_ujian', 'aktif')
-                          ->whereNull('status_kelulusan'); // Tambahkan kondisi status kelulusan NULL
+                        ->whereNull('status_kelulusan'); // Tambahkan kondisi status kelulusan NULL
                 } elseif ($status === 'revisi_lulus' || $status === 'revisi-lulus' || $status === 'revisi') {
                     $query->where('status_kelulusan', 3);
                 } elseif (in_array($status, ['1', '2', '3', '4'])) {
@@ -1580,8 +1577,18 @@ class TugasAkhirController extends Controller
             })
                 ->orderByDesc('tahun_ajaran')
                 ->get(['id', 'tahun_ajaran']);
-
+            $notification = TugasAkhir::where('status_valid', 1)
+                ->where(function ($q) {
+                    $q->whereDoesntHave('ujianTA', function ($q2) {
+                        $q2->where('status_ujian', 'aktif');
+                    })
+                        ->whereHas('ujianTA', function ($q3) {
+                            // dummy
+                        }, '<', 2);
+                })
+                ->count();
             $result = [
+                'notification' => $notification,
                 'tahun_ajaran_list' => $tahunAjaranList,
                 'data' => $dataGabungan,
                 'pagination' => [
@@ -2203,11 +2210,11 @@ class TugasAkhirController extends Controller
                 'presentasi' => 'required|numeric|min:0|max:100',
                 'rerata_ujian_ta' => 'required|numeric|min:0|max:100',
                 'revisi' => 'nullable|string',
-                'status_kelulusan' => 'nullable|in:1,2,3,4', // tambahkan validasi opsional
+                'status_kelulusan' => 'nullable|in:1,2,3,4',
             ]);
 
             $dosenId = Auth::id();
-            $tugasAkhir = TugasAkhir::with(['dosenPenguji', 'berkas', 'ujianTA'])->find($tugasAkhirId);
+            $tugasAkhir = TugasAkhir::with(['dosenPenguji', 'berkas', 'ujianTA', 'nilaiBimbingan'])->find($tugasAkhirId);
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
@@ -2281,16 +2288,43 @@ class TugasAkhirController extends Controller
                     }
                 }
 
+                // Jika status_kelulusan = 3 (revisi) atau 4 (tidak lulus)
                 if (in_array($request->status_kelulusan, [3, 4])) {
                     foreach ($tugasAkhir->berkas as $berkas) {
-                        if ($request->status_kelulusan == 3) {
-                            // Hanya untuk berkas "Naskah Tugas Akhir"
-                            if ($berkas->nama_berkas === 'Naskah Tugas Akhir') {
-                                $berkas->status_valid = 3; // 3 = perlu revisi
-                                $berkas->save();
-                            }
+                        if ($request->status_kelulusan == 3 && $berkas->nama_berkas === 'Naskah Tugas Akhir') {
+                            $berkas->status_valid = 3; // 3 = perlu revisi
+                            $berkas->save();
                         }
                     }
+                    // Hapus/set nilai ke 0 jika revisi, set ke 50 jika tidak lulus
+                    $nilaiUjianTAList = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
+                        ->whereIn('dosen_id', $tugasAkhir->dosenPenguji->pluck('id'))
+                        ->get();
+
+                    if ($request->status_kelulusan == 3) {
+                        foreach ($nilaiUjianTAList as $nilai) {
+                            $nilai->update([
+                                'kualitas_tata_laporan' => 0,
+                                'kemampuan_teknis' => 0,
+                                'kualitas_produk' => 0,
+                                'presentasi' => 0,
+                                'rerata_ujian_ta' => 0,
+                                // revisi tetap dipertahankan
+                            ]);
+                        }
+                    } elseif ($request->status_kelulusan == 4) {
+                        foreach ($nilaiUjianTAList as $nilai) {
+                            $nilai->update([
+                                'kualitas_tata_laporan' => 50,
+                                'kemampuan_teknis' => 50,
+                                'kualitas_produk' => 50,
+                                'presentasi' => 50,
+                                'rerata_ujian_ta' => 50,
+                                'revisi' => null,
+                            ]);
+                        }
+                    }
+
                     foreach ($tugasAkhir->ujianTA as $ujian) {
                         if ($ujian->status_ujian === 'aktif') {
                             $ujian->status_ujian = 'non-aktif';
@@ -2300,34 +2334,13 @@ class TugasAkhirController extends Controller
                     if ($request->status_kelulusan == 3) {
                         $tugasAkhir->status_valid = 3; // biar bisa revisi
                     } elseif ($request->status_kelulusan == 4) {
-                        // $tugasAkhir->status_valid = null; // biar bisa daftar ulang
                         $tugasAkhir->status_aktif = 0; // non-aktifkan TA
                     }
                     $tugasAkhir->save();
                 }
 
-                // Jika status_kelulusan = 4 (tidak lulus), set semua nilai_ujian_ta menjadi 50
-                if ($request->status_kelulusan == 4) {
-                    $dosenPengujiIds = $tugasAkhir->dosenPenguji->pluck('id');
-                    $nilaiUjianTAList = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
-                        ->whereIn('dosen_id', $dosenPengujiIds)
-                        ->get();
-
-                    foreach ($nilaiUjianTAList as $nilai) {
-                        $nilai->update([
-                            'kualitas_tata_laporan' => 50,
-                            'kemampuan_teknis' => 50,
-                            'kualitas_produk' => 50,
-                            'presentasi' => 50,
-                            'rerata_ujian_ta' => 50,
-                            'revisi' => null,
-                        ]);
-                    }
-                }
-
                 // Jika status_kelulusan = 1 (lulus tanpa revisi), hapus semua catatan revisi dosen penguji
                 if ($request->status_kelulusan == 1) {
-                    // Ambil semua nilai_ujian_ta untuk ujian ini
                     $nilaiUjianTAList = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
                         ->whereIn('dosen_id', $tugasAkhir->dosenPenguji->pluck('id'))
                         ->get();
@@ -2338,34 +2351,34 @@ class TugasAkhirController extends Controller
                     }
                 }
 
-                // === Tambahan: Hitung nilai akhir jika semua nilai sudah ada ===
-                $nilaiProposal = $tugasAkhir->nilai_proposal;
-                $nilaiBimbingan = $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->rerata_bimbingan : null;
+                // === Hitung nilai akhir jika semua nilai sudah ada, KECUALI status_kelulusan == 3 ===
+                if ($request->status_kelulusan != 3) {
+                    $nilaiProposal = $tugasAkhir->nilai_proposal;
+                    $nilaiBimbingan = $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->rerata_bimbingan : null;
+                    $nilaiUjianTACollection = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
+                        ->whereIn('dosen_id', $tugasAkhir->dosenPenguji->pluck('id'))
+                        ->pluck('rerata_ujian_ta');
 
-                // Ambil 3 nilai ujian TA dari dosen penguji (tabel nilai_ujian_ta) untuk ujian TA ini
-                $nilaiUjianTACollection = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
-                    ->whereIn('dosen_id', $tugasAkhir->dosenPenguji->pluck('id'))
-                    ->pluck('rerata_ujian_ta');
-
-                if ($nilaiProposal !== null && $nilaiBimbingan !== null && $nilaiUjianTACollection->count() === 3) {
-                    $rerataUjianTA = $nilaiUjianTACollection->avg();
-                    $nilaiAkhir = round(
-                        ($nilaiProposal * 0.1) +
-                        ($nilaiBimbingan * 0.3) +
-                        ($rerataUjianTA * 0.6),
-                        2
-                    );
-                    $tugasAkhir->update([
-                        'nilai_akhir' => $nilaiAkhir,
-                    ]);
-                    // Update nilai_akhir hanya pada ujianTA terbaru (latest) milik tugas akhir ini
-                    $latestUjianTA = $tugasAkhir->ujianTA()->orderByDesc('id')->first();
-                    if ($latestUjianTA) {
-                        $latestUjianTA->nilai_akhir = $nilaiAkhir;
-                        $latestUjianTA->save();
+                    if ($nilaiProposal !== null && $nilaiBimbingan !== null && $nilaiUjianTACollection->count() === 3) {
+                        $rerataUjianTA = $nilaiUjianTACollection->avg();
+                        $nilaiAkhir = round(
+                            ($nilaiProposal * 0.1) +
+                            ($nilaiBimbingan * 0.3) +
+                            ($rerataUjianTA * 0.6),
+                            2
+                        );
+                        $tugasAkhir->update([
+                            'nilai_akhir' => $nilaiAkhir,
+                        ]);
+                        // Update nilai_akhir hanya pada ujianTA terbaru (latest) milik tugas akhir ini
+                        $latestUjianTA = $tugasAkhir->ujianTA()->orderByDesc('id')->first();
+                        if ($latestUjianTA) {
+                            $latestUjianTA->nilai_akhir = $nilaiAkhir;
+                            $latestUjianTA->save();
+                        }
                     }
                 }
-                // === End tambahan ===
+                // === End hitung nilai akhir ===
             }
 
             return ApiResponse::success(
