@@ -21,6 +21,7 @@ class PeminjamanInventaris extends Model
         'tanggal_pinjam', 
         'kegunaan', 
         'referensi', 
+        'qr_code_path', 
         'created_by',
     ];
 

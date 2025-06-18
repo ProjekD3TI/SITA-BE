@@ -11,18 +11,28 @@ use App\Models\AdminPengelola\JenisInventaris;
 use App\Models\AdminPengelola\PeminjamanInventaris;
 use App\Models\Dosen;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 class PeminjamanInventarisController extends Controller
 {
     
     public function grupPeminjamanInventaris(Request $request) {
-        $query = PeminjamanInventaris::with(['detailPeminjamanInventaris']);
+        $query = PeminjamanInventaris::with([
+        'detailPeminjamanInventaris',
+        'detailPeminjamanInventaris.inventaris',
+        'detailPeminjamanInventaris.inventaris.jenisInventaris' 
+    ]);
 
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
@@ -71,12 +81,12 @@ class PeminjamanInventarisController extends Controller
             
             $totalDikembalikan = $item->detailPeminjamanInventaris->whereNotNull('tanggal_kembali')->count();
             
-            $returnStatus = 'Belum Dikembalikan';
+            $returnStatus = 'Dipinjam';
             if ($totalDikembalikan > 0) {
                 if ($totalDikembalikan >= $totalDipinjam) {
-                    $returnStatus = 'Sudah Dikembalikan';
+                    $returnStatus = 'Selesai';
                 } else {
-                    $returnStatus = 'Sebagian Dikembalikan';
+                    $returnStatus = 'Dikembalikan Sebagian';
                 }
             }
             
@@ -218,6 +228,23 @@ class PeminjamanInventarisController extends Controller
                 'referensi' => $no_referensi,
                 'created_by' => auth()->user()->name,
             ]);
+
+            $url = env('FRONTEND_URL') . '/admin-pengelola/peminjaman-inventaris/detail/' . $peminjaman->id_peminjaman_inventaris;
+
+            $renderer = new ImageRenderer(
+                new RendererStyle(400),
+                new SvgImageBackEnd()
+            );
+            $writer = new Writer($renderer);
+            $qrCodeContent = $writer->writeString($url);
+
+            $qrFileName = Str::uuid() . '.svg';
+            $qrFilePath = "public/inventaris/peminjaman/qrcode/{$qrFileName}";
+            Storage::put($qrFilePath, $qrCodeContent);
+
+            $peminjaman->qr_code_path = $qrFileName;
+            $peminjaman->save();
+
             // buat data di detail peminjaman inventaris dengan mengambil id dari data peminjaman
             foreach ($inv as $inventaris_id) {
                 $peminjaman_item = DetailPeminjamanInventaris::create([
@@ -253,8 +280,8 @@ class PeminjamanInventarisController extends Controller
 
     
 
-    public function getDetailPeminjaman($id_peminjaman_inventaris) {
-        $peminjaman = PeminjamanInventaris::find($id_peminjaman_inventaris);
+    public function getDetailPeminjaman($id_peminjaman_inventaris, Request $request) {
+        $peminjaman = PeminjamanInventaris::with('detailPeminjamanInventaris.inventaris.jenisInventaris')->find($id_peminjaman_inventaris);
         if (!$peminjaman) {
             return response()->json([
                 'status' => 'error',
@@ -262,8 +289,31 @@ class PeminjamanInventarisController extends Controller
             ], 404);
         }
         
-        $detail = DetailPeminjamanInventaris::with('inventaris.jenisInventaris')->where('id_peminjaman_inventaris', $id_peminjaman_inventaris)->get();
+        if ($request->has('export') && $request->export == 'pdf') {
+            if (!$peminjaman->detailPeminjamanInventaris || $peminjaman->detailPeminjamanInventaris->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Detail peminjaman tidak ditemukan',
+                ], 404);
+            }
+            
+            $data = [
+                'peminjaman' => $peminjaman,
+                'detail' => $peminjaman->detailPeminjamanInventaris, 
+                'tanggalPinjam' => \Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->format('d/m/Y'),
+            ];
+
+            $pdf = Pdf::loadView('peminjaman.detail_inventaris', $data)
+                ->setPaper('a4', 'portrait')
+                ->setOption('isHtml5ParserEnabled', true);
+
+            return $pdf->download("peminjaman_{$peminjaman->referensi}.pdf");
+        }
         
+        $detail = DetailPeminjamanInventaris::with('inventaris.jenisInventaris')
+            ->where('id_peminjaman_inventaris', $id_peminjaman_inventaris)
+            ->get();
+            
         return response()->json([
             'status' => 'success',
             'message' => 'Detail peminjaman berhasil diambil',
@@ -407,14 +457,14 @@ class PeminjamanInventarisController extends Controller
             'data' => $peminjaman
         ]);
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'peminjaman gagal diperbarui',
-            'error' => $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'peminjaman gagal diperbarui',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
 
 

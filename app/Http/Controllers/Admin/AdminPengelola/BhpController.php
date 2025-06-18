@@ -78,21 +78,21 @@ class BhpController extends Controller
             'peruntukan' => $request->peruntukan,
         ]);
 
-        $url = env('FRONTEND_URL') . '/bhp/' . $bhp->id_bhp;
+        // $url = env('FRONTEND_URL') . '/bhp/detail/' . $bhp->id_bhp;
 
-        $renderer = new ImageRenderer(
-            new RendererStyle(400),
-            new SvgImageBackEnd()
-        );
-        $writer = new Writer($renderer);
-        $qrCodeContent = $writer->writeString($url);
+        // $renderer = new ImageRenderer(
+        //     new RendererStyle(400),
+        //     new SvgImageBackEnd()
+        // );
+        // $writer = new Writer($renderer);
+        // $qrCodeContent = $writer->writeString($url);
 
-        $qrFileName = Str::uuid() . '.svg';
-        $qrFilePath = "public/bhp/qrcode/{$qrFileName}";
-        Storage::put($qrFilePath, $qrCodeContent);
+        // $qrFileName = Str::uuid() . '.svg';
+        // $qrFilePath = "public/bhp/qrcode/{$qrFileName}";
+        // Storage::put($qrFilePath, $qrCodeContent);
 
-        $bhp->qr_code_path = $qrFileName;
-        $bhp->save();
+        // $bhp->qr_code_path = $qrFileName;
+        // $bhp->save();
 
         if ($request->hasFile('foto_bhp')) {
         
@@ -118,8 +118,8 @@ class BhpController extends Controller
 
         return response()->json([
             'message' => 'Bhp berhasil ditambahkan',
-            'qr_code_url' => url("storage/bhp/qrcode/{$qrFileName}"),
-            'qr_code_download_url' => url("bhp/{$bhp->id_bhp}/download-qrcode"),
+            // 'qr_code_url' => url("storage/bhp/qrcode/{$qrFileName}"),
+            // 'qr_code_download_url' => url("bhp/{$bhp->id_bhp}/download-qrcode"),
         ]);
     }
 

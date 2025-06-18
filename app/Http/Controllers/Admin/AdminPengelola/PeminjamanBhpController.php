@@ -9,13 +9,20 @@ use App\Models\AdminPengelola\Bhp;
 use App\Models\AdminPengelola\Foto;
 use App\Models\Dosen;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\AdminPengelola\PeminjamanBhp;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 
 class PeminjamanBhpController extends Controller
 {
@@ -27,7 +34,10 @@ class PeminjamanBhpController extends Controller
             $query->where(function($q) use ($searchTerm) {
                 $q->where('nama_peminjam', 'like', "%{$searchTerm}%")
                   ->orWhere('ni_peminjam', 'like', "%{$searchTerm}%")
-                  ->orWhere('kegunaan', 'like', "%{$searchTerm}%");
+                  ->orWhere('kegunaan', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('bhp', function($query) use ($searchTerm) {
+                    $query->where('nama_bhp', 'like', "%{$searchTerm}%");
+                });
             }
         );
         }
@@ -37,66 +47,80 @@ class PeminjamanBhpController extends Controller
         }
         if ($request->has('start_date') && $request->start_date !== '') {
         $query->whereDate('tanggal_pinjam', '>=', $request->start_date);
-    }
+        }
     
-    if ($request->has('end_date') && $request->end_date !== '') {
-        $query->whereDate('tanggal_pinjam', '<=', $request->end_date);
-    }
-    
-    $sortBy = $request->input('sort_by', 'created_at');
-    $sortType = $request->input('sort_type', 'desc');
+        if ($request->has('end_date') && $request->end_date !== '') {
+            $query->whereDate('tanggal_pinjam', '<=', $request->end_date);
+        }
+        
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortType = $request->input('sort_type', 'desc');
 
-    $sortableColumns = [
-        'no' => 'id_peminjaman_bhp',
-        'nama_peminjam' => 'nama_peminjam',
-        'tanggal_pinjam_formatted' => 'tanggal_pinjam',
-        'jumlah_penggunaan' => 'jumlah_penggunaan',
-        'status' => 'status_pengembalian',
-        'created_at' => 'created_at',
-    ];
+        
+        $sortableColumns = [
+            'no' => 'id_peminjaman_bhp',
+            'nama_peminjam' => 'nama_peminjam',
+            'tanggal_pinjam_formatted' => 'tanggal_pinjam',
+            'jumlah_penggunaan' => 'jumlah_penggunaan',
+            'status' => 'status_pengembalian',
+            'created_at' => 'created_at',
+        ];
 
-    if (array_key_exists($sortBy, $sortableColumns)) {
-        $sortColumn = $sortableColumns[$sortBy];
-    } else {
-        $sortColumn = 'created_at';
-    }
+        if (array_key_exists($sortBy, $sortableColumns)) {
+            $sortColumn = $sortableColumns[$sortBy];
 
-    $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
-
-    $query->orderBy($sortColumn, $sortDirection);
-        $peminjaman_bhp = $query->get();
-            
-        $peminjaman_bhp = $peminjaman_bhp->map(function($peminjaman) {
-            $photos = Foto::where('id_bhp', $peminjaman->id_bhp)
-                        ->select('foto_path')
-                        ->get();
+            if ($sortColumn === 'bhp.nama_bhp') {
+                $query->join('bhps', 'peminjaman_bhps.id_bhp', '=', 'bhps.id_bhp')
+                    ->select('peminjaman_bhps.*', 'bhps.nama_bhp');
                 
-             $peminjaman->fotos = $photos;
-            return $peminjaman;
-        });
+                $sortColumn = 'bhps.nama_bhp';
+            }
+        } else {
+            $sortColumn = 'created_at';
+        }
+
+        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
+
+        $query->orderBy($sortColumn, $sortDirection);
+            $peminjaman_bhp = $query->get();
+                
+            $peminjaman_bhp = $peminjaman_bhp->map(function($peminjaman) {
+                $photos = Foto::where('id_bhp', $peminjaman->id_bhp)
+                            ->select('foto_path')
+                            ->get();
+                    
+                $peminjaman->fotos = $photos;
+
+                if ($peminjaman->bhp) {
+                    $peminjaman->nama_bhp = $peminjaman->bhp->nama_bhp;
+                } else {
+                    $peminjaman->nama_bhp = 'BHP tidak ditemukan';
+                }
+                return $peminjaman;
+            });
+            
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
         
-        $perPage = $request->input('per_page', 10);
-        $page = $request->input('page', 1);
-    
-        $paginatedData = PaginationHelper::paginate($peminjaman_bhp, $perPage, $page, [
-            'path' => $request->url(),
-            'query' => $request->query(),
-        ]);
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Data Peminjaman Bhp',
-            'data' => $paginatedData->items(),
-            'pagination' => [
-                'total' => $paginatedData->total(),
-                'per_page' => $paginatedData->perPage(),
-                    'current_page' => $paginatedData->currentPage(),
-                'last_page' => $paginatedData->lastPage(),
-            ],
-            'sorting' => [
-                'sort_by' => $sortBy,
-                'sort_type' => $sortType,
-        ]
+            $paginatedData = PaginationHelper::paginate($peminjaman_bhp, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data Peminjaman Bhp',
+                'data' => $paginatedData->items(),
+                'pagination' => [
+                    'total' => $paginatedData->total(),
+                    'per_page' => $paginatedData->perPage(),
+                        'current_page' => $paginatedData->currentPage(),
+                    'last_page' => $paginatedData->lastPage(),
+                ],
+                'sorting' => [
+                    'sort_by' => $sortBy,
+                    'sort_type' => $sortType,
+            ]
         ], 200);
     }
     
@@ -180,7 +204,7 @@ class PeminjamanBhpController extends Controller
                 'kegunaan' => $request->kegunaan,
                 'tanggal_pinjam' => $request->tanggal_pinjam,
                 'jumlah_penggunaan' => $request->jumlah_penggunaan,
-                'status_penggunaan' => 0,
+                'status_penggunaan' => 'dipinjam',
                 'jumlah_kembali_bagus' => 0,
                 'jumlah_kembali_rusak' => 0,
                 'keterangan_pengembalian' => null,
@@ -188,6 +212,23 @@ class PeminjamanBhpController extends Controller
             ]);
 
             DB::commit();
+
+
+            $url = env('FRONTEND_URL') . '/admin-pengelola/peminjaman-bhp/detail/' . $peminjaman_bhp->id_peminjaman_bhp;
+
+            $renderer = new ImageRenderer(
+                new RendererStyle(400),
+                new SvgImageBackEnd()
+            );
+            $writer = new Writer($renderer);
+            $qrCodeContent = $writer->writeString($url);
+
+            $qrFileName = Str::uuid() . '.svg';
+            $qrFilePath = "public/bhp/peminjaman/qrcode/{$qrFileName}";
+            Storage::put($qrFilePath, $qrCodeContent);
+
+            $peminjaman_bhp->qr_code_path = $qrFileName;
+            $peminjaman_bhp->save();
 
             $this->sendTelegramMessage(env('TELEGRAM_CHAT_ID'), "Peminjaman Bhp $request->jumlah_penggunaan item  oleh " . $user->name . "-" . $nomor_identitas . " pada tanggal " . $request->tanggal_pinjam . ". Peminjaman dibuat oleh " . auth()->user()->name);
 
@@ -205,13 +246,34 @@ class PeminjamanBhpController extends Controller
     
     }
 
-    public function findPeminjamanBhp($id) {
+    public function findPeminjamanBhp($id, Request $request) {
         $peminjaman_bhp = PeminjamanBhp::find($id);
-        if ($peminjaman_bhp) {
-            return response()->json($peminjaman_bhp);
-        } else {
+        if (!$peminjaman_bhp)  {
             return response()->json(['message' => 'Peminjaman BHP tidak ditemukan'], 404);
         }
+
+        if ($request->has('export') && $request->export =='pdf') {
+            $bhp = Bhp::find($peminjaman_bhp->id_bhp);
+            if (!$bhp) {
+                return response()->json(['message' => 'BHP tidak ditemukan'], 404);
+            }
+            
+            $data = [
+                'peminjaman' => $peminjaman_bhp,
+                'bhp' => $bhp,
+                'tanggalPinjam' => \Carbon\Carbon::parse($peminjaman_bhp->tanggal_pinjam)->format('d/m/Y'),
+            ];
+            $pdf = Pdf::loadView('peminjaman.detail_bhp', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true);
+
+            return $pdf->download('peminjaman_bhp_' . $peminjaman_bhp->id_peminjaman_bhp . '.pdf');
+        } 
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Detail Peminjaman BHP',
+            'data' => $peminjaman_bhp
+        ], 200);
     }
 
     public function editPeminjamanBhp(Request $request, $id) {
@@ -240,7 +302,7 @@ class PeminjamanBhpController extends Controller
         ], 404);
     }
 
-    if ($peminjaman_bhp->status_pengembalian == 1) {
+    if ($peminjaman_bhp->status_pengembalian != 'dipinjam') {
         return response()->json([
             'status' => 'error',
             'message' => 'Peminjaman BHP yang sudah dikembalikan tidak dapat diedit'
@@ -399,29 +461,21 @@ class PeminjamanBhpController extends Controller
             return response()->json($validator->errors(), 400);
         }
 
-        if ($peminjaman_bhp->status_pengembalian === 1) {
+        if ($peminjaman_bhp->status_pengembalian === 'selesai') {
             return response()->json([
                 'message' => 'Peminjaman BHP sudah dikembalikan'
             ], 400);
         }
 
-        if ($request->jumlah_kembali_bagus > $peminjaman_bhp->jumlah_penggunaan) {
-            return response()->json([
-                'message' => 'Jumlah kembali bagus melebihi jumlah penggunaan',
-                'jumlah_penggunaan' => $peminjaman_bhp->jumlah_penggunaan
-            ], 422);
-        }
+        $jumlah_kembali_total = $request->jumlah_kembali_bagus + $request->jumlah_kembali_rusak;
+        $sisa_belum_kembali = $peminjaman_bhp->jumlah_penggunaan - 
+                            ($peminjaman_bhp->jumlah_kembali_bagus + $peminjaman_bhp->jumlah_kembali_rusak);
 
-        if ($request->jumlah_kembali_rusak > $peminjaman_bhp->jumlah_penggunaan) {
+        if ($jumlah_kembali_total > $sisa_belum_kembali) {
             return response()->json([
-                'message' => 'Jumlah kembali rusak melebihi jumlah penggunaan',
-                'jumlah_penggunaan' => $peminjaman_bhp->jumlah_penggunaan
-            ], 422);
-        }
-
-        if ($request->jumlah_kembali_bagus + $request->jumlah_kembali_rusak !== $peminjaman_bhp->jumlah_penggunaan) {
-            return response()->json([
-                'message' => 'Jumlah kembali bagus dan rusak tidak sesuai dengan jumlah penggunaan'
+                'status' => 'error',
+                'message' => 'Jumlah pengembalian melebihi jumlah yang belum dikembalikan',
+                'sisa_belum_kembali' => $sisa_belum_kembali
             ], 422);
         }
 
@@ -451,35 +505,62 @@ class PeminjamanBhpController extends Controller
             $bhp->kondisi_rusak += $request->jumlah_kembali_rusak;
             $bhp->save();
 
-            $peminjaman_bhp->status_pengembalian = 1;
-            $peminjaman_bhp->jumlah_kembali_bagus = $request->jumlah_kembali_bagus;
-            $peminjaman_bhp->jumlah_kembali_rusak = $request->jumlah_kembali_rusak;
+            $total_kembali_bagus = $peminjaman_bhp->jumlah_kembali_bagus + $request->jumlah_kembali_bagus;
+            $total_kembali_rusak = $peminjaman_bhp->jumlah_kembali_rusak + $request->jumlah_kembali_rusak;
+            $total_kembali = $total_kembali_bagus + $total_kembali_rusak;
+
+            $new_status = 'dipinjam';
+            if ($total_kembali === $peminjaman_bhp->jumlah_penggunaan) {
+                $new_status = 'selesai';
+            } elseif ($total_kembali > 0) {
+                $new_status = 'dikembalikan_sebagian';
+            }
+
+            $peminjaman_bhp->status_pengembalian = $new_status;
+            $peminjaman_bhp->jumlah_kembali_bagus = $total_kembali_bagus;
+            $peminjaman_bhp->jumlah_kembali_rusak = $total_kembali_rusak;
             $peminjaman_bhp->tanggal_kembali = $request->tanggal_kembali;
-            $peminjaman_bhp->keterangan_pengembalian = $request->keterangan_pengembalian;
+            
+            $keterangan_baru = $request->keterangan_pengembalian;
+            if ($peminjaman_bhp->keterangan_pengembalian) {
+                $keterangan_baru = $peminjaman_bhp->keterangan_pengembalian . "\n" . 
+                                 ",   " . $keterangan_baru;
+            }
+            $peminjaman_bhp->keterangan_pengembalian = $keterangan_baru;
+            
             $peminjaman_bhp->save();
 
             DB::commit();
 
-            $this->sendTelegramMessage(env('TELEGRAM_CHAT_ID'), "Peminjaman Bhp {$peminjaman_bhp->jumlah_penggunaan}" . " oleh $peminjaman_bhp->nama_peminjam telah dikembalikan pada tanggal " . $request->tanggal_kembali . ". Peminjaman dikembalikan oleh " . auth()->user()->name);
-
-            return response()->json([
-                'message' => 'Peminjaman BHP berhasil dikembalikan',
-                'peminjaman' => $peminjaman_bhp
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Gagal mengembalikan peminjaman',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+            $status_text = $new_status === 'selesai' ? 'sepenuhnya' : 
+                ($new_status === 'dikembalikan_sebagian' ? 'sebagian' : '');
+            
+            $this->sendTelegramMessage(
+                env('TELEGRAM_CHAT_ID'), 
+                "Peminjaman BHP: {$jumlah_kembali_total} item dari total {$peminjaman_bhp->jumlah_penggunaan} " .
+                "oleh {$peminjaman_bhp->nama_peminjam} telah dikembalikan {$status_text} " .
+                "pada tanggal {$request->tanggal_kembali}. " .
+                "Status saat ini: {$new_status}. " .
+                "Dikembalikan oleh: " . auth()->user()->name
+            );
+                return response()->json([
+                    'message' => 'Peminjaman BHP berhasil dikembalikan ',
+                    'peminjaman' => $peminjaman_bhp
+                ]);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Gagal mengembalikan peminjaman',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
 
     }
 
     public function deletePeminjamanBhp($id){
         $peminjaman = PeminjamanBhp::findOrFail($id);
 
-        if ($peminjaman->status_pengembalian === 1) {
+        if ($peminjaman->status_pengembalian !== 'dipinjam') {
             return response()->json([
                 'message' => 'Tidak dapat menghapus peminjaman yang sudah dikembalikan'
             ], 400);

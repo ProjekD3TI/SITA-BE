@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jabatan', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('description');
-            $table->timestamps();
+        Schema::table('ruangs', function (Blueprint $table) {
+            $table->foreign(['id_gedung'], 'ruangs_ibfk_1')->references(['id_gedung'])->on('gedung')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jabatan');
+        Schema::table('ruangs', function (Blueprint $table) {
+            $table->dropForeign('ruangs_ibfk_1');
+        });
     }
 };

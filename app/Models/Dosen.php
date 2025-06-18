@@ -19,6 +19,7 @@ class Dosen extends Authenticatable
         'password',
         'nik',
         'status',
+        'no_telp',
     ];
 
     /**

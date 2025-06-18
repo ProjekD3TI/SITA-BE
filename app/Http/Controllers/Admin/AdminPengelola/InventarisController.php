@@ -110,37 +110,119 @@ class InventarisController extends Controller
             'kondisi' => 'required',
             'id_ruang' => 'required',
             'tahun_pengadaan' => 'required',
+            'jumlah' => 'sometimes|integer|min:1',
+            
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
 
-        $inventaris = Inventaris::create([
-            'id_jenis_inventaris' => $request->id_jenis_inventaris,
-            'no_inventaris' => $request->no_inventaris,
-            'kondisi' => $request->kondisi,
-            'id_ruang' => $request->id_ruang,
-            'tahun_pengadaan' => $request->tahun_pengadaan,
-        ]);
+        $base_no_inv = $request->no_inventaris;
+        $jumlah = $request->input('jumlah', 1);
+        $inventaris_list = [];
 
-        $url = env('FRONTEND_URL') . '/inventaris/' . $inventaris->id_inventaris;
+        DB::beginTransaction();
+        try {
+            
+            if ($jumlah == 1) {
+                // Untuk inventaris tunggal - cek apakah nomor sudah ada
+                $existing = Inventaris::where('no_inventaris', $base_no_inv)->first();
+                
+                if ($existing) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'Nomor inventaris sudah ada',
+                        'error' => "Nomor inventaris '{$base_no_inv}' sudah digunakan"
+                    ], 400);
+                }
+                
+                // Buat inventaris tunggal dengan nomor yang diinput user
+                $inventaris = Inventaris::create([
+                    'id_jenis_inventaris' => $request->id_jenis_inventaris,
+                    'no_inventaris' => $base_no_inv,
+                    'kondisi' => $request->kondisi,
+                    'id_ruang' => $request->id_ruang,
+                    'tahun_pengadaan' => $request->tahun_pengadaan,
+                ]);
 
-        $renderer = new ImageRenderer(
-            new RendererStyle(400),
-            new SvgImageBackEnd()
-        );
-        $writer = new Writer($renderer);
-        $qrCodeContent = $writer->writeString($url);
+                // $url = env('FRONTEND_URL') . '/inventaris/' . $inventaris->id_inventaris;
+                // $renderer = new ImageRenderer(new RendererStyle(400), new SvgImageBackEnd());
+                // $writer = new Writer($renderer);
+                // $qrCodeContent = $writer->writeString($url);
 
-        $qrFileName = Str::uuid() . '.svg';
-        $qrFilePath = "public/inventaris/qrcode/{$qrFileName}";
-        Storage::put($qrFilePath, $qrCodeContent);
+                // $qrFileName = Str::uuid() . '.svg';
+                // $qrFilePath = "public/inventaris/qrcode/{$qrFileName}";
+                // Storage::put($qrFilePath, $qrCodeContent);
 
-        $inventaris->qr_code_path = $qrFileName;
-        $inventaris->save();
+                // $inventaris->qr_code_path = $qrFileName;
+                // $inventaris->save();
 
-        return response()->json(['message' => 'Inventaris berhasil ditambahkan']);
+                $inventaris_list[] = $inventaris;
+                
+            } else {
+                // Untuk multiple inventaris - otomatis melanjutkan dari nomor terakhir
+                
+                // cari nomor  terakhir
+                $last_inventaris = Inventaris::where('no_inventaris', 'LIKE', $base_no_inv . '%')
+                    ->orderBy('no_inventaris', 'desc')
+                    ->first();
+
+                $start_number = 1;
+                
+                if ($last_inventaris) {
+                    $last_no = $last_inventaris->no_inventaris;
+                    
+                    if (preg_match('/\.(\d{3})$/', $last_no, $matches)) {
+                        $start_number = intval($matches[1]) + 1;
+                    } else {
+                        $start_number = 1;
+                    }
+                }
+
+                for ($i = 0; $i < $jumlah; $i++) {
+                    $current_no = $base_no_inv . '.' . str_pad($start_number + $i, 3, '0', STR_PAD_LEFT);
+
+                    $inventaris = Inventaris::create([
+                        'id_jenis_inventaris' => $request->id_jenis_inventaris,
+                        'no_inventaris' => $current_no,
+                        'kondisi' => $request->kondisi,
+                        'id_ruang' => $request->id_ruang,
+                        'tahun_pengadaan' => $request->tahun_pengadaan,
+                    ]);
+
+                    // $url = env('FRONTEND_URL') . '/inventaris/' . $inventaris->id_inventaris;
+                    // $renderer = new ImageRenderer(new RendererStyle(400), new SvgImageBackEnd());
+                    // $writer = new Writer($renderer);
+                    // $qrCodeContent = $writer->writeString($url);
+
+                    // $qrFileName = Str::uuid() . '.svg';
+                    // $qrFilePath = "public/inventaris/qrcode/{$qrFileName}";
+                    // Storage::put($qrFilePath, $qrCodeContent);
+
+                    // $inventaris->qr_code_path = $qrFileName;
+                    // $inventaris->save();
+
+                    $inventaris_list[] = $inventaris;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => $jumlah > 1 ? 
+                    "$jumlah inventaris berhasil ditambahkan" : 
+                    'Inventaris berhasil ditambahkan',
+                'data' => $inventaris_list
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Gagal menambahkan inventaris',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function findInventaris($id) {

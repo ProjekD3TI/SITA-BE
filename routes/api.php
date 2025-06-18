@@ -66,6 +66,12 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
     
+    
+    Route::get('mahasiswa/peminjaman_bhp', [MahasiswaController::class, 'showPeminjamanBhpUser']);
+    Route::get('mahasiswa/detail_bhp/{id}', [MahasiswaController::class, 'detailPeminjamanBhp']);
+    Route::get('mahasiswa/peminjaman_inventaris', [MahasiswaController::class, 'showPeminjamanInventarisUser']);
+    Route::get('mahasiswa/detail_inventaris/{id}', [MahasiswaController::class, 'detailPeminjamanInventaris']);
+
     // Route::post('/mahasiswa/logout', [AuthController::class, 'logout']);
     // route yg laen
 });
@@ -229,7 +235,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_pengelola/mahasiswa/{id}', [AdminPengelolaController::class, 'getMahasiswaById']);
         Route::get('/admin_pengelola/dosen', [AdminPengelolaController::class, 'getDosen']); //status = 1
         Route::get('/admin_pengelola/dosen/{id}', [AdminPengelolaController::class, 'getDosenById']);
+        Route::get('/admin_pengelola/get_jenis_inventaris', [AdminPengelolaController::class, 'getJenisInventaris']); //kondisi baik klo yang atas seluruh inventaris
         Route::get('/admin_pengelola/get_inventaris', [AdminPengelolaController::class, 'getInventaris']); //kondisi baik klo yang atas seluruh inventaris
+        Route::get('/admin_pengelola/get_ruang', [AdminPengelolaController::class, 'getRuang']); 
+        Route::get('/admin_pengelola/get_tipe', [AdminPengelolaController::class, 'getTipe']); 
+        Route::get('/admin_pengelola/get_merk', [AdminPengelolaController::class, 'getMerk']); 
 
 
         // Peminjaman Bhp

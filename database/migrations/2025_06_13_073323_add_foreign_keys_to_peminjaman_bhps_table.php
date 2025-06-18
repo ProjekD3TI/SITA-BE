@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('admin', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->enum('role', ['superadmin', 'admin_ta', 'admin_pengelola']);
-            $table->timestamps();
+        Schema::table('peminjaman_bhps', function (Blueprint $table) {
+            $table->foreign(['id_bhp'], 'peminjaman_bhps_ibfk_1')->references(['id_bhp'])->on('bhps')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('admin');
+        Schema::table('peminjaman_bhps', function (Blueprint $table) {
+            $table->dropForeign('peminjaman_bhps_ibfk_1');
+        });
     }
 };

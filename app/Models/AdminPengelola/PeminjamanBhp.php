@@ -24,15 +24,20 @@ class PeminjamanBhp extends Model
         'tanggal_pinjam', 
         'tanggal_kembali', 
         'jumlah_penggunaan', 
-        'status_pengembalian', 
+        'status_pengembalian', // dipinjam, dikembalikan, sebagian dikembalikan
         'jumlah_kembali_bagus', 
         'jumlah_kembali_rusak', 
         'keterangan_pengembalian',
+        'qr_code_path',
         'created_by',
     ];
     public function notifications()
     {
         return $this->morphMany(Notification::class, 'notifiable');
+    }
+    public function bhp()
+    {
+        return $this->belongsTo(Bhp::class, 'id_bhp', 'id_bhp');
     }
 
 }
