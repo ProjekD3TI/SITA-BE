@@ -80,9 +80,7 @@ class NilaiBimbinganController extends Controller
             ]);
 
             // ================== Tambahan: Cek 3 dosen penguji sudah memberi nilai ==================
-            // Ambil semua dosen penguji
             $dosenPengujiIds = $tugasAkhir->dosenPenguji->pluck('id');
-            // Ambil ujian TA terbaru
             $ujianTA = $tugasAkhir->ujianTA()->latest('id')->first();
 
             $nilaiUjianTA = collect();
@@ -94,15 +92,21 @@ class NilaiBimbinganController extends Controller
 
             $nilaiProposal = $tugasAkhir->nilai_proposal;
 
+            // Cek status kelulusan
+            $statusKelulusan = $tugasAkhir->status_kelulusan;
+
             if ($nilaiProposal !== null && $nilaiBimbingan->rerata_bimbingan !== null && $nilaiUjianTA->count() === 3) {
-                $rerataUjianTA = $nilaiUjianTA->avg();
-                // Perhitungan dengan bobot
-                $nilaiAkhir = round(
-                    ($nilaiProposal * 0.1) +
-                    ($nilaiBimbingan->rerata_bimbingan * 0.3) +
-                    ($rerataUjianTA * 0.6),
-                    2
-                );
+                if ($statusKelulusan == 3) {
+                    $nilaiAkhir = 0;
+                } else {
+                    $rerataUjianTA = $nilaiUjianTA->avg();
+                    $nilaiAkhir = round(
+                        ($nilaiProposal * 0.1) +
+                        ($nilaiBimbingan->rerata_bimbingan * 0.3) +
+                        ($rerataUjianTA * 0.6),
+                        2
+                    );
+                }
                 $tugasAkhir->update([
                     'nilai_akhir' => $nilaiAkhir,
                 ]);
@@ -166,15 +170,20 @@ class NilaiBimbinganController extends Controller
             }
 
             $nilaiProposal = $tugasAkhir->nilai_proposal;
+            $statusKelulusan = $tugasAkhir->status_kelulusan;
 
             if ($nilaiProposal !== null && $nilaiBimbingan->rerata_bimbingan !== null && $nilaiUjianTA->count() === 3) {
-                $rerataUjianTA = $nilaiUjianTA->avg();
-                $nilaiAkhir = round(
-                    ($nilaiProposal * 0.1) +
-                    ($nilaiBimbingan->rerata_bimbingan * 0.3) +
-                    ($rerataUjianTA * 0.6),
-                    2
-                );
+                if ($statusKelulusan == 3) {
+                    $nilaiAkhir = 0;
+                } else {
+                    $rerataUjianTA = $nilaiUjianTA->avg();
+                    $nilaiAkhir = round(
+                        ($nilaiProposal * 0.1) +
+                        ($nilaiBimbingan->rerata_bimbingan * 0.3) +
+                        ($rerataUjianTA * 0.6),
+                        2
+                    );
+                }
                 $tugasAkhir->update([
                     'nilai_akhir' => $nilaiAkhir,
                 ]);
