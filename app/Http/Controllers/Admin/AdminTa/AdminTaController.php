@@ -338,12 +338,11 @@ class AdminTaController extends Controller
             $judul_tugas_akhir = $tugasAkhir->judul_tugas_akhir ?? '-';
             $nama_mahasiswa = $tugasAkhir->mahasiswa->name ?? '-';
             $nim_mahasiswa = $tugasAkhir->mahasiswa->nim ?? '-';
-            $nama_divisi_tugas_akhir = "Nanang"; // Sesuaikan jika ada field
-            $nama_kepala_program_studi = "Eko"; // Sesuaikan jika ada field
 
             Carbon::setLocale('id');
             $tanggal_ujian = $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('d F Y') : '-';
-            $waktu_ujian = $ujianTA->sesi && $ujianTA->sesi->waktu_mulai ? substr($ujianTA->sesi->waktu_mulai, 0, 5) : '-';
+            $hari_tanggal_ujian = $ujianTA->tanggal_ujian ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y') : '-';
+            $waktu_ujian = $ujianTA->sesi && $ujianTA->sesi->waktu_mulai ? substr($ujianTA->sesi->waktu_mulai, 0, 5) . ' WIB' : '-';
 
             $fields = [
                 'judul_tugas_akhir-1' => $judul_tugas_akhir,
@@ -383,11 +382,11 @@ class AdminTaController extends Controller
                 'nim_mahasiswa-4' => $nim_mahasiswa,
                 'tanggal_ujian-1' => $tanggal_ujian,
                 'tanggal_ujian-2' => $tanggal_ujian,
-                'tanggal_ujian-3' => $tanggal_ujian,
+                'tanggal_ujian-3' => $hari_tanggal_ujian,
                 'tanggal_ujian-4' => $tanggal_ujian,
-                'tanggal_ujian-5' => $tanggal_ujian,
+                'tanggal_ujian-5' => $hari_tanggal_ujian,
                 'tanggal_ujian-6' => $tanggal_ujian,
-                'tanggal_ujian-7' => $tanggal_ujian,
+                'tanggal_ujian-7' => $hari_tanggal_ujian,
                 'tanggal_ujian-8' => $tanggal_ujian,
                 'waktu_ujian-1' => $waktu_ujian,
                 'waktu_ujian-2' => $waktu_ujian,
