@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use App\Exports\UjianTAExport;
 use App\Models\RequestPembimbing;
 use App\Http\Responses\ApiResponse;
+use Mews\Purifier\Facades\Purifier;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
@@ -2251,6 +2252,9 @@ class TugasAkhirController extends Controller
                 ->where('dosen_id', $dosenId)
                 ->first();
 
+            // Bersihkan input revisi sebelum digunakan
+            $cleanedRevisi = $request->filled('revisi') ? Purifier::clean($request->revisi) : null;
+
             if ($nilaiUjianTA) {
                 $nilaiUjianTA->update([
                     'kualitas_tata_laporan' => $request->kualitas_tata_laporan,
@@ -2258,7 +2262,7 @@ class TugasAkhirController extends Controller
                     'kualitas_produk' => $request->kualitas_produk,
                     'presentasi' => $request->presentasi,
                     'rerata_ujian_ta' => $request->rerata_ujian_ta,
-                    'revisi' => $request->revisi,
+                    'revisi' => $cleanedRevisi,
                 ]);
             } else {
                 $nilaiUjianTA = NilaiUjianTA::create([
@@ -2269,7 +2273,7 @@ class TugasAkhirController extends Controller
                     'kualitas_produk' => $request->kualitas_produk,
                     'presentasi' => $request->presentasi,
                     'rerata_ujian_ta' => $request->rerata_ujian_ta,
-                    'revisi' => $request->revisi,
+                    'revisi' => $cleanedRevisi,
                 ]);
             }
 
