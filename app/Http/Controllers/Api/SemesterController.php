@@ -65,23 +65,30 @@ class SemesterController extends Controller
     public function setDefault($id)
     {
         try {
+            \Log::info('Set default semester request', ['id' => $id]);
 
             // Reset dulu semua Semester menjadi non-default
             Semester::query()->update(['is_default' => 0]);
+            \Log::info('Reset all semesters to non-default');
 
             // Set Semester yang dipilih menjadi default
-            $tahunAjaran = Semester::findOrFail($id);
-            $tahunAjaran->update(['is_default' => 1]);
+            $semester = Semester::findOrFail($id);
+            \Log::info('Found semester', ['semester' => $semester->toArray()]);
+
+            $semester->update(['is_default' => 1]);
+            \Log::info('Updated semester is_default', ['new_value' => $semester->is_default]);
 
             return ApiResponse::success(
-                new SemesterResource($tahunAjaran),
+                new SemesterResource($semester),
                 'Semester default berhasil diubah',
                 201
             );
 
         } catch (ValidationException $e) {
+            \Log::error('Validation error: ' . $e->getMessage());
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (\Exception $e) {
+            \Log::error('Set default semester failed: ' . $e->getMessage());
             return ApiResponse::error('Gagal mengganti semester default: ' . $e->getMessage(), 500);
         }
     }

@@ -11,6 +11,7 @@ use App\Models\TugasAkhir;
 use Illuminate\Http\Request;
 use App\Exports\ProposalExport;
 use App\Http\Responses\ApiResponse;
+use Mews\Purifier\Facades\Purifier;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
@@ -355,7 +356,10 @@ class ProposalController extends Controller
             // Update the TugasAkhir record
             $tugasAkhir = $proposal->tugasAkhir;
             $tugasAkhir->nilai_proposal = $validatedData['nilai_proposal'];
-            $tugasAkhir->catatan_proposal = $validatedData['catatan_proposal'];
+
+
+            // $tugasAkhir->catatan_proposal = $validatedData['catatan_proposal'];
+            $tugasAkhir->catatan_proposal = Purifier::clean($validatedData['catatan_proposal']);
             $tugasAkhir->save();
 
             // Return the updated TugasAkhir using a resource
@@ -472,8 +476,8 @@ class ProposalController extends Controller
                 $berkasProposal = $proposal->berkas()->where('nama_berkas', 'Naskah Proposal Tugas Akhir')->first();
                 if ($berkasProposal) {
                     // Hapus file lama jika ada
-                    if ($berkasProposal->file_path && \Storage::exists(ltrim($berkasProposal->file_path, '/'))) {
-                        \Storage::delete(ltrim($berkasProposal->file_path, '/'));
+                    if ($berkasProposal->file_path && Storage::exists(ltrim($berkasProposal->file_path, '/'))) {
+                        Storage::delete(ltrim($berkasProposal->file_path, '/'));
                     }
                     $originalName = $request->file('file_proposal')->getClientOriginalName();
                     $filePath = $request->file('file_proposal')->storeAs("private/proposal/{$proposal->id}", $originalName);
@@ -489,8 +493,8 @@ class ProposalController extends Controller
                 $berkasTranskrip = $proposal->berkas()->where('nama_berkas', 'Transkrip Nilai Mahasiswa')->first();
                 if ($berkasTranskrip) {
                     // Hapus file lama jika ada
-                    if ($berkasTranskrip->file_path && \Storage::exists(ltrim($berkasTranskrip->file_path, '/'))) {
-                        \Storage::delete(ltrim($berkasTranskrip->file_path, '/'));
+                    if ($berkasTranskrip->file_path && Storage::exists(ltrim($berkasTranskrip->file_path, '/'))) {
+                        Storage::delete(ltrim($berkasTranskrip->file_path, '/'));
                     }
                     $originalName = $request->file('file_transkrip')->getClientOriginalName();
                     $filePath = $request->file('file_transkrip')->storeAs("private/proposal/{$proposal->id}", $originalName);
