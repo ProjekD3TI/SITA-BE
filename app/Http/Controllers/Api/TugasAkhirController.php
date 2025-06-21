@@ -986,7 +986,7 @@ class TugasAkhirController extends Controller
                 'proposal:id,judul_proposal',
                 'bimbingan'
             ])
-                // ->where('status_aktif', 1)
+                ->where('status_aktif', 1)
                 ->withCount([
                     'bimbingan as bimbingan_count' => function ($query) {
                         $query->where('status_verifikasi', 1);
@@ -1163,7 +1163,7 @@ class TugasAkhirController extends Controller
                 'dosenPembimbing:id,name',
                 'berkas'
             ])
-                // ->where('status_aktif', 1)
+                ->where('status_aktif', 1)
                 ->whereIn('status_valid', [0, 1, 2]); // Hanya ambil yang belum validasi atau ditolak
 
             // Fitur search nim, nama, judul tugas akhir
@@ -1579,6 +1579,7 @@ class TugasAkhirController extends Controller
                 ->orderByDesc('tahun_ajaran')
                 ->get(['id', 'tahun_ajaran']);
             $notification = TugasAkhir::where('status_valid', 1)
+                ->where('status_aktif', 1)
                 ->where(function ($q) {
                     $q->whereDoesntHave('ujianTA', function ($q2) {
                         $q2->where('status_ujian', 'aktif');

@@ -9,9 +9,10 @@ use App\Models\User;
 use App\Models\Dosen;
 use App\Models\UjianTA;
 use App\Models\TugasAkhir;
-use Illuminate\Http\Request;
 use App\Models\JabatanDosen;
 use App\Models\NilaiUjianTA;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
@@ -431,5 +432,102 @@ class AdminTaController extends Controller
         return response()->download($path, 'template_lembar_revisi.pdf');
     }
 
+    public function tabelJabatanDosenForAdmin()
+    {
+        try {
+            // Ambil semua dosen beserta relasi jabatannya (hanya yang aktif)
+            $dosenList = Dosen::orderBy('name')->get();
 
+            // Mapping data untuk response
+            $data = $dosenList->map(function ($dosen) {
+                return [
+                    'dosen_id' => $dosen->id,
+                    'name' => $dosen->name,
+                    'nik' => $dosen->nik,
+                    'email' => $dosen->email,
+                    'akses_ta' => $dosen->akses_ta,
+                    'jabatans' => $dosen->jabatans->map(function ($jabatan) {
+                        return [
+                            'jabatan_id' => $jabatan->id,
+                            'name' => $jabatan->name,
+                            'description' => $jabatan->description,
+                            'is_active' => $jabatan->pivot->is_active,
+                        ];
+                    }),
+                ];
+            });
+
+            return ApiResponse::success($data, 'Data dosen dan jabatannya berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function setKaprodiDosenByAdmin(Request $request)
+    {
+        $request->validate([
+            'dosen_id' => 'required|exists:dosen,id',
+        ]);
+
+        try {
+            DB::transaction(function () use ($request) {
+                $dosenId = $request->input('dosen_id');
+                $dosen = Dosen::findOrFail($dosenId);
+
+                // Validasi bahwa dosen yang dipilih aktif dan memiliki akses TA
+                if ($dosen->status != 1 || $dosen->akses_ta != 1) {
+                    throw new Exception('Dosen yang dipilih harus aktif dan memiliki akses TA.', 422);
+                }
+
+                // Hapus semua jabatan Kaprodi yang ada
+                JabatanDosen::where('jabatan_id', 3)->delete();
+
+                // Tetapkan dosen yang dipilih sebagai Kaprodi baru
+                JabatanDosen::create([
+                    'dosen_id' => $dosenId,
+                    'jabatan_id' => 3,
+                    'is_active' => 1,
+                ]);
+            });
+
+            return ApiResponse::success(null, 'Jabatan Kaprodi berhasil diupdate.');
+        } catch (Exception $e) {
+            $statusCode = is_numeric($e->getCode()) && $e->getCode() > 0 ? $e->getCode() : 500;
+            return ApiResponse::error('Gagal mengupdate Kaprodi: ' . $e->getMessage(), $statusCode);
+        }
+    }
+
+    public function setDivisiTADosenByAdmin(Request $request)
+    {
+        $request->validate([
+            'dosen_id' => 'required|exists:dosen,id',
+        ]);
+
+        try {
+            DB::transaction(function () use ($request) {
+                $dosenId = $request->input('dosen_id');
+                $dosen = Dosen::findOrFail($dosenId);
+
+                // Validasi bahwa dosen yang dipilih aktif dan memiliki akses TA
+                if ($dosen->status != 1 || $dosen->akses_ta != 1) {
+                    throw new Exception('Dosen yang dipilih harus aktif dan memiliki akses TA.', 422);
+                }
+
+                // Hapus semua jabatan Divisi TA yang ada
+                JabatanDosen::where('jabatan_id', 5)->delete();
+
+                // Tetapkan dosen yang dipilih sebagai Divisi TA baru
+                JabatanDosen::create([
+                    'dosen_id' => $dosenId,
+                    'jabatan_id' => 5,
+                    'is_active' => 1,
+                ]);
+            });
+
+            return ApiResponse::success(null, 'Jabatan Divisi TA berhasil diupdate.');
+        } catch (Exception $e) {
+            $statusCode = is_numeric($e->getCode()) && $e->getCode() > 0 ? $e->getCode() : 500;
+            return ApiResponse::error('Gagal mengupdate Divisi TA: ' . $e->getMessage(), $statusCode);
+        }
+    }
 }

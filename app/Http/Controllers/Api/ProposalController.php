@@ -34,7 +34,9 @@ class ProposalController extends Controller
             $query = Proposal::with([
                 'tugasAkhir.mahasiswa:id,nim,name',
                 'berkas'
-            ]);
+            ])->whereHas('tugasAkhir', function ($q) {
+                $q->where('status_aktif', 1);
+            });
 
             // Fitur search nim/nama mahasiswa atau judul proposal
             if ($request->search) {
@@ -207,7 +209,9 @@ class ProposalController extends Controller
                 'tugasAkhir.mahasiswa:id,nim,name',
                 'tugasAkhir.kategori',
                 'tugasAkhir.dosenPembimbing:id,name', // agar FE dapat dospem
-            ]);
+            ])->whereHas('tugasAkhir', function ($q) {
+                $q->where('status_aktif', 1);
+            });
 
 
             // Fitur search nim/nama mahasiswa atau judul proposal
@@ -235,6 +239,7 @@ class ProposalController extends Controller
                 }
             }
             $notificationCount = TugasAkhir::whereNull('nilai_proposal')
+                ->where('status_aktif', 1)
                 ->whereHas('proposal', function ($q) {
                     $q->where('status_proposal', 1);
                 })->count();

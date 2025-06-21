@@ -312,6 +312,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/admin_ta/mahasiswa-ta', [AdminTaController::class, 'setAksesTAMahasiswaByAdmin']);
         Route::get('/admin_ta/dosen-ta', [AdminTaController::class, 'tabelListDosenForAdmin']);
         Route::put('/admin_ta/dosen-ta', [AdminTaController::class, 'setAksesTADosenByAdmin']);
+        Route::get('/admin_ta/jabatan-dosen', [AdminTaController::class, 'tabelJabatanDosenForAdmin']);
+        Route::post('/admin_ta/set-kaprodi', [AdminTaController::class, 'setKaprodiDosenByAdmin']);
+        Route::post('/admin_ta/set-divisi-ta', [AdminTaController::class, 'setDivisiTADosenByAdmin']);
 
         // Route Ruang
         Route::apiResource('/admin_ta/ruang', RuangController::class);
