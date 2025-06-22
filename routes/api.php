@@ -38,8 +38,8 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
-
+Route::get('/ruang', [RuangController::class, 'showRuang']);
+Route::get('/access/log', [AccessController::class, 'getLogs']);
 Route::post('/access/log', [AccessController::class, 'log']);
 Route::post('/access/check', [AccessController::class, 'check']);
 
