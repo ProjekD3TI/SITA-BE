@@ -394,15 +394,15 @@ class AdminTaController extends Controller
                 'waktu_ujian-3' => $waktu_ujian,
                 'waktu_ujian-4' => $waktu_ujian,
                 // Nilai
-                'nilai_bimbingan_ta-1' => $nilaiBimbingan1,
-                'nilai_bimbingan_ta-2' => $nilaiBimbingan2,
-                'nilai_proposal_ta' => $nilaiProposal,
-                'nilai_rata-rata_ujian' => $nilaiRataRataUjian,
-                'nilai_ujian_ketua_penguji' => $nilaiKetua ? $nilaiKetua->rerata_ujian_ta : null,
-                'nilai_ujian_penguji' => $nilaiPenguji,
-                'nilai_ujian_sekretaris_penguji' => $nilaiSekretaris ? $nilaiSekretaris->rerata_ujian_ta : null,
-                'rata-rata_nilai_ujian_ta' => $nilaiRataRataUjian,
-                'total_nilai_tugas_akhir' => $totalNilaiTugasAkhir,
+                'nilai_bimbingan_ta-1' => $nilaiBimbingan1 ?: '-',
+                'nilai_bimbingan_ta-2' => $nilaiBimbingan2 ?: '-',
+                'nilai_proposal_ta' => $nilaiProposal ?: '-',
+                'nilai_rata-rata_ujian' => $nilaiRataRataUjian ?: '-',
+                'nilai_ujian_ketua_penguji' => ($nilaiKetua && $nilaiKetua->rerata_ujian_ta) ? $nilaiKetua->rerata_ujian_ta : '-',
+                'nilai_ujian_penguji' => $nilaiPenguji ?: '-',
+                'nilai_ujian_sekretaris_penguji' => ($nilaiSekretaris && $nilaiSekretaris->rerata_ujian_ta) ? $nilaiSekretaris->rerata_ujian_ta : '-',
+                'rata-rata_nilai_ujian_ta' => $nilaiRataRataUjian ?: '-',
+                'total_nilai_tugas_akhir' => $totalNilaiTugasAkhir ?: '-',
             ];
 
             // Generate PDF jika template tersedia
@@ -469,11 +469,16 @@ class AdminTaController extends Controller
             'dosen_id' => 'required|exists:dosen,id',
         ]);
 
+
         try {
             DB::transaction(function () use ($request) {
                 $dosenId = $request->input('dosen_id');
                 $dosen = Dosen::findOrFail($dosenId);
 
+                // Cek apakah dosen yang dipilih sedang menjabat sebagai Divisi TA
+                if ($dosen->jabatans->contains('id', 5)) {
+                    throw new Exception('Dosen yang menjabat sebagai Divisi TA tidak dapat dijadikan Kaprodi.', 422);
+                }
                 // Validasi bahwa dosen yang dipilih aktif dan memiliki akses TA
                 if ($dosen->status != 1 || $dosen->akses_ta != 1) {
                     throw new Exception('Dosen yang dipilih harus aktif dan memiliki akses TA.', 422);
@@ -508,6 +513,11 @@ class AdminTaController extends Controller
                 $dosenId = $request->input('dosen_id');
                 $dosen = Dosen::findOrFail($dosenId);
 
+                // Cek apakah dosen yang dipilih sedang menjabat sebagai Divisi TA
+                if ($dosen->jabatans->contains('id', 3)) {
+                    throw new Exception('Dosen yang menjabat sebagai Kaprodi tidak dapat dijadikan Divisi TA.', 422);
+                }
+
                 // Validasi bahwa dosen yang dipilih aktif dan memiliki akses TA
                 if ($dosen->status != 1 || $dosen->akses_ta != 1) {
                     throw new Exception('Dosen yang dipilih harus aktif dan memiliki akses TA.', 422);
@@ -527,7 +537,7 @@ class AdminTaController extends Controller
             return ApiResponse::success(null, 'Jabatan Divisi TA berhasil diupdate.');
         } catch (Exception $e) {
             $statusCode = is_numeric($e->getCode()) && $e->getCode() > 0 ? $e->getCode() : 500;
-            return ApiResponse::error('Gagal mengupdate Divisi TA: ' . $e->getMessage(), $statusCode);
+            return ApiResponse::error('Gagal mengupdate Divisi TA, ' . $e->getMessage(), $statusCode);
         }
     }
 }

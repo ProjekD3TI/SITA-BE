@@ -579,9 +579,10 @@ class TugasAkhirController extends Controller
                 'mahasiswa:id,nim,name',
                 'dosenPembimbing:id,name',
                 'kategori:id,nama_kategori',
-                'requestPembimbing'
-            ])
-                ->where('status_aktif', 1);
+                'requestPembimbing',
+                'tahunAjaran:id,tahun_ajaran'
+            ]);
+            // ->where('status_aktif', 1);
 
             // Fitur pencarian berdasarkan nama mahasiswa atau NIM
             if ($request->search) {
@@ -591,21 +592,33 @@ class TugasAkhirController extends Controller
                 });
             }
 
+            // Filter tahun ajaran multi value
+            if ($request->tahun_ajaran_id) {
+                $tahunAjaranList = explode(',', $request->tahun_ajaran_id);
+                $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                $query->whereIn('tahun_ajaran_id', $tahunAjaranList);
+            }
+
+            // Ambil tahun ajaran list (tidak berubah)
+            $currentYear = now()->year;
+            $tahunAjaranList = TahunAjaran::where(function ($query) use ($currentYear) {
+                for ($i = 0; $i < 5; $i++) {
+                    $year = $currentYear - $i;
+                    if ($i == 0) {
+                        $query->where('tahun_ajaran', 'like', '%' . $year . '%');
+                    } else {
+                        $query->orWhere('tahun_ajaran', 'like', '%' . $year . '%');
+                    }
+                }
+            })
+                ->orderByDesc('tahun_ajaran')
+                ->get(['id', 'tahun_ajaran']);
+
             // Fitur filter berdasarkan kategori
             if ($request->kategori) {
                 $kategoriList = explode(',', $request->kategori);
-                $query->whereHas('kategori', function ($q) use ($kategoriList) {
-                    $q->where(function ($subQuery) use ($kategoriList) {
-                        foreach ($kategoriList as $index => $kategori) {
-                            $kategori = trim($kategori);
-                            if ($index === 0) {
-                                $subQuery->where('nama_kategori', 'like', '%' . $kategori . '%');
-                            } else {
-                                $subQuery->orWhere('nama_kategori', 'like', '%' . $kategori . '%');
-                            }
-                        }
-                    });
-                });
+                $kategoriList = array_map('trim', $kategoriList);
+                $query->whereIn('kategori_id', $kategoriList);
             }
 
             // Urutkan: status_request = 2 (ditolak) paling atas, lalu id desc
@@ -625,6 +638,10 @@ class TugasAkhirController extends Controller
             $data = collect($tugasAkhir->items())->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
+                    'tahun_ajaran' => [
+                        'tahun_ajaran_id' => $item->tahunAjaran->id ?? null,
+                        'tahun_ajaran' => $item->tahunAjaran->tahun_ajaran ?? null,
+                    ],
                     'mahasiswa' => [
                         'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
@@ -644,6 +661,7 @@ class TugasAkhirController extends Controller
 
             $result = [
                 'notification' => $notificationCount,
+                'tahun_ajaran_list' => $tahunAjaranList,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
@@ -669,36 +687,39 @@ class TugasAkhirController extends Controller
                 'dosenPembimbing:id,name',
                 'dosenPenguji:id' // tambahkan eager load dosenPenguji
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
-                ->get();
+                ->first();
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
 
             $daftarDosen = Dosen::select('name', 'nik', 'id', 'akses_ta')
                 ->where('status', 1)
                 ->orderBy('name', 'asc')
                 ->get();
 
-            $data = $tugasAkhir->map(function ($item) {
-                return [
-                    'tugas_akhir_id' => $item->id,
-                    'mahasiswa' => [
-                        'mahasiswa_id' => $item->mahasiswa->id ?? null,
-                        'nim' => $item->mahasiswa->nim ?? null,
-                        'name' => $item->mahasiswa->name ?? null,
-                    ],
-                    'kategori' => [
-                        'kategori_id' => $item->kategori->id ?? null,
-                        'nama_kategori' => $item->kategori->nama_kategori ?? null,
-                    ],
-                    'tahun_ajaran' => $item->tahunAjaran ? $item->tahunAjaran->tahun_ajaran : null,
-                    'dosen_pembimbing' => [
-                        'dosen_pembimbing_id' => $item->dosenPembimbing->id ?? null,
-                        'name' => $item->dosenPembimbing->name ?? null,
-                    ],
-                    // Tambahkan flag sudah ada dosen penguji
-                    'has_dosen_penguji' => $item->dosenPenguji && $item->dosenPenguji->count() > 0,
-                ];
-            });
+            $data = [
+                'tugas_akhir_id' => $tugasAkhir->id,
+                'mahasiswa' => [
+                    'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
+                    'nim' => $tugasAkhir->mahasiswa->nim ?? null,
+                    'name' => $tugasAkhir->mahasiswa->name ?? null,
+                ],
+                'kategori' => [
+                    'kategori_id' => $tugasAkhir->kategori->id ?? null,
+                    'nama_kategori' => $tugasAkhir->kategori->nama_kategori ?? null,
+                ],
+                'tahun_ajaran' => $tugasAkhir->tahunAjaran ? $tugasAkhir->tahunAjaran->tahun_ajaran : null,
+                'dosen_pembimbing' => [
+                    'dosen_pembimbing_id' => $tugasAkhir->dosenPembimbing->id ?? null,
+                    'name' => $tugasAkhir->dosenPembimbing->name ?? null,
+                ],
+                // Tambahkan flag sudah ada dosen penguji
+                'has_dosen_penguji' => $tugasAkhir->dosenPenguji && $tugasAkhir->dosenPenguji->count() > 0,
+            ];
+            ;
 
             return ApiResponse::success([
                 [
@@ -828,7 +849,7 @@ class TugasAkhirController extends Controller
                 'bimbingan',
                 'kategori:id,nama_kategori',
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->whereNotNull('dosen_pembimbing_id'); // hanya yang sudah punya dosen pembimbing
 
             if ($request->search) {
@@ -838,20 +859,31 @@ class TugasAkhirController extends Controller
                 });
             }
 
+            // Filter tahun ajaran multi value
+            if ($request->tahun_ajaran_id) {
+                $tahunAjaranList = explode(',', $request->tahun_ajaran_id);
+                $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                $query->whereIn('tahun_ajaran_id', $tahunAjaranList);
+            }
+            // Ambil tahun ajaran list (tidak berubah)
+            $currentYear = now()->year;
+            $tahunAjaranList = TahunAjaran::where(function ($query) use ($currentYear) {
+                for ($i = 0; $i < 5; $i++) {
+                    $year = $currentYear - $i;
+                    if ($i == 0) {
+                        $query->where('tahun_ajaran', 'like', '%' . $year . '%');
+                    } else {
+                        $query->orWhere('tahun_ajaran', 'like', '%' . $year . '%');
+                    }
+                }
+            })
+                ->orderByDesc('tahun_ajaran')
+                ->get(['id', 'tahun_ajaran']);
+            // Fitur filter berdasarkan kategori
             if ($request->kategori) {
                 $kategoriList = explode(',', $request->kategori);
-                $query->whereHas('kategori', function ($q) use ($kategoriList) {
-                    $q->where(function ($subQuery) use ($kategoriList) {
-                        foreach ($kategoriList as $index => $kategori) {
-                            $kategori = trim($kategori);
-                            if ($index === 0) {
-                                $subQuery->where('nama_kategori', 'like', '%' . $kategori . '%');
-                            } else {
-                                $subQuery->orWhere('nama_kategori', 'like', '%' . $kategori . '%');
-                            }
-                        }
-                    });
-                });
+                $kategoriList = array_map('trim', $kategoriList);
+                $query->whereIn('kategori_id', $kategoriList);
             }
 
             $tugasAkhir = $query->orderBy('id', 'desc')->paginate(10);
@@ -859,6 +891,10 @@ class TugasAkhirController extends Controller
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
+                    'tahun_ajaran' => [
+                        'tahun_ajaran_id' => $item->tahunAjaran->id ?? null,
+                        'tahun_ajaran' => $item->tahunAjaran->tahun_ajaran ?? null,
+                    ],
                     'mahasiswa' => [
                         'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
@@ -878,6 +914,7 @@ class TugasAkhirController extends Controller
 
             $result = [
                 'data' => $data,
+                'tahun_ajaran_list' => $tahunAjaranList,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
                     'last_page' => $tugasAkhir->lastPage(),
@@ -902,7 +939,7 @@ class TugasAkhirController extends Controller
                 'nilaiBimbingan',
                 'tahunAjaran:id,tahun_ajaran',
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->first();
 
@@ -966,6 +1003,7 @@ class TugasAkhirController extends Controller
                     'komunikasi' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->komunikasi : null,
                     'skill_pengetahuan' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->skill_pengetahuan : null,
                     'tingkah_laku' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->tingkah_laku : null,
+                    'catatan' => $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->catatan_akhir_bimbingan : null,
                 ],
             ];
             return ApiResponse::success($data, 'Data detail bimbingan berhasil diambil');
@@ -986,7 +1024,7 @@ class TugasAkhirController extends Controller
                 'proposal:id,judul_proposal',
                 'bimbingan'
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->withCount([
                     'bimbingan as bimbingan_count' => function ($query) {
                         $query->where('status_verifikasi', 1);
@@ -1042,7 +1080,7 @@ class TugasAkhirController extends Controller
             // ✅ PERBAIKAN: Map data dengan pengecekan status lulus per item
             $data = $tugasAkhir->map(function ($item) {
                 // ✅ PERBAIKAN: Cek status lulus untuk setiap item individually
-                $sudahLulus = in_array($item->status_kelulusan, [1, 2]);
+                $sudahLulus = in_array($item->status_kelulusan, [1, 2, 4]);
 
                 return [
                     'tugas_akhir_id' => $item->id,
@@ -1101,9 +1139,20 @@ class TugasAkhirController extends Controller
                 'kategori:id,nama_kategori',
                 'dosenPenguji:id,name,nik' // tambahkan relasi dosenPenguji
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->first();
+
+
+            if (!$tugasAkhir) {
+                return ApiResponse::error('Tugas Akhir tidak ditemukan.', 404);
+            }
+
+            // Cek jika mahasiswa sudah lulus atau harus mengulang
+            if (in_array($tugasAkhir->status_kelulusan, [1, 2, 4])) {
+                return ApiResponse::error('Tidak dapat mengubah penguji karena mahasiswa sudah dinyatakan lulus atau harus mengulang TA.', 403);
+            }
+
 
             $daftarDosen = Dosen::select('id', 'name', 'nik', 'akses_ta')
                 ->where('status', 1)
@@ -1163,7 +1212,7 @@ class TugasAkhirController extends Controller
                 'dosenPembimbing:id,name',
                 'berkas'
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->whereIn('status_valid', [0, 1, 2]); // Hanya ambil yang belum validasi atau ditolak
 
             // Fitur search nim, nama, judul tugas akhir
@@ -1256,12 +1305,21 @@ class TugasAkhirController extends Controller
                 'tahunAjaran:id,tahun_ajaran',
                 'berkas'
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->first();
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+
+            // Cek jika mahasiswa sudah lulus
+            if (in_array($tugasAkhir->status_kelulusan, [1, 2, 4])) {
+                return ApiResponse::error('Tidak dapat mengubah validasi karena mahasiswa sudah dinyatakan lulus/tidak lulus.', 403);
+            }
+
+            if ($tugasAkhir->status_valid != 0) {
+                return ApiResponse::error('Berkas pendaftaran telah divalidasi', 403);
             }
 
             $data = [
@@ -1393,30 +1451,34 @@ class TugasAkhirController extends Controller
                 });
             }
 
-            // Filter tahun ajaran pada ujian_ta
-            if ($request->has('tahun_ajaran_id') && $request->tahun_ajaran_id) {
-                $query->where('tahun_ajaran_id', $request->tahun_ajaran_id);
+            // Filter tahun ajaran multi value
+            if ($request->tahun_ajaran_id) {
+                $tahunAjaranList = explode(',', $request->tahun_ajaran_id);
+                $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                $query->whereIn('tahun_ajaran_id', $tahunAjaranList);
             }
 
-            // Filter status kelulusan pada ujian_ta
-            $filterMenunggu = false;
-            if ($request->has('status')) {
-                $status = $request->status;
-                if ($status === 'menunggu') {
-                    $filterMenunggu = true;
-                    // Jangan ambil data UjianTA, hanya ambil data TA yang belum dijadwalkan
-                    $query->whereRaw('1=0'); // Kosongkan hasil
-                } elseif ($status === 'terjadwal') {
-                    $query->where('status_ujian', 'aktif')
-                        ->whereNull('status_kelulusan'); // Tambahkan kondisi status kelulusan NULL
-                } elseif ($status === 'revisi_lulus' || $status === 'revisi-lulus' || $status === 'revisi') {
-                    $query->where('status_kelulusan', 3);
-                } elseif (in_array($status, ['1', '2', '3', '4'])) {
-                    $query->where('status_kelulusan', $status);
-                } elseif ($status === 'aktif') {
-                    $query->where('status_ujian', 'aktif');
-                } elseif ($status === 'non-aktif') {
-                    $query->where('status_ujian', 'non-aktif');
+            // Filter status kelulusan (mendukung multi-status)
+            $statuses = ($request->has('status') && $request->status) ? explode(',', $request->status) : [];
+
+            if (!empty($statuses)) {
+                if ($statuses === ['menunggu']) {
+                    $query->whereRaw('1=0'); // Jika hanya 'menunggu', kosongkan query UjianTA
+                } else {
+                    $query->where(function ($q) use ($statuses) {
+                        if (in_array('terjadwal', $statuses)) {
+                            $q->orWhere(function ($subQ) {
+                                $subQ->where('status_ujian', 'aktif')->whereNull('status_kelulusan');
+                            });
+                        }
+                        if (in_array('revisi', $statuses) || in_array('revisi-lulus', $statuses) || in_array('3', $statuses)) {
+                            $q->orWhere('status_kelulusan', 3);
+                        }
+                        $numericStatuses = array_filter($statuses, 'is_numeric');
+                        if (!empty($numericStatuses)) {
+                            $q->orWhereIn('status_kelulusan', $numericStatuses);
+                        }
+                    });
                 }
             }
 
@@ -1455,16 +1517,9 @@ class TugasAkhirController extends Controller
                 $queryTaBelumUjian->where('tahun_ajaran_id', $request->tahun_ajaran_id);
             }
 
-            // Filter status kelulusan pada tugas akhir
-            if ($request->has('status')) {
-                $status = $request->status;
-                // Jika filter menunggu, tampilkan hanya TA yang belum dijadwalkan
-                if ($status === 'menunggu') {
-                    // Tidak perlu filter tambahan
-                } else {
-                    // Untuk filter lain, kosongkan hasil TA yang belum dijadwalkan
-                    $queryTaBelumUjian->whereRaw('1=0');
-                }
+            // Hanya jalankan query ini jika 'menunggu' dipilih atau tidak ada filter status
+            if (!empty($statuses) && !in_array('menunggu', $statuses)) {
+                $queryTaBelumUjian->whereRaw('1=0');
             }
 
             $taBelumUjian = $queryTaBelumUjian->get();
@@ -1619,12 +1674,15 @@ class TugasAkhirController extends Controller
                 'ujianTA.sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
                 'ujianTA.ruang:id,nama_ruang'
             ])
-                ->where('status_aktif', 1)
+                // ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
                 ->first();
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+            }
+            if (in_array($tugasAkhir->status_kelulusan, [1, 2, 4])) {
+                return ApiResponse::error('Tidak dapat mengubah validasi karena tugas akhir sudah dinyatakan lulus/tidak lulus.', 403);
             }
 
             // Ambil list dosen penguji untuk checking conflicts

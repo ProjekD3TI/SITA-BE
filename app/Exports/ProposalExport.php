@@ -15,11 +15,14 @@ class ProposalExport implements FromCollection, WithHeadings, WithStyles, WithEv
 {
     protected $search;
     protected $statusNilai;
+    protected $tahunAjaranId; // Tambahkan properti
 
-    public function __construct($search = null, $statusNilai = null)
+    public function __construct($search = null, $statusNilai = null, $tahunAjaranId = null)
     {
         $this->search = $search;
         $this->statusNilai = $statusNilai;
+        $this->tahunAjaranId = $tahunAjaranId; // Simpan tahun ajaran id
+
     }
 
     public function collection()
@@ -28,15 +31,17 @@ class ProposalExport implements FromCollection, WithHeadings, WithStyles, WithEv
             'tugasAkhir.mahasiswa:id,nim,name',
             'tugasAkhir.dosenPembimbing:id,name',
             'tugasAkhir.tahunAjaran'
-        ]);
+        ])->where('status_proposal', 1);
 
-        // Filter sama seperti di tabelListSeminarProposalForAdmin
-        $query->where('status_proposal', 1);
 
-        // Filter tahun ajaran default
-        $query->whereHas('tugasAkhir.tahunAjaran', function ($q) {
-            $q->where('is_default', 1);
-        });
+        // Filter tahun ajaran jika ada
+        if ($this->tahunAjaranId) {
+            $tahunAjaranList = explode(',', $this->tahunAjaranId);
+            $tahunAjaranList = array_map('trim', $tahunAjaranList);
+            $query->whereHas('tugasAkhir.tahunAjaran', function ($q) use ($tahunAjaranList) {
+                $q->whereIn('id', $tahunAjaranList);
+            });
+        }
 
         // Fitur search nim/nama mahasiswa atau judul proposal
         if ($this->search) {
@@ -68,6 +73,7 @@ class ProposalExport implements FromCollection, WithHeadings, WithStyles, WithEv
                 'nim' => $item->tugasAkhir->mahasiswa->nim ?? '',
                 'nama' => $item->tugasAkhir->mahasiswa->name ?? '',
                 'judul_proposal' => $item->judul_proposal ?? '',
+                'tahun_ajaran' => $item->tugasAkhir->tahunAjaran->tahun_ajaran ?? '',
                 'dosen_pembimbing' => $item->tugasAkhir->dosenPembimbing->name ?? '',
                 'nilai_proposal' => $item->tugasAkhir->nilai_proposal ?? '-',
             ];
@@ -80,6 +86,7 @@ class ProposalExport implements FromCollection, WithHeadings, WithStyles, WithEv
             'NIM',
             'Nama',
             'Judul Proposal',
+            'Tahun Ajaran',
             'Dosen Pembimbing',
             'Nilai Proposal',
         ];
@@ -101,7 +108,7 @@ class ProposalExport implements FromCollection, WithHeadings, WithStyles, WithEv
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 // Header background kuning dan border
-                $event->sheet->getStyle('A1:E1')->applyFromArray([
+                $event->sheet->getStyle('A1:F1')->applyFromArray([
                     'fill' => [
                         'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                         'color' => ['rgb' => 'FFF700'],

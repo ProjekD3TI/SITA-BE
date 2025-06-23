@@ -202,8 +202,8 @@ class BimbinganController extends Controller
                 'kategori:id,nama_kategori',
                 'bimbingan'
             ])
-                ->where('dosen_pembimbing_id', $dosenId)
-                ->where('status_aktif', 1);
+                ->where('dosen_pembimbing_id', $dosenId);
+            // ->where('status_aktif', 1);
 
             // Fitur search nim/nama mahasiswa
             if ($request->search) {

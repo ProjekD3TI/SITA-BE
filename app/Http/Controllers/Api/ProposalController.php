@@ -8,6 +8,7 @@ use App\Models\Kategori;
 use App\Models\Proposal;
 use App\Models\StatusForm;
 use App\Models\TugasAkhir;
+use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
 use App\Exports\ProposalExport;
 use App\Http\Responses\ApiResponse;
@@ -34,9 +35,11 @@ class ProposalController extends Controller
             $query = Proposal::with([
                 'tugasAkhir.mahasiswa:id,nim,name',
                 'berkas'
-            ])->whereHas('tugasAkhir', function ($q) {
-                $q->where('status_aktif', 1);
-            });
+            ]);
+
+            // ->whereHas('tugasAkhir', function ($q) {
+            //     $q->where('status_aktif', 1);
+            // });
 
             // Fitur search nim/nama mahasiswa atau judul proposal
             if ($request->search) {
@@ -53,6 +56,30 @@ class ProposalController extends Controller
                 $statusList = array_map('trim', $statusList);
                 $query->whereIn('status_proposal', $statusList);
             }
+
+            // Filter tahun ajaran multi value
+            if ($request->tahun_ajaran_id) {
+                $tahunAjaranList = explode(',', $request->tahun_ajaran_id);
+                $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                $query->whereHas('tugasAkhir.tahunAjaran', function ($q) use ($tahunAjaranList) {
+                    $q->whereIn('id', $tahunAjaranList);
+                });
+            }
+            // Ambil tahun ajaran list (tidak berubah)
+            $currentYear = now()->year;
+            $tahunAjaranList = TahunAjaran::where(function ($query) use ($currentYear) {
+                for ($i = 0; $i < 5; $i++) {
+                    $year = $currentYear - $i;
+                    if ($i == 0) {
+                        $query->where('tahun_ajaran', 'like', '%' . $year . '%');
+                    } else {
+                        $query->orWhere('tahun_ajaran', 'like', '%' . $year . '%');
+                    }
+                }
+            })
+                ->orderByDesc('tahun_ajaran')
+                ->get(['id', 'tahun_ajaran']);
+
             // Urutkan: status_proposal = 0 (menunggu) paling atas, lalu id desc
             $query->orderByRaw("CASE WHEN status_proposal = 0 THEN 0 ELSE 1 END")->orderByDesc('id');
 
@@ -63,6 +90,10 @@ class ProposalController extends Controller
                 Carbon::setLocale('id');
                 return [
                     'proposal_id' => $item->id,
+                    'tahun_ajaran' => $item->tugasAkhir->tahunAjaran ? [
+                        'tahun_ajaran_id' => $item->tugasAkhir->tahunAjaran->id,
+                        'tahun_ajaran' => $item->tugasAkhir->tahunAjaran->tahun_ajaran,
+                    ] : null,
                     'judul_proposal' => $item->judul_proposal ?? null,
                     'status_proposal' => $item->status_proposal ?? null,
                     'mahasiswa' => [
@@ -88,6 +119,7 @@ class ProposalController extends Controller
 
             $result = [
                 'notification' => $notificationCount,
+                'tahun_ajaran_list' => $tahunAjaranList,
                 'status_form' => [
                     'id' => $statusForm->id,
                     'is_open' => $statusForm->is_open,
@@ -118,8 +150,14 @@ class ProposalController extends Controller
                 'berkas'
             ])->find($proposalId);
 
+
             if (!$proposal) {
                 return ApiResponse::error('Proposal tidak ditemukan untuk ID tersebut', 404);
+            }
+
+            // Cek jika proposal sudah divalidasi (diterima atau ditolak)
+            if (in_array($proposal->status_proposal, [1, 2])) {
+                return ApiResponse::error('Proposal ini sudah divalidasi dan tidak dapat diakses lagi.', 403);
             }
 
             $data = [
@@ -209,9 +247,12 @@ class ProposalController extends Controller
                 'tugasAkhir.mahasiswa:id,nim,name',
                 'tugasAkhir.kategori',
                 'tugasAkhir.dosenPembimbing:id,name', // agar FE dapat dospem
-            ])->whereHas('tugasAkhir', function ($q) {
-                $q->where('status_aktif', 1);
-            });
+            ])->where('status_proposal', 1);
+            ;
+
+            // ->whereHas('tugasAkhir', function ($q) {
+            //     $q->where('status_aktif', 1);
+            // });
 
 
             // Fitur search nim/nama mahasiswa atau judul proposal
@@ -223,8 +264,28 @@ class ProposalController extends Controller
                     ->orWhere('judul_proposal', 'like', '%' . $request->search . '%');
             }
 
-            // Tambahkan filter status_proposal = 1
-            $query->where('status_proposal', 1);
+            // Filter tahun ajaran multi value
+            if ($request->tahun_ajaran_id) {
+                $tahunAjaranList = explode(',', $request->tahun_ajaran_id);
+                $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                $query->whereHas('tugasAkhir.tahunAjaran', function ($q) use ($tahunAjaranList) {
+                    $q->whereIn('id', $tahunAjaranList);
+                });
+            }
+            // Ambil tahun ajaran list (tidak berubah)
+            $currentYear = now()->year;
+            $tahunAjaranList = TahunAjaran::where(function ($query) use ($currentYear) {
+                for ($i = 0; $i < 5; $i++) {
+                    $year = $currentYear - $i;
+                    if ($i == 0) {
+                        $query->where('tahun_ajaran', 'like', '%' . $year . '%');
+                    } else {
+                        $query->orWhere('tahun_ajaran', 'like', '%' . $year . '%');
+                    }
+                }
+            })
+                ->orderByDesc('tahun_ajaran')
+                ->get(['id', 'tahun_ajaran']);
 
             // Filter status_nilai: sudah/ belum
             if ($request->has('status_nilai')) {
@@ -252,6 +313,10 @@ class ProposalController extends Controller
                 Carbon::setLocale('id');
                 return [
                     'proposal_id' => $item->id,
+                    'tahun_ajaran' => $item->tugasAkhir->tahunAjaran ? [
+                        'tahun_ajaran_id' => $item->tugasAkhir->tahunAjaran->id,
+                        'tahun_ajaran' => $item->tugasAkhir->tahunAjaran->tahun_ajaran,
+                    ] : null,
                     'judul_proposal' => $item->judul_proposal ?? null,
                     'nilai_proposal' => $item->tugasAkhir->nilai_proposal ?? null,
                     'mahasiswa' => [
@@ -296,7 +361,7 @@ class ProposalController extends Controller
                 ->find($proposalId);
 
             if (!$proposal) {
-                return ApiResponse::success(null, 'Proposal tidak ditemukan untuk ID tersebut');
+                return ApiResponse::error('Proposal tidak ditemukan untuk ID tersebut', 404);
             }
             $naskahBerkas = $proposal->berkas
                 ->where('nama_berkas', 'Naskah Proposal Tugas Akhir')
@@ -380,9 +445,10 @@ class ProposalController extends Controller
     {
         $search = $request->get('search');
         $statusNilai = $request->get('status_nilai');
+        $tahunAjaranId = $request->get('tahun_ajaran_id');
 
         return Excel::download(
-            new ProposalExport($search, $statusNilai),
+            new ProposalExport($search, $statusNilai, $tahunAjaranId),
             'seminar_proposal_filtered.xlsx'
         );
     }
