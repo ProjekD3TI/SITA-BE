@@ -96,8 +96,8 @@ class NilaiBimbinganController extends Controller
             $statusKelulusan = $tugasAkhir->status_kelulusan;
 
             if ($nilaiProposal !== null && $nilaiBimbingan->rerata_bimbingan !== null && $nilaiUjianTA->count() === 3) {
-                if ($statusKelulusan == 3) {
-                    $nilaiAkhir = 0;
+                if ($statusKelulusan == 3 || $statusKelulusan == 4) {
+                    $nilaiAkhir = null;
                 } else {
                     $rerataUjianTA = $nilaiUjianTA->avg();
                     $nilaiAkhir = round(
@@ -173,8 +173,8 @@ class NilaiBimbinganController extends Controller
             $statusKelulusan = $tugasAkhir->status_kelulusan;
 
             if ($nilaiProposal !== null && $nilaiBimbingan->rerata_bimbingan !== null && $nilaiUjianTA->count() === 3) {
-                if ($statusKelulusan == 3) {
-                    $nilaiAkhir = 0;
+                if ($statusKelulusan == 3 || $statusKelulusan == 4) {
+                    $nilaiAkhir = null;
                 } else {
                     $rerataUjianTA = $nilaiUjianTA->avg();
                     $nilaiAkhir = round(

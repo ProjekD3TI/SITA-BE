@@ -719,7 +719,7 @@ class TugasAkhirController extends Controller
                 ->first();
 
             if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+                return ApiResponse::error('Permintaan pembimbing tidak ditemukan', 404);
             }
 
             $daftarDosen = Dosen::select('name', 'nik', 'id', 'akses_ta')
@@ -971,19 +971,41 @@ class TugasAkhirController extends Controller
                 ->first();
 
             if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+                return ApiResponse::error('Detail bimbingan tidak ditemukan', 404);
             }
 
             Carbon::setLocale('id');
 
-            // Ambil hanya kolom yang diminta dari tabel bimbingan
+            // 1. Pertama, ambil SEMUA bimbingan untuk tugas akhir ini, dan urutkan berdasarkan ID ASC (kronologis)
+            // Kita perlu ini untuk menghitung bimbingan_ke dengan benar
+            $allBimbingan = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
+                ->orderBy('id', 'asc')
+                ->get(['id', 'status_verifikasi']);
+
+            // 2. Buat mapping ID bimbingan => nomor bimbingan_ke
+            $bimbinganKeMapping = [];
+            $counter = 1; // Mulai dari 1 untuk bimbingan pertama
+
+            foreach ($allBimbingan as $bimbingan) {
+                $bimbinganKeMapping[$bimbingan->id] = $counter;
+
+                // Hanya increment counter jika bimbingan disetujui (status = 1)
+                // Jika status = 0 (ditolak) atau 3 (tertunda), counter tidak bertambah
+                if ($bimbingan->status_verifikasi == 1) {
+                    $counter++;
+                }
+            }
+
+            // 3. Sekarang ambil data untuk paginasi (dengan order DESC agar yang terbaru muncul duluan)
             $bimbinganQuery = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
                 ->orderBy('id', 'desc')
                 ->paginate(10, ['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
 
-            $bimbinganData = collect($bimbinganQuery->items())->map(function ($bimbingan) {
+            // 4. Map data bimbingan dengan nomor bimbingan_ke yang telah dihitung
+            $bimbinganData = collect($bimbinganQuery->items())->map(function ($bimbingan) use ($bimbinganKeMapping) {
                 return [
                     'id' => $bimbingan->id,
+                    'bimbingan_ke' => $bimbinganKeMapping[$bimbingan->id], // Ambil dari mapping yang telah dibuat
                     'tanggal_bimbingan' => $bimbingan->tanggal_bimbingan
                         ? Carbon::parse($bimbingan->tanggal_bimbingan)->translatedFormat('l, d F Y')
                         : null,
@@ -991,7 +1013,7 @@ class TugasAkhirController extends Controller
                     'catatan' => $bimbingan->catatan,
                     'status_verifikasi' => $bimbingan->status_verifikasi,
                 ];
-            });
+            })->toArray();
 
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id,
@@ -1198,7 +1220,7 @@ class TugasAkhirController extends Controller
 
 
             if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas Akhir tidak ditemukan.', 404);
+                return ApiResponse::error('Tugas akhir yang akan diplotting penguji tidak ditemukan.', 404);
             }
 
             // Cek jika mahasiswa sudah lulus atau harus mengulang
@@ -1389,7 +1411,7 @@ class TugasAkhirController extends Controller
                 ->first();
 
             if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+                return ApiResponse::error('Pendaftaran tidak ditemukan', 404);
             }
 
             // Cek jika mahasiswa sudah lulus
@@ -1755,10 +1777,11 @@ class TugasAkhirController extends Controller
             ])
                 // ->where('status_aktif', 1)
                 ->where('id', $tugasAkhirId)
+                ->where("status_valid", 1) // Hanya ambil yang sudah valid
                 ->first();
 
             if (!$tugasAkhir) {
-                return ApiResponse::error('Tugas Akhir tidak ditemukan', 404);
+                return ApiResponse::error('Ujian TA tidak ditemukan', 404);
             }
             if (in_array($tugasAkhir->status_kelulusan, [1, 2, 4])) {
                 return ApiResponse::error('Tidak dapat mengubah validasi karena tugas akhir sudah dinyatakan lulus/tidak lulus.', 403);
@@ -2494,7 +2517,7 @@ class TugasAkhirController extends Controller
                 }
 
                 // === Hitung nilai akhir jika semua nilai sudah ada, KECUALI status_kelulusan == 3 ===
-                if ($request->status_kelulusan != 3) {
+                if ($request->status_kelulusan != 3 || $request->status_kelulusan != 4) {
                     $nilaiProposal = $tugasAkhir->nilai_proposal;
                     $nilaiBimbingan = $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->rerata_bimbingan : null;
                     $nilaiUjianTACollection = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)

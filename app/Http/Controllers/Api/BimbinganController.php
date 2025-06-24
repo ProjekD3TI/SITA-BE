@@ -120,7 +120,25 @@ class BimbinganController extends Controller
                 return ApiResponse::success([], 'Belum ada tugas akhir yang aktif');
             }
 
+            // 1. Ambil SEMUA bimbingan untuk perhitungan nomor bimbingan_ke yang akurat
+            $allBimbingan = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
+                ->orderBy('id', 'asc')
+                ->get(['id', 'status_verifikasi']);
 
+            // 2. Buat mapping ID bimbingan => nomor bimbingan_ke
+            $bimbinganKeMapping = [];
+            $counter = 1; // Mulai dari 1 untuk bimbingan pertama
+
+            foreach ($allBimbingan as $bimbingan) {
+                $bimbinganKeMapping[$bimbingan->id] = $counter;
+
+                // Hanya increment counter jika bimbingan disetujui (status = 1)
+                if ($bimbingan->status_verifikasi == 1) {
+                    $counter++;
+                }
+            }
+
+            // 3. Ambil data dengan paginasi (tetap urut DESC agar terbaru muncul dulu)
             $bimbinganList = Bimbingan::where('tugas_akhir_id', $tugasAkhir->id)
                 ->orderBy('id', 'desc')
                 ->paginate(10, ['id', 'tanggal_bimbingan', 'bab', 'catatan', 'status_verifikasi']);
@@ -128,9 +146,12 @@ class BimbinganController extends Controller
             $babTertinggi = $tugasAkhir->bimbingan
                 ->where('status_verifikasi', 1)
                 ->max('bab') ?? null;
-            $result = collect($bimbinganList->items())->map(function ($item) {
+
+            // 4. Map data dengan nomor bimbingan_ke yang sudah dihitung
+            $result = collect($bimbinganList->items())->map(function ($item) use ($bimbinganKeMapping) {
                 return [
                     'id' => $item->id,
+                    'bimbingan_ke' => $bimbinganKeMapping[$item->id], // Tambah bimbingan_ke dari mapping
                     'tanggal_bimbingan' => $item->tanggal_bimbingan
                         ? Carbon::parse($item->tanggal_bimbingan)->translatedFormat('l, d F Y')
                         : null,

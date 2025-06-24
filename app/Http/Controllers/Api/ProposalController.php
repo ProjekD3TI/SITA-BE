@@ -152,7 +152,7 @@ class ProposalController extends Controller
 
 
             if (!$proposal) {
-                return ApiResponse::error('Proposal tidak ditemukan untuk ID tersebut', 404);
+                return ApiResponse::error('Detail pengajuan proposal tidak ditemukan.', 404);
             }
 
             // Cek jika proposal sudah divalidasi (diterima atau ditolak)
@@ -361,7 +361,7 @@ class ProposalController extends Controller
                 ->find($proposalId);
 
             if (!$proposal) {
-                return ApiResponse::error('Proposal tidak ditemukan untuk ID tersebut', 404);
+                return ApiResponse::error('Detail seminar proposal tidak ditemukan.', 404);
             }
             $naskahBerkas = $proposal->berkas
                 ->where('nama_berkas', 'Naskah Proposal Tugas Akhir')
