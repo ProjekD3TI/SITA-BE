@@ -55,12 +55,38 @@ class TugasAkhirController extends Controller
                 });
             }
 
+            // Filter tahun ajaran multi value
+            if ($request->tahun_ajaran_id) {
+                $tahunAjaranList = explode(',', $request->tahun_ajaran_id);
+                $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                $query->whereIn('tahun_ajaran_id', $tahunAjaranList);
+            }
+
+            // Ambil tahun ajaran list (tidak berubah)
+            $currentYear = now()->year;
+            $tahunAjaranList = TahunAjaran::where(function ($query) use ($currentYear) {
+                for ($i = 0; $i < 5; $i++) {
+                    $year = $currentYear - $i;
+                    if ($i == 0) {
+                        $query->where('tahun_ajaran', 'like', '%' . $year . '%');
+                    } else {
+                        $query->orWhere('tahun_ajaran', 'like', '%' . $year . '%');
+                    }
+                }
+            })
+                ->orderByDesc('tahun_ajaran')
+                ->get(['id', 'tahun_ajaran']);
+
             // Pagination
             $tugasAkhir = $query->orderByDesc('id')->paginate(10);
 
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
+                    'tahun_ajaran' => [
+                        'id' => $item->tahunAjaran->id ?? null,
+                        'tahun_ajaran' => $item->tahunAjaran->tahun_ajaran ?? null,
+                    ],
                     'mahasiswa' => [
                         'id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
@@ -77,6 +103,7 @@ class TugasAkhirController extends Controller
 
             $result = [
                 'data' => $data,
+                'tahun_ajaran_list' => $tahunAjaranList,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
                     'last_page' => $tugasAkhir->lastPage(),
@@ -1059,6 +1086,27 @@ class TugasAkhirController extends Controller
                     }
                 });
             }
+            // Filter tahun ajaran multi value
+            if ($request->tahun_ajaran_id) {
+                $tahunAjaranList = explode(',', $request->tahun_ajaran_id);
+                $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                $query->whereIn('tahun_ajaran_id', $tahunAjaranList);
+            }
+
+            // Ambil tahun ajaran list (tidak berubah)
+            $currentYear = now()->year;
+            $tahunAjaranList = TahunAjaran::where(function ($query) use ($currentYear) {
+                for ($i = 0; $i < 5; $i++) {
+                    $year = $currentYear - $i;
+                    if ($i == 0) {
+                        $query->where('tahun_ajaran', 'like', '%' . $year . '%');
+                    } else {
+                        $query->orWhere('tahun_ajaran', 'like', '%' . $year . '%');
+                    }
+                }
+            })
+                ->orderByDesc('tahun_ajaran')
+                ->get(['id', 'tahun_ajaran']);
 
             // Query Anomali
             $query->orderByRaw("CASE WHEN NOT EXISTS ( SELECT 1 FROM dosen_penguji WHERE dosen_penguji.tugas_akhir_id = tugas_akhir.id ) THEN 0 ELSE 1 END")
@@ -1084,6 +1132,10 @@ class TugasAkhirController extends Controller
 
                 return [
                     'tugas_akhir_id' => $item->id,
+                    'tahun_ajaran' => [
+                        'tahun_ajaran_id' => $item->tahunAjaran->id ?? null,
+                        'tahun_ajaran' => $item->tahunAjaran->tahun_ajaran ?? null,
+                    ],
                     'sudah_lulus' => $sudahLulus,
                     'mahasiswa' => [
                         'mahasiswa_id' => $item->mahasiswa->id ?? null,
@@ -1109,6 +1161,7 @@ class TugasAkhirController extends Controller
 
             $result = [
                 'notification' => $notificationCount,
+                'tahun_ajaran_list' => $tahunAjaranList,
                 'data' => $data,
                 'pagination' => [
                     'current_page' => $tugasAkhir->currentPage(),
@@ -1152,7 +1205,6 @@ class TugasAkhirController extends Controller
             if (in_array($tugasAkhir->status_kelulusan, [1, 2, 4])) {
                 return ApiResponse::error('Tidak dapat mengubah penguji karena mahasiswa sudah dinyatakan lulus atau harus mengulang TA.', 403);
             }
-
 
             $daftarDosen = Dosen::select('id', 'name', 'nik', 'akses_ta')
                 ->where('status', 1)
@@ -1237,6 +1289,28 @@ class TugasAkhirController extends Controller
                 }
             }
 
+            // Filter tahun ajaran multi value
+            if ($request->tahun_ajaran_id) {
+                $tahunAjaranList = explode(',', $request->tahun_ajaran_id);
+                $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                $query->whereIn('tahun_ajaran_id', $tahunAjaranList);
+            }
+
+            // Ambil tahun ajaran list (tidak berubah)
+            $currentYear = now()->year;
+            $tahunAjaranList = TahunAjaran::where(function ($query) use ($currentYear) {
+                for ($i = 0; $i < 5; $i++) {
+                    $year = $currentYear - $i;
+                    if ($i == 0) {
+                        $query->where('tahun_ajaran', 'like', '%' . $year . '%');
+                    } else {
+                        $query->orWhere('tahun_ajaran', 'like', '%' . $year . '%');
+                    }
+                }
+            })
+                ->orderByDesc('tahun_ajaran')
+                ->get(['id', 'tahun_ajaran']);
+
             $query->orderByRaw("CASE WHEN status_valid = 0 THEN 0 ELSE 1 END")->orderByDesc('id');
 
             $tugasAkhir = $query->paginate(10);
@@ -1252,6 +1326,10 @@ class TugasAkhirController extends Controller
             $data = $tugasAkhir->map(function ($item) {
                 return [
                     'tugas_akhir_id' => $item->id,
+                    'tahun_ajaran' => [
+                        'tahun_ajaran_id' => $item->tahunAjaran->id ?? null,
+                        'tahun_ajaran' => $item->tahunAjaran->tahun_ajaran ?? null,
+                    ],
                     'mahasiswa' => [
                         'mahasiswa_id' => $item->mahasiswa->id ?? null,
                         'nim' => $item->mahasiswa->nim ?? null,
@@ -1278,6 +1356,7 @@ class TugasAkhirController extends Controller
 
             $result = [
                 'notification' => $notificationCount,
+                'tahun_ajaran_list' => $tahunAjaranList,
                 'status_form' => $statusForm,
                 'data' => $data,
                 'pagination' => [

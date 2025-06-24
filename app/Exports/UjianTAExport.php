@@ -66,7 +66,9 @@ class UjianTAExport implements FromCollection, WithHeadings, WithStyles, WithEve
                 }
 
                 if ($this->tahunAjaranId) {
-                    $ujianQuery->where('tahun_ajaran_id', $this->tahunAjaranId);
+                    $tahunAjaranList = explode(',', $this->tahunAjaranId);
+                    $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                    $ujianQuery->whereIn('tahun_ajaran_id', $tahunAjaranList);
                 }
 
                 if (!empty($statuses)) {
@@ -124,7 +126,9 @@ class UjianTAExport implements FromCollection, WithHeadings, WithStyles, WithEve
                 }
 
                 if ($this->tahunAjaranId) {
-                    $queryTaBelumUjian->where('tahun_ajaran_id', $this->tahunAjaranId);
+                    $tahunAjaranList = explode(',', $this->tahunAjaranId);
+                    $tahunAjaranList = array_map('trim', $tahunAjaranList);
+                    $queryTaBelumUjian->whereIn('tahun_ajaran_id', $tahunAjaranList);
                 }
 
                 $taBelumUjian = $queryTaBelumUjian->get();
