@@ -162,7 +162,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     // Sistem Tugas-akhir (Fitur Ujian Tugas Akhir ~ List Ujian TA untuk Dosen & Detail Ujian TA)
     Route::get('/dosen/tugas-akhir/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
     Route::get('/dosen/tugas-akhir/detail-ujian-ta/{ujianTaId}', [TugasAkhirController::class, 'detailUjianForDosen']);
-
+    Route::get('/dosen/tugas-akhir/check-ujian-revision-status/{ujianTaId}', [TugasAkhirController::class, 'checkUjianRevisionStatus']);
     // Sistem Tugas akhir (Tugas Akhir)
     Route::put('/dosen/tugas-akhir/submit-nilai-dan-status/{tugasAkhirId}', [TugasAkhirController::class, 'updateStatusKelulusanDanNilaiByDosenPenguji']);
 
