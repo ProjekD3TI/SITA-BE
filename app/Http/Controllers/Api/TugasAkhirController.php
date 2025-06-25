@@ -2338,37 +2338,37 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function checkUjianRevisionStatus($ujianTaId)
+    public function cekStatusRevisiUjianTAForDosen($ujianTaId)
     {
         try {
-            $currentUjian = UjianTA::with('tugasAkhir')->findOrFail($ujianTaId);
-            $tugasAkhirId = $currentUjian->tugas_akhir_id;
+            $ujianSaatIni = UjianTA::with('tugasAkhir')->findOrFail($ujianTaId);
+            $tugasAkhirId = $ujianSaatIni->tugas_akhir_id;
 
             // Cari UjianTA sebelumnya dengan status_kelulusan = 3 (revisi)
             // Pastikan hanya yang terjadi sebelum ujian ini
-            $previousRevisionExam = UjianTA::where('tugas_akhir_id', $tugasAkhirId)
+            $ujianRevisiSebelumnya = UjianTA::where('tugas_akhir_id', $tugasAkhirId)
                 ->where('id', '!=', $ujianTaId)
                 ->where('status_kelulusan', 3)
-                ->where(function ($query) use ($currentUjian) {
-                    if ($currentUjian->tanggal_ujian) {
-                        $query->where('tanggal_ujian', '<', $currentUjian->tanggal_ujian);
+                ->where(function ($query) use ($ujianSaatIni) {
+                    if ($ujianSaatIni->tanggal_ujian) {
+                        $query->where('tanggal_ujian', '<', $ujianSaatIni->tanggal_ujian);
                     }
                     // Fallback ke ID jika tanggal sama/tidak ada
-                    $query->orWhere('id', '<', $currentUjian->id);
+                    $query->orWhere('id', '<', $ujianSaatIni->id);
                 })
                 ->orderByDesc('tanggal_ujian')
                 ->orderByDesc('id')
                 ->exists();
 
             $data = [
-                'is_retake' => $previousRevisionExam,
+                'is_retake' => $ujianRevisiSebelumnya,
                 'tugas_akhir_id' => $tugasAkhirId,
-                'ujian_ta_id' => $currentUjian->id,
+                'ujian_ta_id' => $ujianSaatIni->id,
             ];
 
             return ApiResponse::success(
                 $data,
-                $previousRevisionExam
+                $ujianRevisiSebelumnya
                     ? 'Ujian ini adalah ujian ulang setelah revisi'
                     : 'Ujian ini bukan ujian ulang'
             );
