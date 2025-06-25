@@ -411,11 +411,11 @@ class ProposalController extends Controller
         try {
             // Validate the request
             $validatedData = $request->validate([
-                'nilai_proposal' => 'required|numeric|min:0|max:100', // Ensure the score is between 0 and 100
-                'catatan_proposal' => 'required|string', // Notes are required
+                'nilai_proposal' => 'required|numeric|min:0|max:100',
+                'catatan_proposal' => 'required|string',
             ]);
 
-            // Temukan porposal berdasarkan ID dengan eager loading
+            // Temukan proposal berdasarkan ID dengan eager loading
             $proposal = Proposal::with(['tugasAkhir'])->findOrFail($id);
 
             // Pastikan Proposal memiliki TugasAkhir yang terkait
@@ -423,12 +423,14 @@ class ProposalController extends Controller
                 return ApiResponse::error('Proposal ini tidak terhubung dengan Tugas Akhir manapun', 404);
             }
 
+            // Cek jika sudah ada nilai akhir, tidak boleh update
+            if (!is_null($proposal->tugasAkhir->nilai_akhir)) {
+                return ApiResponse::error('Nilai proposal tidak dapat diubah karena mahasiswa sudah memiliki nilai akhir.', 403);
+            }
+
             // Update the TugasAkhir record
             $tugasAkhir = $proposal->tugasAkhir;
             $tugasAkhir->nilai_proposal = $validatedData['nilai_proposal'];
-
-
-            // $tugasAkhir->catatan_proposal = $validatedData['catatan_proposal'];
             $tugasAkhir->catatan_proposal = Purifier::clean($validatedData['catatan_proposal']);
             $tugasAkhir->save();
 
@@ -440,7 +442,6 @@ class ProposalController extends Controller
             return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
         }
     }
-
     public function exportProposalBelumSeminar(Request $request)
     {
         $search = $request->get('search');

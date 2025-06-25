@@ -415,9 +415,11 @@ class AdminTaController extends Controller
             $pdf->Load($fields, true);
             $pdf->Merge();
 
-            return response($pdf->Output('S', 'berita_acara_ujian.pdf'))
+            $namaFile = preg_replace('/[^A-Za-z0-9 _-]/', '', $nama_mahasiswa) . '_BA.pdf';
+            return response($pdf->Output('S', $namaFile))
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="berita_acara_ujian.pdf"');
+                ->header('Content-Disposition', 'attachment; filename="' . $namaFile . '"')
+                ->header('Access-Control-Expose-Headers', 'Content-Disposition');
         } catch (Exception $e) {
             return ApiResponse::error('Gagal mengambil data berita acara ujian: ' . $e->getMessage(), 500);
         }
@@ -429,7 +431,11 @@ class AdminTaController extends Controller
         if (!file_exists($path)) {
             abort(404, 'File tidak ditemukan');
         }
-        return response()->download($path, 'template_lembar_revisi.pdf');
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="template_lembar_revisi.pdf"',
+            'Access-Control-Expose-Headers' => 'Content-Disposition',
+        ]);
     }
 
     public function tabelJabatanDosenForAdmin()
