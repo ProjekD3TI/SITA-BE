@@ -86,6 +86,10 @@ return [
 
     'extensions' => [],
     'security_schemes' => [
-        'sanctumAuth' => SecurityScheme::http('bearer', 'Sanctum'),
+        'sanctumAuth' => [
+            'type' => 'http',
+            'scheme' => 'bearer',
+            'bearerFormat' => 'Sanctum',
+        ],
     ],
 ];

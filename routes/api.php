@@ -245,10 +245,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::middleware(['auth:sanctum', 'admin.role:admin_ta'])->group(function () {
         Route::get('/admin_ta/dashboard', [AdminTaController::class, 'dashboard']);
 
-        // Route::post('/admin_ta/cetak-berita-acara-ujian', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
         Route::get('/admin_ta/cetak-berita-acara-ujian/{ujianTaId}', [AdminTaController::class, 'cetakBeritaAcaraUjian']);
-        Route::get('/admin_ta/template-lembar-revisi', [AdminTaController::class, 'downloadLembarRevisi'])
-            ->withoutMiddleware(['api']); // Hapus middleware api
+        Route::get('/admin_ta/cetak-lembar-revisi/{ujianTaId}', [AdminTaController::class, 'cetakLembarRevisi']);
+        // Route::get('/admin_ta/template-lembar-revisi', [AdminTaController::class, 'downloadLembarRevisi'])
+        //     ->withoutMiddleware(['api']); // Hapus middleware api
         // Tugas-akhir
         Route::get('/admin_ta/tugas-akhir', [TugasAkhirController::class, 'tabelTugasAkhirForAdmin']);
         Route::put('/admin_ta/tugas-akhir/{id}/update-active-status', [TugasAkhirController::class, 'updateActiveStatusForAdmin']);

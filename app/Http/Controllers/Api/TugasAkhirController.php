@@ -1646,6 +1646,7 @@ class TugasAkhirController extends Controller
                     ],
                     'tugas_akhir_id' => $ta->id ?? null,
                     'berita_acara_url' => url('/api/admin_ta/cetak-berita-acara-ujian/' . ($item->id ?? 0)),
+                    'lembar_revisi_url' => url('/api/admin_ta/cetak-lembar-revisi/' . ($item->id ?? 0)),
                     'mahasiswa' => [
                         'mahasiswa_id' => $ta->mahasiswa->id ?? null,
                         'nim' => $ta->mahasiswa->nim ?? null,
@@ -1675,6 +1676,7 @@ class TugasAkhirController extends Controller
                     'ujian_ta' => null,
                     'tugas_akhir_id' => $ta->id ?? null,
                     'berita_acara_url' => null,
+                    'lembar_revisi_url' => null,
                     'mahasiswa' => [
                         'mahasiswa_id' => $ta->mahasiswa->id ?? null,
                         'nim' => $ta->mahasiswa->nim ?? null,
@@ -2585,8 +2587,8 @@ class TugasAkhirController extends Controller
             return ApiResponse::success(
                 $data,
                 $ujianRevisiSebelumnya
-                    ? 'Ujian ini adalah ujian ulang setelah revisi'
-                    : 'Ujian ini bukan ujian ulang'
+                ? 'Ujian ini adalah ujian ulang setelah revisi'
+                : 'Ujian ini bukan ujian ulang'
             );
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);

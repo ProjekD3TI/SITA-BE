@@ -26,10 +26,9 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
-
     'max_age' => 0,
 
+    'expose_headers' => ['Content-Disposition'],
 
     'supports_credentials' => true,
 

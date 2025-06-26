@@ -13,6 +13,7 @@ use App\Models\JabatanDosen;
 use App\Models\NilaiUjianTA;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Spatie\LaravelPdf\Facades\Pdf;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
@@ -438,6 +439,76 @@ class AdminTaController extends Controller
         ]);
     }
 
+    public function cetakLembarRevisi($ujianTaId)
+    {
+        try {
+            // Ambil data Ujian TA beserta relasi yang dibutuhkan
+            $ujianTA = UjianTA::with([
+                'tugasAkhir.mahasiswa',
+                'tugasAkhir.dosenPenguji',
+                'tugasAkhir.dosenPembimbing',
+            ])->findOrFail($ujianTaId);
+
+            $tugasAkhir = $ujianTA->tugasAkhir;
+            $mahasiswa = $tugasAkhir->mahasiswa;
+
+            // Data identitas
+            $nama_mahasiswa = $mahasiswa->name ?? '-';
+            $nim_mahasiswa = $mahasiswa->nim ?? '-';
+            $judul_ta = $tugasAkhir->judul_tugas_akhir ?? '-';
+
+            // Tanggal ujian (format: Selasa, 24 Juni 2025)
+            Carbon::setLocale('id');
+            $tanggal_ujian = $ujianTA->tanggal_ujian
+                ? Carbon::parse($ujianTA->tanggal_ujian)->translatedFormat('l, d F Y')
+                : '-';
+
+            // Ambil dosen penguji (urutkan: ketua, sekretaris, penguji)
+            $penguji = $tugasAkhir->dosenPenguji;
+            $ketua = $penguji->firstWhere('pivot.jabatan_penguji', 'ketua');
+            $sekretaris = $penguji->firstWhere('pivot.jabatan_penguji', 'sekretaris');
+            $pengujiBiasa = $penguji->firstWhere('pivot.jabatan_penguji', 'penguji');
+
+            // Ambil nilai revisi dari tabel nilai_ujian_ta
+            $nilaiUjianTA = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)->get();
+
+            $nilaiKetua = $nilaiUjianTA->where('dosen_id', optional($ketua)->id)->first();
+            $nilaiSekretaris = $nilaiUjianTA->where('dosen_id', optional($sekretaris)->id)->first();
+            $nilaiPenguji = $nilaiUjianTA->where('dosen_id', optional($pengujiBiasa)->id)->first();
+
+            // Siapkan data revisi untuk blade, konsisten penamaan
+            $revisi = (object) [
+                'tanggal_ujian' => $tanggal_ujian,
+                'nama_mahasiswa' => $nama_mahasiswa,
+                'nim_mahasiswa' => $nim_mahasiswa,
+                'judul_tugas_akhir' => $judul_ta,
+                'nama_ketua_penguji' => $ketua?->name ?? '-',
+                'nama_sekretaris_penguji' => $sekretaris?->name ?? '-',
+                'nama_penguji' => $pengujiBiasa?->name ?? '-',
+                'catatan_ketua_penguji' => $nilaiKetua?->revisi ?? '<i>tidak ada catatan</i>',
+                'catatan_sekretaris_penguji' => $nilaiSekretaris?->revisi ?? '<i>tidak ada catatan</i>',
+                'catatan_penguji' => $nilaiPenguji?->revisi ?? '<i>tidak ada catatan</i>',
+            ];
+
+            $namaFile = preg_replace('/[^A-Za-z0-9 _-]/', '', $nama_mahasiswa) . '_Lembar_Revisi.pdf';
+
+            // Simpan PDF ke file sementara
+            $tempPath = storage_path('app/temp/' . $namaFile);
+            Pdf::view('lembarRevisi', [
+                'revisi' => $revisi
+            ])->format('a4')->save($tempPath);
+
+            // Kirim response manual
+            return response()->download($tempPath, $namaFile, [
+                'Content-Type' => 'application/pdf',
+                'Access-Control-Expose-Headers' => 'Content-Disposition',
+            ])->deleteFileAfterSend(true);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Gagal generate PDF: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     public function tabelJabatanDosenForAdmin()
     {
         try {

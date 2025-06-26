@@ -19,6 +19,8 @@
         "laravel/tinker": "^2.8",
         "maatwebsite/excel": "^3.1",
         "mews/purifier": "^3.4",
+        "spatie/browsershot": "^5.0",
+        "spatie/laravel-pdf": "^1.6",
         "tmw/fpdm": "^2.9"
     },
     "require-dev": {
