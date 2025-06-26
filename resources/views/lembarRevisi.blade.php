@@ -90,7 +90,7 @@
             break-inside: avoid;
         }
 
-        .catatan-revisi h5,
+        .catatan-revisi h4,
         .catatan-revisi div {
             margin: 0px;
         }
@@ -177,15 +177,15 @@
         </table>
        <div class="catatan-revisi">
     <div>
-        <h5>{{ $revisi->nama_ketua_penguji }}</h5>
+        <h4>{{ $revisi->nama_ketua_penguji }}</h4>
         <div class="catatan">{!! $revisi->catatan_ketua_penguji !!}</div>
     </div>
     <div class="catatan-dosen">
-        <h5>{{ $revisi->nama_sekretaris_penguji }}</h5>
+        <h4>{{ $revisi->nama_sekretaris_penguji }}</h4>
         <div class="catatan">{!! $revisi->catatan_sekretaris_penguji !!}</div>
     </div>
     <div class="catatan-dosen">
-        <h5>{{ $revisi->nama_penguji }}</h5>
+        <h4>{{ $revisi->nama_penguji }}</h4>
         <div class="catatan">{!! $revisi->catatan_penguji !!}</div>
     </div>
 </div>
