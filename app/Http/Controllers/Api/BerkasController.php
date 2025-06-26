@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\BerkasResource;
 use Illuminate\Support\Facades\Storage;
 use Dotenv\Exception\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BerkasController extends Controller
 {
@@ -84,19 +85,17 @@ class BerkasController extends Controller
 
     }
 
-    public function getBerkasTugasAkhirForMahasiswa()
+    public function getBerkasTugasAkhirForMahasiswa($id)
     {
         try {
             $mahasiswaId = auth()->id();
 
+            // Ambil Tugas Akhir berdasarkan ID yang diberikan
+            // dan pastikan itu milik mahasiswa yang sedang login.
             $tugasAkhir = TugasAkhir::where('mahasiswa_id', $mahasiswaId)
-                ->where('status_aktif', 1)
-                ->first();
+                ->findOrFail($id);
 
-            if (!$tugasAkhir) {
-                return ApiResponse::success([], 'Belum ada Tugas Akhir aktif');
-            }
-
+            // Daftar berkas yang diharapkan ada untuk setiap tugas akhir
             $expectedBerkas = [
                 "Naskah Tugas Akhir",
                 "Transkrip Nilai Mahasiswa",
@@ -108,16 +107,22 @@ class BerkasController extends Controller
                 "Surat Perpanjangan Masa Studi"
             ];
 
+            // Ambil semua berkas yang sudah ada di database untuk tugas akhir ini
             $berkasDB = $tugasAkhir->berkas()->get();
 
             $result = [];
+            // Loop melalui daftar berkas yang diharapkan
             foreach ($expectedBerkas as $nama) {
+                // Cari berkas yang sesuai dari yang sudah ada di DB
                 $berkas = $berkasDB->firstWhere('nama_berkas', $nama);
+
+                // Bangun array respons, pastikan ada entri untuk setiap jenis berkas
                 $result[] = [
                     'id' => $berkas->id ?? null,
-                    'nama_berkas' => $berkas->nama_berkas ?? null,
+                    'nama_berkas' => $nama, // Selalu gunakan nama dari expected list
                     'file_path' => $berkas->file_path ?? null,
                     'status_valid' => $berkas->status_valid ?? null,
+                    // Buat URL download hanya jika berkas ada
                     'download_url' => $berkas ? route('berkas.download', ['berkas' => $berkas->id]) : null,
                 ];
             }
@@ -126,6 +131,9 @@ class BerkasController extends Controller
                 'berkas' => $result,
                 'catatan_perbaikan' => $tugasAkhir->catatan_perbaikan,
             ], 'Daftar berkas tugas akhir berhasil diambil');
+
+        } catch (ModelNotFoundException $e) {
+            return ApiResponse::error('Tugas Akhir tidak ditemukan atau Anda tidak memiliki akses.', 404);
         } catch (\Exception $e) {
             return ApiResponse::error('Gagal mengambil berkas tugas akhir: ' . $e->getMessage(), 500);
         }

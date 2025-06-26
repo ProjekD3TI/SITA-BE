@@ -101,16 +101,28 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('/mahasiswa/nilai-bimbingan', [NilaiBimbinganController::class, 'getNilaiBimbinganByMahasiswa']);
 
     // Ujian Tugas Akhir
-    Route::get('/mahasiswa/ujian-ta', [TugasAkhirController::class, 'ujianTAForMahasiswa']);
+    Route::get('/mahasiswa/tugas-akhir/ujian-ta', [TugasAkhirController::class, 'UjianTAForMahasiswa']);
+    //detail
+    Route::get('mahasiswa/tugas-akhir/tugas-akhir/{id}', [TugasAkhirController::class, 'detailTugasAkhirForMahasiswa']);
+    //daftar
+    Route::get('/mahasiswa/tugas-akhr/ujian-ta/daftar', [TugasAkhirController::class, 'showDaftarTAForMahasiswa']);
+    Route::post('/mahasiswa/tugas-akhir/daftar', [TugasAkhirController::class, 'storeUjianTAForMahasiswa']);
+    Route::post('/mahasiswa/tugas-akhir/daftar/{id}/update', [TugasAkhirController::class, 'updateUjianTAForMahasiswa']);
+    //berkas
+    Route::get('/mahasiswa/tugas-akhir/ujian-ta/berkas/{id}', [BerkasController::class, 'getBerkasTugasAkhirForMahasiswa']);
+
+
     Route::get('/mahasiswa/ujian-ta/nilai-ujian', [NilaiUjianTAController::class, 'getNilaiUjianForMahasiswa']);
     Route::get('/mahasiswa/ujian-ta/jadwal-ujian', [UjianTAController::class, 'jadwalUjianForMahasiswa']);
 
-    Route::get('/mahasiswa/berkas/ujian-ta', [BerkasController::class, 'getBerkasTugasAkhirForMahasiswa']);
 
-    Route::post('/mahasiswa/tugas-akhir/daftar', [TugasAkhirController::class, 'storeUjianTAForMahasiswa']);
-    Route::post('/mahasiswa/tugas-akhir/{id}/update', [TugasAkhirController::class, 'updateUjianTAForMahasiswa']);
+
+    //iki kae nggo opo ya cik, tak golek i ra rung temu nggo opo. tak hapus wedi rusak cik
     Route::get('/mahasiswa/tugas-akhir/cek-dosen-pembimbing', [TugasAkhirController::class, 'cekDosenPembimbingByMahasiswa']);
     Route::get('/mahasiswa/tugas-akhir/aktif', [TugasAkhirController::class, 'tugasAkhirAktifByMahasiswa']);
+
+
+    //dashboard
     Route::get('mahasiswa/tugas-akhir/dashboard', [TugasAkhirController::class, 'setDashboardByMahasiswa']);
 
     // Kategori

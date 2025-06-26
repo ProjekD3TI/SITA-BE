@@ -46,5 +46,8 @@ class UjianTA extends Model
     {
         return $this->belongsTo(Sesi::class, 'sesi_id', 'id');
     }
-
+    public function nilaiUjian()
+    {
+        return $this->hasMany(NilaiUjianTA::class, 'ujian_ta_id', 'id');
+    }
 }

@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use App\Exports\UjianTAExport;
 use App\Models\RequestPembimbing;
 use App\Http\Responses\ApiResponse;
+use Illuminate\Support\Facades\Log;
 use Mews\Purifier\Facades\Purifier;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\TugasAkhirResource;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 
 class TugasAkhirController extends Controller
@@ -2056,7 +2058,221 @@ class TugasAkhirController extends Controller
 
     // ========================== FITUR MAHASISWA ==========================
 
-    public function ujianTAForMahasiswa()
+
+    public function UjianTAforMahasiswa()
+    {
+        try {
+            $mahasiswaId = Auth::id();
+
+            // Ambil tugas akhir yang dimiliki mahasiswa (aktif maupun tidak)
+            $tugasAkhir = TugasAkhir::with([
+                'mahasiswa:id,nim,name',
+                'dosenPembimbing:id,name,nik',
+                'dosenPenguji:id,name,nik', // Eager load the related Dosen models
+                'kategori:id,nama_kategori',
+                'tahunAjaran:id,tahun_ajaran',
+                'ujianTA' => function ($q) {
+                    $q->with([
+                        'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
+                        'ruang:id,nama_ruang',
+                        'tahunAjaran:id,tahun_ajaran',
+                        'nilaiUjian' // Eager load nilai untuk setiap ujian
+                    ])->orderByDesc('id');
+                }
+            ])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->orderByDesc('status_aktif') // Tampilkan yang aktif terlebih dahulu
+                ->orderByDesc('id')
+                ->get();
+
+            if ($tugasAkhir->isEmpty()) {
+                return ApiResponse::success([], 'Belum ada tugas akhir');
+            }
+
+            // Format data yang akan dikembalikan
+            $result = $tugasAkhir->map(function ($ta) {
+                $data = [
+                    'tugas_akhir_id' => $ta->id,
+                    'tahun_ajaran' => [
+                        'id' => $ta->tahunAjaran->id ?? null,
+                        'tahun_ajaran' => $ta->tahunAjaran->tahun_ajaran ?? null
+                    ],
+                    'status_aktif' => $ta->status_aktif,
+                    'status_kelulusan' => $ta->status_kelulusan,
+                    'dosen_pembimbing' => [
+                        'id' => $ta->dosenPembimbing->id ?? null,
+                        'name' => $ta->dosenPembimbing->name ?? null,
+                    ],
+                    'kategori' => [
+                        'id' => $ta->kategori->id ?? null,
+                        'nama_kategori' => $ta->kategori->nama_kategori ?? null,
+                    ],
+                    'jadwal_ujian' => []
+                ];
+
+                // Jika ada ujian TA, tambahkan datanya
+                if ($ta->ujianTA && $ta->ujianTA->count() > 0) {
+                    // Map semua ujian yang terkait dengan tugas akhir ini
+                    $data['jadwal_ujian'] = $ta->ujianTA->map(function ($ujian) use ($ta) {
+
+                        // Iterasi collection dosenPenguji untuk mendapatkan nilai masing-masing
+                        $pengujiList = [];
+                        if ($ta->dosenPenguji->isNotEmpty()) {
+                            $pengujiList = $ta->dosenPenguji->map(function ($penguji) use ($ujian) {
+                                // Cari nilai yang sesuai untuk dosen ini pada ujian ini
+                                $nilai = $ujian->nilaiUjian->firstWhere('dosen_id', $penguji->id);
+
+                                return [
+                                    'id' => $penguji->id,
+                                    'name' => $penguji->name,
+                                    'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
+                                    'nilai_ujian_ta' => $nilai ? [
+                                        'id' => $nilai->id,
+                                        'kualitas_tata_laporan' => $nilai->kualitas_tata_laporan,
+                                        'kemampuan_teknis' => $nilai->kemampuan_teknis,
+                                        'kualitas_produk' => $nilai->kualitas_produk,
+                                        'presentasi' => $nilai->presentasi,
+                                        'rerata_ujian_ta' => $nilai->rerata_ujian_ta,
+                                        'revisi' => $nilai->revisi,
+                                    ] : null,
+                                ];
+                            })->toArray();
+                        }
+
+                        return [
+                            'ujian_ta_id' => $ujian->id,
+                            'tanggal_ujian' => $ujian->tanggal_ujian ? Carbon::parse($ujian->tanggal_ujian)->locale('id')->translatedFormat('d F Y') : null,
+                            'dosen_penguji' => $pengujiList, // Gunakan array yang sudah dibuat
+                            'sesi' => [
+                                'id' => $ujian->sesi->id ?? null,
+                                'nama_sesi' => $ujian->sesi->nama_sesi ?? null,
+                                'waktu_mulai' => $ujian->sesi->waktu_mulai ?? null,
+                                'waktu_selesai' => $ujian->sesi->waktu_selesai ?? null,
+                            ],
+                            'ruang' => [
+                                'id' => $ujian->ruang->id ?? null,
+                                'nama_ruang' => $ujian->ruang->nama_ruang ?? null,
+                            ],
+                            'tahun_ajaran' => [
+                                'id' => $ujian->tahunAjaran->id ?? null,
+                                'tahun_ajaran' => $ujian->tahunAjaran->tahun_ajaran ?? null,
+                            ],
+                        ];
+                    })->toArray();
+                }
+
+                return $data;
+            });
+
+            return ApiResponse::success($result, 'Data tugas akhir dan jadwal ujian berhasil diambil');
+        } catch (Exception $e) {
+            return ApiResponse::error('Gagal mengambil data: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function detailTugasAkhirForMahasiswa($id)
+    {
+        try {
+            $mahasiswaId = Auth::id();
+
+            // Ambil data Tugas Akhir dan pastikan milik mahasiswa yang login.
+            $tugasAkhir = TugasAkhir::with([
+                'mahasiswa:id,nim,name',
+                'dosenPembimbing:id,name,nik',
+                'dosenPenguji:id,name,nik',
+                'kategori:id,nama_kategori',
+                'tahunAjaran:id,tahun_ajaran',
+                // Eager load relasi ujianTA dengan batasan
+                'ujianTA' => function ($query) {
+                    // Urutkan berdasarkan ID (atau created_at) secara menurun dan ambil hanya 1
+                    $query->orderBy('id', 'desc')->with([
+                        'sesi',
+                        'ruang',
+                        'tahunAjaran',
+                        'nilaiUjian', // Load nilai untuk ujian terbaru ini
+                    ]);
+                }
+            ])
+                ->where('mahasiswa_id', $mahasiswaId)
+                ->findOrFail($id);
+
+            // Karena query di atas akan mengembalikan collection, kita ambil item pertama.
+            $latestUjian = $tugasAkhir->ujianTA->first();
+
+            // Format data jadwal ujian terbaru
+            $jadwalUjianTerbaru = null;
+            if ($latestUjian) {
+                // Format data dosen penguji beserta nilainya untuk ujian ini
+                $dosenPengujiList = [];
+                if ($tugasAkhir->dosenPenguji->isNotEmpty()) {
+                    $dosenPengujiList = $tugasAkhir->dosenPenguji->map(function ($penguji) use ($latestUjian) {
+                        // Cari nilai yang relevan dari collection nilaiUjian yang sudah di-load
+                        $nilai = $latestUjian->nilaiUjian->firstWhere('dosen_id', $penguji->id);
+                        return [
+                            'id' => $penguji->id,
+                            'name' => $penguji->name,
+                            'nik' => $penguji->nik,
+                            'jabatan_penguji' => $penguji->pivot->jabatan_penguji ?? null,
+                            'nilai_ujian_ta' => $nilai ? [
+                                'id' => $nilai->id,
+                                'kualitas_tata_laporan' => $nilai->kualitas_tata_laporan,
+                                'kemampuan_teknis' => $nilai->kemampuan_teknis,
+                                'kualitas_produk' => $nilai->kualitas_produk,
+                                'presentasi' => $nilai->presentasi,
+                                'rerata_ujian_ta' => $nilai->rerata_ujian_ta,
+                                'revisi' => $nilai->revisi,
+                            ] : null,
+                        ];
+                    })->toArray();
+                }
+
+                $jadwalUjianTerbaru = [
+                    'ujian_ta_id' => $latestUjian->id,
+                    'tanggal_ujian' => $latestUjian->tanggal_ujian ? Carbon::parse($latestUjian->tanggal_ujian)->locale('id')->translatedFormat('d F Y') : null,
+                    'status_kelulusan' => $latestUjian->status_kelulusan,
+                    'nilai_akhir' => $latestUjian->nilai_akhir,
+                    'sesi' => $latestUjian->sesi ? [
+                        'id' => $latestUjian->sesi->id,
+                        'nama_sesi' => $latestUjian->sesi->nama_sesi,
+                        'waktu_mulai' => $latestUjian->sesi->waktu_mulai,
+                        'waktu_selesai' => $latestUjian->sesi->waktu_selesai,
+                    ] : null,
+                    'ruang' => $latestUjian->ruang ? ['id' => $latestUjian->ruang->id, 'nama_ruang' => $latestUjian->ruang->nama_ruang] : null,
+                    'tahun_ajaran' => $latestUjian->tahunAjaran ? ['id' => $latestUjian->tahunAjaran->id, 'tahun_ajaran' => $latestUjian->tahunAjaran->tahun_ajaran] : null,
+                    'dosen_penguji' => $dosenPengujiList,
+                ];
+            }
+
+            // Struktur data final
+            $result = [
+                'tugas_akhir_id' => $tugasAkhir->id,
+                'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir,
+                'status_aktif' => $tugasAkhir->status_aktif,
+                'mahasiswa' => [
+                    'id' => $tugasAkhir->mahasiswa->id,
+                    'nim' => $tugasAkhir->mahasiswa->nim,
+                    'name' => $tugasAkhir->mahasiswa->name,
+                ],
+                'kategori' => $tugasAkhir->kategori ? ['id' => $tugasAkhir->kategori->id, 'nama_kategori' => $tugasAkhir->kategori->nama_kategori] : null,
+                'tahun_ajaran' => $tugasAkhir->tahunAjaran ? ['id' => $tugasAkhir->tahunAjaran->id, 'tahun_ajaran' => $tugasAkhir->tahunAjaran->tahun_ajaran] : null,
+                'dosen_pembimbing' => $tugasAkhir->dosenPembimbing ? [
+                    'id' => $tugasAkhir->dosenPembimbing->id,
+                    'name' => $tugasAkhir->dosenPembimbing->name,
+                    'nik' => $tugasAkhir->dosenPembimbing->nik,
+                ] : null,
+                'jadwal_ujian_terbaru' => $jadwalUjianTerbaru,
+            ];
+
+            return ApiResponse::success($result, 'Detail tugas akhir berhasil diambil.');
+        } catch (ModelNotFoundException $e) {
+            return ApiResponse::error('Tugas akhir tidak ditemukan atau bukan milik Anda.', 404);
+        } catch (Exception $e) {
+            // Log error untuk debugging
+            return ApiResponse::error('Gagal mengambil data detail tugas akhir.', 500);
+        }
+    }
+
+    public function showDaftarTAForMahasiswa()
     {
         try {
             $mahasiswaId = Auth::id();
