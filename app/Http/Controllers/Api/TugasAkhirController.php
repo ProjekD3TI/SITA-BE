@@ -278,10 +278,14 @@ class TugasAkhirController extends Controller
             foreach ($berkasMap as $namaBerkas => $field) {
                 if ($request->hasFile($field)) {
                     $originalName = $request->file($field)->getClientOriginalName();
-                    $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$originalName}";
+                    $folderBerkas = $namaBerkas; // Nama subfolder sesuai nama berkas
+                    $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$folderBerkas}/{$originalName}";
 
-                    // Simpan file ke storage
-                    $filePath = $request->file($field)->storeAs("private/tugas_akhir/{$tugasAkhir->id}", $originalName);
+                    // Simpan file ke storage dengan subfolder nama berkas
+                    $filePath = $request->file($field)->storeAs(
+                        "private/tugas_akhir/{$tugasAkhir->id}/{$folderBerkas}",
+                        $originalName
+                    );
 
                     // Catat ke DB
                     $tugasAkhir->berkas()->create([
@@ -346,10 +350,14 @@ class TugasAkhirController extends Controller
             foreach ($berkasMap as $namaBerkas => $field) {
                 if ($request->hasFile($field)) {
                     $originalName = $request->file($field)->getClientOriginalName();
-                    $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$originalName}";
+                    $folderBerkas = $namaBerkas;
+                    $privatePath = "private/tugas_akhir/{$tugasAkhir->id}/{$folderBerkas}/{$originalName}";
 
-                    // Simpan file ke storage (selalu upload file baru)
-                    $filePath = $request->file($field)->storeAs("private/tugas_akhir/{$tugasAkhir->id}", $originalName);
+                    // Simpan file ke storage dengan subfolder nama berkas
+                    $filePath = $request->file($field)->storeAs(
+                        "private/tugas_akhir/{$tugasAkhir->id}/{$folderBerkas}",
+                        $originalName
+                    );
 
                     $berkas = $tugasAkhir->berkas()->where('nama_berkas', $namaBerkas)->first();
                     if ($berkas) {
@@ -369,7 +377,6 @@ class TugasAkhirController extends Controller
                     }
                 }
             }
-
             return ApiResponse::success(new TugasAkhirResource($tugasAkhir->load('berkas')), 'Berkas Ujian TA berhasil diupdate');
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);

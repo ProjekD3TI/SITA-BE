@@ -472,6 +472,7 @@ class ProposalController extends Controller
                 'file_transkrip' => 'required|file|mimes:pdf',
             ]);
 
+
             // Cek apakah mahasiswa memiliki tugas akhir yang aktif
             $tugasAkhir = TugasAkhir::with(['proposal'])->where('mahasiswa_id', $request->user()->id)
                 ->where('status_aktif', 1)
@@ -501,31 +502,39 @@ class ProposalController extends Controller
 
             // Simpan file proposal ke private
             $originalName = $request->file('file_proposal')->getClientOriginalName();
-            $filePath = $request->file('file_proposal')->storeAs("private/proposal/{$proposal->id}", $originalName);
-            $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
+            $folderBerkas = 'Naskah Proposal Tugas Akhir';
+            $filePath = $request->file('file_proposal')->storeAs(
+                "private/proposal/{$proposal->id}/{$folderBerkas}",
+                $originalName
+            );
+            $privatePath = "/private/proposal/{$proposal->id}/{$folderBerkas}/{$originalName}";
 
             $proposal->berkas()->create([
-                'nama_berkas' => 'Naskah Proposal Tugas Akhir',
+                'nama_berkas' => $folderBerkas,
                 'file_path' => $privatePath,
                 'status_valid' => 0,
             ]);
 
             // Simpan file transkrip ke private
             $originalName = $request->file('file_transkrip')->getClientOriginalName();
-            $filePath = $request->file('file_transkrip')->storeAs("private/proposal/{$proposal->id}", $originalName);
-            $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
+            $folderBerkas = 'Transkrip Nilai Mahasiswa';
+            $filePath = $request->file('file_transkrip')->storeAs(
+                "private/proposal/{$proposal->id}/{$folderBerkas}",
+                $originalName
+            );
+            $privatePath = "/private/proposal/{$proposal->id}/{$folderBerkas}/{$originalName}";
 
             $proposal->berkas()->create([
-                'nama_berkas' => 'Transkrip Nilai Mahasiswa',
+                'nama_berkas' => $folderBerkas,
                 'file_path' => $privatePath,
                 'status_valid' => 0,
             ]);
 
             return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir', 'berkas')), 'Proposal berhasil dibuat');
         } catch (ValidationException $e) {
-            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
+            return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
+            return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
         }
     }
 
@@ -552,8 +561,12 @@ class ProposalController extends Controller
                         Storage::delete(ltrim($berkasProposal->file_path, '/'));
                     }
                     $originalName = $request->file('file_proposal')->getClientOriginalName();
-                    $filePath = $request->file('file_proposal')->storeAs("private/proposal/{$proposal->id}", $originalName);
-                    $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
+                    $folderBerkas = 'Naskah Proposal Tugas Akhir';
+                    $filePath = $request->file('file_proposal')->storeAs(
+                        "private/proposal/{$proposal->id}/{$folderBerkas}",
+                        $originalName
+                    );
+                    $privatePath = "/private/proposal/{$proposal->id}/{$folderBerkas}/{$originalName}";
                     $berkasProposal->file_path = $privatePath;
                     $berkasProposal->status_valid = 0;
                     $berkasProposal->save();
@@ -569,8 +582,12 @@ class ProposalController extends Controller
                         Storage::delete(ltrim($berkasTranskrip->file_path, '/'));
                     }
                     $originalName = $request->file('file_transkrip')->getClientOriginalName();
-                    $filePath = $request->file('file_transkrip')->storeAs("private/proposal/{$proposal->id}", $originalName);
-                    $privatePath = "/private/proposal/{$proposal->id}/{$originalName}";
+                    $folderBerkas = 'Transkrip Nilai Mahasiswa';
+                    $filePath = $request->file('file_transkrip')->storeAs(
+                        "private/proposal/{$proposal->id}/{$folderBerkas}",
+                        $originalName
+                    );
+                    $privatePath = "/private/proposal/{$proposal->id}/{$folderBerkas}/{$originalName}";
                     $berkasTranskrip->file_path = $privatePath;
                     $berkasTranskrip->status_valid = 0;
                     $berkasTranskrip->save();
@@ -587,9 +604,9 @@ class ProposalController extends Controller
 
             return ApiResponse::success(new ProposalResource($proposal->load('tugasAkhir', 'berkas')), 'Proposal berhasil diubah');
         } catch (ValidationException $e) {
-            return ApiResponse::error('Validation failed: ' . $e->getMessage(), 422);
+            return ApiResponse::error('Validasi Gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
-            return ApiResponse::error('An error occurred: ' . $e->getMessage(), 500);
+            return ApiResponse::error('Terjadi Error: ' . $e->getMessage(), 500);
         }
     }
 
