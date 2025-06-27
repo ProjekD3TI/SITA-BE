@@ -103,9 +103,9 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     // Ujian Tugas Akhir
     Route::get('/mahasiswa/tugas-akhir/ujian-ta', [TugasAkhirController::class, 'UjianTAForMahasiswa']);
     //detail
-    Route::get('/mahasiswa/tugas-akhir/tugas-akhir/{id}', [TugasAkhirController::class, 'detailTugasAkhirForMahasiswa']);
+    Route::get('/mahasiswa/tugas-akhir/ujian-ta/{id}', [TugasAkhirController::class, 'detailTugasAkhirForMahasiswa']);
     //daftar
-    Route::get('/mahasiswa/tugas-akhr/ujian-ta/daftar', [TugasAkhirController::class, 'showDaftarTAForMahasiswa']);
+    Route::get('/mahasiswa/tugas-akhir/ujian-ta/daftar/{id}', [TugasAkhirController::class, 'showDaftarTAForMahasiswa']);
     Route::post('/mahasiswa/tugas-akhir/daftar', [TugasAkhirController::class, 'storeUjianTAForMahasiswa']);
     Route::post('/mahasiswa/tugas-akhir/daftar/{id}/update', [TugasAkhirController::class, 'updateUjianTAForMahasiswa']);
     //berkas

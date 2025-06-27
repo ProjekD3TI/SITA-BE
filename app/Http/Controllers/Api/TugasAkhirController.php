@@ -2073,6 +2073,7 @@ class TugasAkhirController extends Controller
                 'dosenPenguji:id,name,nik', // Eager load the related Dosen models
                 'kategori:id,nama_kategori',
                 'tahunAjaran:id,tahun_ajaran',
+                'bimbingan',
                 'ujianTA' => function ($q) {
                     $q->with([
                         'sesi:id,nama_sesi,waktu_mulai,waktu_selesai',
@@ -2093,12 +2094,15 @@ class TugasAkhirController extends Controller
 
             // Format data yang akan dikembalikan
             $result = $tugasAkhir->map(function ($ta) {
+
                 $data = [
                     'tugas_akhir_id' => $ta->id,
+                    'judul_tugas_akhir' => $ta->judul_tugas_akhir,
                     'tahun_ajaran' => [
                         'id' => $ta->tahunAjaran->id ?? null,
                         'tahun_ajaran' => $ta->tahunAjaran->tahun_ajaran ?? null
                     ],
+                    'status_valid' => $ta->status_valid,
                     'status_aktif' => $ta->status_aktif,
                     'status_kelulusan' => $ta->status_kelulusan,
                     'dosen_pembimbing' => [
@@ -2108,6 +2112,11 @@ class TugasAkhirController extends Controller
                     'kategori' => [
                         'id' => $ta->kategori->id ?? null,
                         'nama_kategori' => $ta->kategori->nama_kategori ?? null,
+                    ],
+                    'bimbingan' => [
+                        'total_bimbingan' => $ta->bimbingan
+                            ? $ta->bimbingan->where('status_verifikasi', 1)->count()
+                            : 0,
                     ],
                     'jadwal_ujian' => []
                 ];
@@ -2143,6 +2152,8 @@ class TugasAkhirController extends Controller
 
                         return [
                             'ujian_ta_id' => $ujian->id,
+                            'status_ujian' => $ujian->status_ujian,
+                            'status_kelulusan' => $ujian->status_kelulusan,
                             'tanggal_ujian' => $ujian->tanggal_ujian ? Carbon::parse($ujian->tanggal_ujian)->locale('id')->translatedFormat('d F Y') : null,
                             'dosen_penguji' => $pengujiList, // Gunakan array yang sudah dibuat
                             'sesi' => [
@@ -2200,7 +2211,18 @@ class TugasAkhirController extends Controller
 
             // Karena query di atas akan mengembalikan collection, kita ambil item pertama.
             $latestUjian = $tugasAkhir->ujianTA->first();
+            $naskahBerkas = $tugasAkhir->berkas
+                ->where('nama_berkas', 'Naskah Tugas Akhir')
+                ->map(function ($berkas) {
+                    return [
+                        'id' => $berkas->id,
+                        'nama_berkas' => $berkas->nama_berkas,
+                        'file_path' => $berkas->file_path,
+                        'download_url' => $berkas ? route('berkas.download', ['berkas' => $berkas->id]) : null,
 
+                    ];
+                })
+                ->values();
             // Format data jadwal ujian terbaru
             $jadwalUjianTerbaru = null;
             if ($latestUjian) {
@@ -2263,6 +2285,7 @@ class TugasAkhirController extends Controller
                     'nik' => $tugasAkhir->dosenPembimbing->nik,
                 ] : null,
                 'jadwal_ujian_terbaru' => $jadwalUjianTerbaru,
+                'berkas' => $naskahBerkas,
             ];
 
             return ApiResponse::success($result, 'Detail tugas akhir berhasil diambil.');
@@ -2274,41 +2297,27 @@ class TugasAkhirController extends Controller
         }
     }
 
-    public function showDaftarTAForMahasiswa()
+    public function showDaftarTAForMahasiswa($id)
     {
         try {
             $mahasiswaId = Auth::id();
 
+            // Ambil Tugas Akhir berdasarkan ID yang diberikan
+            // dan pastikan itu milik mahasiswa yang sedang login
             $tugasAkhir = TugasAkhir::with([
                 'dosenPembimbing:id,name',
                 'kategori:id,nama_kategori',
                 'tahunAjaran:id,tahun_ajaran',
                 'berkas',
                 'bimbingan',
-                'dosenPenguji:id,name' // Tambahkan eager load dosenPenguji
+                'dosenPenguji:id,name'
             ])
                 ->where('mahasiswa_id', $mahasiswaId)
-                ->where('status_aktif', 1)
-                ->first();
+                ->findOrFail($id);
 
             $statusForm = StatusForm::where('nama_form', 'Tugas Akhir')
                 ->select('id', 'is_open')
                 ->first();
-
-            if (!$tugasAkhir) {
-                return ApiResponse::success(null, 'Belum ada Tugas Akhir yang aktif');
-            }
-
-            $naskahBerkas = $tugasAkhir->berkas
-                ->where('nama_berkas', 'Naskah Tugas Akhir')
-                ->map(function ($berkas) {
-                    return [
-                        'id' => $berkas->id,
-                        'nama_berkas' => $berkas->nama_berkas,
-                        'file_path' => $berkas->file_path,
-                    ];
-                })
-                ->values();
 
             // Cek apakah sudah ada dosen penguji
             $hasDosenPenguji = $tugasAkhir->dosenPenguji && $tugasAkhir->dosenPenguji->count() > 0;
@@ -2320,6 +2329,7 @@ class TugasAkhirController extends Controller
                 ],
                 'tugas_akhir' => [
                     'id' => $tugasAkhir->id,
+                    'status_aktif' => $tugasAkhir->status_aktif,
                     'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir,
                     'dosen_pembimbing' => $tugasAkhir->dosenPembimbing ? [
                         'id' => $tugasAkhir->dosenPembimbing->id,
@@ -2341,10 +2351,11 @@ class TugasAkhirController extends Controller
                         ? $tugasAkhir->bimbingan->where('status_verifikasi', 1)->count()
                         : 0,
                 ],
-                'berkas' => $naskahBerkas,
             ];
 
             return ApiResponse::success($result, 'Data tugas akhir berhasil diambil');
+        } catch (ModelNotFoundException $e) {
+            return ApiResponse::error('Tugas Akhir tidak ditemukan atau Anda tidak memiliki akses.', 404);
         } catch (Exception $e) {
             return ApiResponse::error('Gagal mengambil data tugas akhir: ' . $e->getMessage(), 500);
         }
