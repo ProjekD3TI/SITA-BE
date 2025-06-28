@@ -1130,6 +1130,7 @@ class TugasAkhirController extends Controller
                         $query->where('status_verifikasi', 1);
                     }
                 ])
+                ->whereNotNull('nilai_proposal')
                 ->having('bimbingan_count', '>=', 9)
                 ->whereDoesntHave('dosenPenguji')
                 ->count();
@@ -2101,7 +2102,9 @@ class TugasAkhirController extends Controller
 
             // Format data yang akan dikembalikan
             $result = $tugasAkhir->map(function ($ta) {
-
+                $babTertinggi = $ta->bimbingan
+                    ? $ta->bimbingan->where('status_verifikasi', 1)->max('bab')
+                    : null;
                 $data = [
                     'tugas_akhir_id' => $ta->id,
                     'judul_tugas_akhir' => $ta->judul_tugas_akhir,
@@ -2124,6 +2127,7 @@ class TugasAkhirController extends Controller
                         'total_bimbingan' => $ta->bimbingan
                             ? $ta->bimbingan->where('status_verifikasi', 1)->count()
                             : 0,
+                        'bab_tertinggi' => $babTertinggi
                     ],
                     'jadwal_ujian' => []
                 ];
@@ -2328,7 +2332,9 @@ class TugasAkhirController extends Controller
 
             // Cek apakah sudah ada dosen penguji
             $hasDosenPenguji = $tugasAkhir->dosenPenguji && $tugasAkhir->dosenPenguji->count() > 0;
-
+            $babTertinggi = $tugasAkhir->bimbingan
+                ? $tugasAkhir->bimbingan->where('status_verifikasi', 1)->max('bab')
+                : null;
             $result = [
                 'status_form' => [
                     'id' => $statusForm->id,
@@ -2357,6 +2363,7 @@ class TugasAkhirController extends Controller
                     'total_bimbingan' => $tugasAkhir->bimbingan
                         ? $tugasAkhir->bimbingan->where('status_verifikasi', 1)->count()
                         : 0,
+                    'bab_tertinggi' => $babTertinggi,
                 ],
             ];
 
