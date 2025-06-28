@@ -1060,7 +1060,7 @@ class TugasAkhirController extends Controller
                 'proposal:id,judul_proposal',
                 'bimbingan'
             ])
-                // ->where('status_aktif', 1)
+                ->whereNotNull('nilai_proposal')
                 ->withCount([
                     'bimbingan as bimbingan_count' => function ($query) {
                         $query->where('status_verifikasi', 1);
@@ -1201,7 +1201,7 @@ class TugasAkhirController extends Controller
                 'kategori:id,nama_kategori',
                 'dosenPenguji:id,name,nik' // tambahkan relasi dosenPenguji
             ])
-                // ->where('status_aktif', 1)
+                ->whereNotNull('nilai_proposal')
                 ->where('id', $tugasAkhirId)
                 ->first();
 

@@ -133,7 +133,7 @@ class BerkasController extends Controller
             ], 'Daftar berkas tugas akhir berhasil diambil');
 
         } catch (ModelNotFoundException $e) {
-            return ApiResponse::error('Tugas Akhir tidak ditemukan atau Anda tidak memiliki akses.', 404);
+            return ApiResponse::error('Berkas-berkas tidak ditemukan atau Anda tidak memiliki akses.', 404);
         } catch (\Exception $e) {
             return ApiResponse::error('Gagal mengambil berkas tugas akhir: ' . $e->getMessage(), 500);
         }
