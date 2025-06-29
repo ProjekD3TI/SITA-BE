@@ -423,7 +423,7 @@ class PeminjamanBhpController extends Controller
             try {
                 $this->sendTelegramMessage(env('TELEGRAM_CHAT_ID'), 
                     "Peminjaman BHP diperbarui: " . $jumlah_baru . " item oleh " . 
-                    $pengguna->name . " pada tanggal " . $request->tanggal_pinjam . ". " .
+                    $peminjaman_bhp->nama_peminjam . " pada tanggal " . $request->tanggal_pinjam . ". " .
                     "Peminjaman diedit oleh " . auth()->user()->name
                 );
             } catch (\Exception $e) {

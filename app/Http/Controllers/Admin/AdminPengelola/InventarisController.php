@@ -173,15 +173,16 @@ class InventarisController extends Controller
                 if ($last_inventaris) {
                     $last_no = $last_inventaris->no_inventaris;
                     
-                    if (preg_match('/\.(\d{3})$/', $last_no, $matches)) {
+                    if (preg_match('/\.(\d{4})$/', $last_no, $matches)) {
                         $start_number = intval($matches[1]) + 1;
-                    } else {
-                        $start_number = 1;
-                    }
+                    } 
+                    // else {
+                    //     $start_number = 1;
+                    // }
                 }
 
                 for ($i = 0; $i < $jumlah; $i++) {
-                    $current_no = $base_no_inv . '.' . str_pad($start_number + $i, 3, '0', STR_PAD_LEFT);
+                    $current_no = $base_no_inv . '.' . str_pad($start_number + $i, 4, '0', STR_PAD_LEFT);
 
                     $inventaris = Inventaris::create([
                         'id_jenis_inventaris' => $request->id_jenis_inventaris,

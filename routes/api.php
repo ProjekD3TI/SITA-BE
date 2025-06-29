@@ -165,7 +165,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     });
 
     // Route Admin Pengelola (inventaris)
-    Route::middleware(['auth:sanctum', 'admin.role:admin_pengelola'])->group(function () {
+    Route::middleware(['auth:sanctum', 'admin.role:admin_pengelola,superadmin'])->group(function () {
         //route laennya buat admin pengelola
         Route::get('/admin_pengelola/dashboard', [AdminPengelolaController::class, 'dashboard']);
 

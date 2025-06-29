@@ -13,14 +13,24 @@ class AdminRole
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!$request->user()->tokenCan('role:' . $role)) {
+        if (!$request->user()) {
             return response()->json([
-                'message' => 'Unauthorized'
-            ], 403);
+                'message' => 'Unauthenticated.'
+            ], 401);
         }
 
-        return $next($request);
+        $user = $request->user();
+
+        foreach ($roles as $role) {
+            if ($user->tokenCan('role:' . $role)) {
+                return $next($request);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Unauthorized'
+        ], 403);
     }
 }

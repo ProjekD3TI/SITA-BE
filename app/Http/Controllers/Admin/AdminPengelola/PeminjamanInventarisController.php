@@ -324,138 +324,157 @@ class PeminjamanInventarisController extends Controller
         ]);
     }
 
-   public function editPeminjamanInventaris(Request $request, $id_peminjaman_inventaris) {
-    $validator = Validator::make($request->all(), [
-        'id_peminjam' => 'required',
-        'tipe_peminjam' => 'required|in:mahasiswa,dosen',
-        'kegunaan' => 'required',
-        'tanggal_pinjam' => 'required|date',
-        'id_inventaris' => 'required|array',
-        'id_inventaris.*' => 'required|exists:inventaris,id_inventaris',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error Validation',
-            'errors' => $validator->errors()
-        ], 400);
-    }
-
-    $peminjaman = PeminjamanInventaris::find($id_peminjaman_inventaris);
-    if (!$peminjaman) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'peminjaman tidak ditemukan',
-        ], 404);
-    }
-
-    if ($peminjaman->status_peminjaman !== 'dipinjam') {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'hanya peminjaman yang belum dikembalikan yang dapat diedit',
-        ], 400);
-    }
-
-    // cek jika ada inventaris yang sudah dikembalikan
-    if (DetailPeminjamanInventaris::where('id_peminjaman_inventaris', $id_peminjaman_inventaris)
-        ->where('status', 1)->exists()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'tidak dapat mengedit peminjaman yang sudah dikembalikan',
-        ], 400);
-    }
-
-    $user = $request->tipe_peminjam === 'mahasiswa' 
-        ? User::find($request->id_peminjam)
-        : Dosen::find($request->id_peminjam);
-    
-    if (!$user) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'peminjam tidak ditemukan',
-        ], 404);
-    }
-
-    if (date('Y-m-d', strtotime($request->tanggal_pinjam)) > date('Y-m-d')) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'peminjaman tidak boleh lebih dari hari ini',
-        ], 400);
-    }
-
-    // menyimpan data lama untuk notifikasi
-    try {
-        $peminjam_lama = $peminjaman->nama_peminjam;
-        $inventaris_lama = DetailPeminjamanInventaris::where('id_peminjaman_inventaris', $id_peminjaman_inventaris)
-            ->pluck('id_inventaris')->toArray();
-        
-        $peminjaman->update([
-            'id_peminjam' => $request->id_peminjam,
-            'nama_peminjam' => $user->name,
-            'tipe_peminjam' => $request->tipe_peminjam,
-            'ni_peminjam' => $request->tipe_peminjam === 'mahasiswa' ? $user->nim : $user->nik,
-            'no_telp' => $user->no_telp,
-            'kegunaan' => $request->kegunaan,
-            'tanggal_pinjam' => $request->tanggal_pinjam,
+    public function editPeminjamanInventaris(Request $request, $id_peminjaman_inventaris) {
+        $validator = Validator::make($request->all(), [
+            'id_peminjam' => 'required',
+            'tipe_peminjam' => 'required|in:mahasiswa,dosen',
+            'kegunaan' => 'required',
+            'tanggal_pinjam' => 'required|date',
+            'id_inventaris' => 'required|array',
+            'id_inventaris.*' => 'required|exists:inventaris,id_inventaris',
         ]);
 
-        // mengganti inventaris
-        $inventaris_baru = $request->id_inventaris;
-        $remove_inventaris = array_diff($inventaris_lama, $inventaris_baru);
-        $added_inventaris = array_diff($inventaris_baru, $inventaris_lama);
-
-        // mengupdate data inventaris yang di edit
-        foreach ($remove_inventaris as $inventaris_id) {
-            DetailPeminjamanInventaris::where('id_peminjaman_inventaris', $id_peminjaman_inventaris)
-                ->where('id_inventaris', $inventaris_id)->delete();
-            
-            Inventaris::find($inventaris_id)->update(['status' => 1]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error Validation',
+                'errors' => $validator->errors()
+            ], 400);
         }
 
-        foreach ($added_inventaris as $inventaris_id) {
-            if ($inventaris = Inventaris::where('id_inventaris', $inventaris_id)
-                ->where('status', 1)->first()) {
-                
-                DetailPeminjamanInventaris::create([
-                    'id_peminjaman_inventaris' => $id_peminjaman_inventaris,
-                    'id_inventaris' => $inventaris_id,
-                ]);
-                
-                $inventaris->update(['status' => 0]);
+        $peminjaman = PeminjamanInventaris::find($id_peminjaman_inventaris);
+        if (!$peminjaman) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'peminjaman tidak ditemukan',
+            ], 404);
+        }
+
+        if ($peminjaman->status_peminjaman !== 'dipinjam') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'hanya peminjaman yang belum dikembalikan yang dapat diedit',
+            ], 400);
+        }
+
+        // cek jika ada inventaris yang sudah dikembalikan
+        if (DetailPeminjamanInventaris::where('id_peminjaman_inventaris', $id_peminjaman_inventaris)
+            ->where('status', 1)->exists()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'tidak dapat mengedit peminjaman yang sudah dikembalikan',
+            ], 400);
+        }
+
+        $pengguna = null;
+        $nomor_identitas = null;
+
+        if ($request->tipe_peminjam === 'mahasiswa') {
+            $pengguna = User::find($request->id_peminjam);
+            if ($pengguna) {
+                $nomor_identitas = $pengguna->nim;
+            }
+        } elseif ($request->tipe_peminjam === 'dosen') {
+            $pengguna = Dosen::find($request->id_peminjam);
+            if ($pengguna) {
+                $nomor_identitas = $pengguna->nik;
             }
         }
 
-        // notif telegram
-        $notif = ["Perubahan peminjaman ref {$peminjaman->referensi}"];
-        
-        $hitung_perubahan = count($inventaris_lama) != count($inventaris_baru);
-        $perubahan_peminjam = $peminjam_lama !== $user->name;
-        
-        if ($hitung_perubahan) {
-            $notif[] = "peminjaman ".count($inventaris_lama)." inventaris menjadi ".count($inventaris_baru)." inventaris";
-        }
-        
-        if ($perubahan_peminjam) {
-            $notif[] = "peminjam {$peminjam_lama} menjadi {$user->name}";
-        }
-        
-        $notif[] = "diubah oleh ".auth()->user()->name;
-        
-        try {
-            $this->sendTelegramMessage(
-                env('TELEGRAM_CHAT_ID'), 
-                implode($hitung_perubahan && $perubahan_peminjam ? '. ' : ' ', $notif)
-            );
-        } catch (\Exception $e) {
-            \Log::warning('Failed to send notification: '.$e->getMessage());
+        if (!$pengguna) {
+            return response()->json([
+                'status' => 'error',
+                'message' => ucfirst($request->tipe_peminjam) . ' tidak ditemukan'
+            ], 404);
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'peminjaman berhasil diperbarui',
-            'data' => $peminjaman
-        ]);
+        if (date('Y-m-d', strtotime($request->tanggal_pinjam)) > date('Y-m-d')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'peminjaman tidak boleh lebih dari hari ini',
+            ], 400);
+        }
+
+        $auth_user = auth()->user();
+        if (!$auth_user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User tidak terautentikasi',
+            ], 401);
+        }
+
+        // menyimpan data lama untuk notifikasi
+        try {
+            $peminjam_lama = $peminjaman->nama_peminjam;
+            $inventaris_lama = DetailPeminjamanInventaris::where('id_peminjaman_inventaris', $id_peminjaman_inventaris)
+                ->pluck('id_inventaris')->toArray();
+            
+            $peminjaman->update([
+                'id_peminjam' => $request->id_peminjam,
+                'nama_peminjam' => $pengguna->name,
+                'tipe_peminjam' => $request->tipe_peminjam,
+                'ni_peminjam' => $request->tipe_peminjam === 'mahasiswa' ? $pengguna->nim : $pengguna->nik,
+                'no_telp' => $pengguna->no_telp,
+                'kegunaan' => $request->kegunaan,
+                'tanggal_pinjam' => $request->tanggal_pinjam,
+            ]);
+
+            // mengganti inventaris
+            $inventaris_baru = $request->id_inventaris;
+            $remove_inventaris = array_diff($inventaris_lama, $inventaris_baru);
+            $added_inventaris = array_diff($inventaris_baru, $inventaris_lama);
+
+            // mengupdate data inventaris yang di edit
+            foreach ($remove_inventaris as $inventaris_id) {
+                DetailPeminjamanInventaris::where('id_peminjaman_inventaris', $id_peminjaman_inventaris)
+                    ->where('id_inventaris', $inventaris_id)->delete();
+                
+                Inventaris::find($inventaris_id)->update(['status' => 1]);
+            }
+
+            foreach ($added_inventaris as $inventaris_id) {
+                if ($inventaris = Inventaris::where('id_inventaris', $inventaris_id)
+                    ->where('status', 1)->first()) {
+                    
+                    DetailPeminjamanInventaris::create([
+                        'id_peminjaman_inventaris' => $id_peminjaman_inventaris,
+                        'id_inventaris' => $inventaris_id,
+                    ]);
+                    
+                    $inventaris->update(['status' => 0]);
+                }
+            }
+
+            // notif telegram
+            $notif = ["Perubahan peminjaman ref {$peminjaman->referensi}"];
+            
+            $hitung_perubahan = count($inventaris_lama) != count($inventaris_baru);
+            $perubahan_peminjam = $peminjam_lama !== $pengguna->name;
+            
+            if ($hitung_perubahan) {
+                $notif[] = "peminjaman ".count($inventaris_lama)." inventaris menjadi ".count($inventaris_baru)." inventaris";
+            }
+            
+            if ($perubahan_peminjam) {
+                $notif[] = "peminjam {$peminjam_lama} menjadi {$pengguna->name}";
+            }
+            
+            $notif[] = "diubah oleh ".$auth_user->name;
+            
+            try {
+                $this->sendTelegramMessage(
+                    env('TELEGRAM_CHAT_ID'), 
+                    implode($hitung_perubahan && $perubahan_peminjam ? '. ' : ' ', $notif)
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send notification: '.$e->getMessage());
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'peminjaman berhasil diperbarui',
+                'data' => $peminjaman
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -562,7 +581,7 @@ class PeminjamanInventarisController extends Controller
 
         if (count($dikembalikan) > 0) {
             try {
-                $this->sendTelegramMessage(env('TELEGRAM_CHAT_ID'), "Pengembalian " . count($dikembalikan) . " item inventaris oleh " . $peminjaman->nama_peminjam . ". Status peminjaman: " . $peminjaman->status_peminjaman);
+                $this->sendTelegramMessage(env('TELEGRAM_CHAT_ID'), "Pengembalian " . count($dikembalikan) . " item inventaris oleh " . $peminjaman->nama_peminjam .  "Peminjaman dikembalikan oleh" . auth()->user()->name . ". Status peminjaman: "  . $peminjaman->status_peminjaman);
             } catch (\Exception $e) {
                 \Log::warning('Failed to send Telegram notification: ' . $e->getMessage());
             }
