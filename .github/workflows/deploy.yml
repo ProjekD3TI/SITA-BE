@@ -10,7 +10,17 @@ jobs:
     - name: 🚚 Get latest code
       uses: actions/checkout@v4
 
-    - name: 📂 Sync files
+    - name: � Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, mysql, gd
+        coverage: none
+
+    - name: 📦 Install Composer dependencies
+      run: composer install --optimize-autoloader --no-dev
+
+    - name: �📂 Sync files
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
