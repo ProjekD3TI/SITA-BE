@@ -2655,12 +2655,7 @@ class TugasAkhirController extends Controller
 
             // Cek apakah editing nilai diizinkan
             if (!$ujianTA->edit_nilai) {
-                $jabatanPenguji = $dosenPenguji->pivot->jabatan_penguji ?? null;
-
-                // Hanya sekretaris yang boleh edit ketika edit_nilai = false
-                if ($jabatanPenguji !== 'sekretaris') {
-                    return ApiResponse::error('Editing nilai ujian TA tidak diizinkan untuk ujian ini. Hubungi sekretaris penguji.', 403);
-                }
+                return ApiResponse::error('Editing nilai ujian TA tidak diizinkan untuk ujian ini. Hubungi sekretaris penguji.', 403);
             }
 
             // Jika sekretaris, cek 2 penguji lain sudah input nilai untuk ujian TA ini
