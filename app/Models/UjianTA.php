@@ -19,6 +19,7 @@ class UjianTA extends Model
         'tahun_ajaran_id',
         'status_kelulusan',
         'nilai_akhir',
+        'edit_nilai',
         'status_ujian',
     ];
 

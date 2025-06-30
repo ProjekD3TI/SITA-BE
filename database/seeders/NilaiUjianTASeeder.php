@@ -16,6 +16,8 @@ class NilaiUjianTASeeder extends Seeder
 
         // Raffael
         NilaiUjianTA::create([
+            'ujian_ta_id' => 1,
+            'dosen_id' => 9,
             'kualitas_tata_laporan' => 85,
             'kemampuan_teknis' => 90,
             'kualitas_produk' => 88,
@@ -23,6 +25,8 @@ class NilaiUjianTASeeder extends Seeder
             'rerata_ujian_ta' => 80,
         ]);
         NilaiUjianTA::create([
+            'ujian_ta_id' => 1,
+            'dosen_id' => 15,
             'kualitas_tata_laporan' => 75,
             'kemampuan_teknis' => 80,
             'kualitas_produk' => 78,
@@ -30,6 +34,8 @@ class NilaiUjianTASeeder extends Seeder
             'rerata_ujian_ta' => 76,
         ]);
         NilaiUjianTA::create([
+            'ujian_ta_id' => 1,
+            'dosen_id' => 4,
             'kualitas_tata_laporan' => 90,
             'kemampuan_teknis' => 95,
             'kualitas_produk' => 93,

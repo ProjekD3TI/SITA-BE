@@ -754,7 +754,8 @@ class TugasAkhirController extends Controller
                 ],
                 // Tambahkan flag sudah ada dosen penguji
                 'has_dosen_penguji' => $tugasAkhir->dosenPenguji && $tugasAkhir->dosenPenguji->count() > 0,
-            ];;
+            ];
+            ;
 
             return ApiResponse::success([
                 [
@@ -2511,11 +2512,15 @@ class TugasAkhirController extends Controller
                 })
                 ->values();
 
+            $cekDosenSekretaris = ($tugasAkhir->dosenPenguji->firstWhere('id', $dosenId) && (($tugasAkhir->dosenPenguji->firstWhere('id', $dosenId)->pivot->jabatan_penguji ?? null) === 'sekretaris')) ? true : false;
+
             Carbon::setLocale('id');
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'ujian_ta_id' => $ujianTA->id,
                 'status_kelulusan' => $ujianTA->status_kelulusan ?? null,
+                'edit_nilai' => $ujianTA->edit_nilai ?? null,
+                'sekretaris' => $cekDosenSekretaris ?? null,
                 'mahasiswa' => [
                     'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
                     'nim' => $tugasAkhir->mahasiswa->nim ?? null,
@@ -2609,8 +2614,8 @@ class TugasAkhirController extends Controller
             return ApiResponse::success(
                 $data,
                 $ujianRevisiSebelumnya
-                    ? 'Ujian ini adalah ujian ulang setelah revisi'
-                    : 'Ujian ini bukan ujian ulang'
+                ? 'Ujian ini adalah ujian ulang setelah revisi'
+                : 'Ujian ini bukan ujian ulang'
             );
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
@@ -2648,14 +2653,24 @@ class TugasAkhirController extends Controller
                 return ApiResponse::error('Ujian TA tidak ditemukan untuk tugas akhir ini.', 404);
             }
 
+            // Cek apakah editing nilai diizinkan
+            if (!$ujianTA->edit_nilai) {
+                $jabatanPenguji = $dosenPenguji->pivot->jabatan_penguji ?? null;
+
+                // Hanya sekretaris yang boleh edit ketika edit_nilai = false
+                if ($jabatanPenguji !== 'sekretaris') {
+                    return ApiResponse::error('Editing nilai ujian TA tidak diizinkan untuk ujian ini. Hubungi sekretaris penguji.', 403);
+                }
+            }
+
             // Jika sekretaris, cek 2 penguji lain sudah input nilai untuk ujian TA ini
             if (($dosenPenguji->pivot->jabatan_penguji ?? null) === 'sekretaris') {
                 $pengujiLain = $tugasAkhir->dosenPenguji
                     ->filter(function ($penguji) use ($dosenId, $ujianTA) {
                         return $penguji->id != $dosenId &&
                             NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
-                            ->where('dosen_id', $penguji->id)
-                            ->exists();
+                                ->where('dosen_id', $penguji->id)
+                                ->exists();
                     })
                     ->count();
 
@@ -2784,8 +2799,8 @@ class TugasAkhirController extends Controller
                         $rerataUjianTA = $nilaiUjianTACollection->avg();
                         $nilaiAkhir = round(
                             ($nilaiProposal * 0.1) +
-                                ($nilaiBimbingan * 0.3) +
-                                ($rerataUjianTA * 0.6),
+                            ($nilaiBimbingan * 0.3) +
+                            ($rerataUjianTA * 0.6),
                             2
                         );
                         $tugasAkhir->update([

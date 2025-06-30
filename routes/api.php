@@ -175,6 +175,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
     Route::get('/dosen/tugas-akhir/list-ujian-ta', [TugasAkhirController::class, 'tabelUjianTAForDosen']);
     Route::get('/dosen/tugas-akhir/detail-ujian-ta/{ujianTaId}', [TugasAkhirController::class, 'detailUjianForDosen']);
     Route::get('/dosen/tugas-akhir/cek-status-revisi-ujian-ta/{ujianTaId}', [TugasAkhirController::class, 'cekStatusRevisiUjianTAForDosen']);
+    Route::put('/dosen/tugas-akhir/detail-ujian-ta/{ujianTaId}/edit-nilai', [UjianTAController::class, 'editNilaiUjianTA']);
     // Sistem Tugas akhir (Tugas Akhir)
     Route::put('/dosen/tugas-akhir/submit-nilai-dan-status/{tugasAkhirId}', [TugasAkhirController::class, 'updateStatusKelulusanDanNilaiByDosenPenguji']);
 

@@ -13,10 +13,13 @@ use App\Exports\UjianTAExport;
 use Illuminate\Support\Facades\DB;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Resources\UjianTAResource;
 use App\Http\Resources\TugasAkhirResource;
+use Exception;
 use Illuminate\Validation\ValidationException;
 
 
@@ -453,6 +456,43 @@ class UjianTAController extends Controller
             return response()->json([
                 'message' => 'Terjadi kesalahan saat export data: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    // Dosen Sekretaris
+
+    public function editNilaiUjianTA(Request $request, $ujianTaId)
+    {
+        try {
+            $request->validate([
+                'edit_nilai' => 'required|boolean'
+            ]);
+
+            $dosenId = Auth::id();
+
+            $ujianTA = UjianTA::with('tugasAkhir.dosenPenguji')->findOrFail($ujianTaId);
+
+            // Cek apakah dosen adalah sekretaris
+            $dosenPenguji = $ujianTA->tugasAkhir->dosenPenguji->firstWhere('id', $dosenId);
+            if (!$dosenPenguji || ($dosenPenguji->pivot->jabatan_penguji ?? null) !== 'sekretaris') {
+                return ApiResponse::error('Hanya sekretaris yang dapat mengatur izin edit nilai.', 403);
+            }
+
+            $ujianTA->update([
+                'edit_nilai' => $request->edit_nilai
+            ]);
+
+            $message = $request->edit_nilai
+                ? 'Dosen penguji kini dapat mengedit nilai ujian TA'
+                : 'Dosen penguji tidak dapat mengedit nilai ujian TA';
+
+            return ApiResponse::success([
+                'ujian_ta_id' => $ujianTA->id,
+                'edit_nilai' => $ujianTA->edit_nilai
+            ], $message);
+
+        } catch (Exception $e) {
+            return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
     }
 }
