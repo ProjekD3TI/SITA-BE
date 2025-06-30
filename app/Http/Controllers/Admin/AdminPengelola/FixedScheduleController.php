@@ -9,6 +9,7 @@ use App\Models\AdminPengelola\FixedSchedule;
 use App\Models\AdminPengelola\FixedScheduleSession;
 use App\Models\AdminPengelola\Ruang;
 use App\Models\AdminPengelola\Session;
+use App\Models\Dosen;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class FixedScheduleController extends Controller
     
         $transformedSchedules = $schedules->map(function ($schedule) {
             // Filter out sessions without a session relation
+            $namaDosen = Dosen::find($schedule->penanggung_jawab)?->name;
             $validSessions = $schedule->sessions->filter(function($item) {
                 return !is_null($item->session);
             });
@@ -67,7 +69,7 @@ class FixedScheduleController extends Controller
             return [
                 'id' => $schedule->id,
                 'pemakaian' => $schedule->pemakaian,
-                'penanggung_jawab' => $schedule->penanggung_jawab,
+                'penanggung_jawab' => $namaDosen,
                 'start_date' => $schedule->start_date,
                 'end_date' => $schedule->end_date,
                 'created_at' => $schedule->created_at,
@@ -100,7 +102,7 @@ class FixedScheduleController extends Controller
         'id_ruang' => 'required|exists:ruangs,id_ruang',
         'pemakaian' => 'required|string|max:255',
         'id_class' => 'required',
-        'penanggung_jawab' => 'required|string|max:255',
+        'penanggung_jawab' => 'required|integer|exists:dosen,id',
         'start_date' => 'required|date',
         'end_date' => 'required|date',
         'sessions' => 'required|array|min:1',
@@ -139,6 +141,13 @@ class FixedScheduleController extends Controller
         return response()->json([
             'status' => 'error',
             'message' => 'Kelas tidak ditemukan',
+        ], 422);
+    }
+    $penanggung_jawab = Dosen::find($request->penanggung_jawab);
+    if (!$penanggung_jawab) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Dosen Penanggung jawab tidak ditemukan',
         ], 422);
     }
 
@@ -252,7 +261,7 @@ class FixedScheduleController extends Controller
         'id_ruang' => 'required|exists:ruangs,id_ruang',
         'pemakaian' => 'required|string|max:255',
         'id_class' => 'required',
-        'penanggung_jawab' => 'required|string|max:255',
+        'penanggung_jawab' => 'required|integer|exists:dosen,id',
         'start_date' => 'required|date',
         'end_date' => 'required|date',
         'sessions' => 'required|array|min:1',
@@ -300,6 +309,13 @@ class FixedScheduleController extends Controller
         return response()->json([
             'status' => 'error',
             'message' => 'Kelas tidak ditemukan',
+        ], 422);
+    }
+    $penanggung_jawab = Dosen::find($request->penanggung_jawab);
+    if (!$penanggung_jawab) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Dosen Penanggung jawab tidak ditemukan',
         ], 422);
     }
 

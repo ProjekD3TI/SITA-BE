@@ -59,7 +59,7 @@ class GedungController extends Controller
         $validator = Validator::make($request->all(), [
             'nama_gedung' => 'required',
             'lokasi' => 'required',
-            'id_lantai' => 'required',
+            // 'id_lantai' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -69,7 +69,7 @@ class GedungController extends Controller
         $gedung = Gedung::create([
             'nama_gedung' => $request->nama_gedung,
             'lokasi' => $request->lokasi,
-            'id_lantai' => $request->id_lantai,
+            // 'id_lantai' => $request->id_lantai,
         ]);
 
         return response()->json(['message' => 'gedung berhasil ditambahkan']);
@@ -92,7 +92,7 @@ class GedungController extends Controller
             $validator = Validator::make($request->all(), [
                 'nama_gedung' => 'required',
                 'lokasi' => 'required',
-                'id_lantai' => 'required',
+                // 'id_lantai' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -102,7 +102,7 @@ class GedungController extends Controller
             $data = [
                 'nama_gedung' => $request->nama_gedung,
                 'lokasi' => $request->lokasi,
-                'id_lantai' => $request->id_lantai,
+                // 'id_lantai' => $request->id_lantai,
             ];
 
             $db_gedung->update($data);

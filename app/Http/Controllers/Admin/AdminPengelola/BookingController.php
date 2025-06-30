@@ -10,36 +10,40 @@ use App\Models\AdminPengelola\FixedScheduleSession;
 use App\Models\AdminPengelola\Session;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
-
     public function getUserBooking(Request $request) {
         $query = Booking::query()
             ->leftJoin('ruangs', 'bookings.id_ruang', '=', 'ruangs.id_ruang')
             ->leftJoin('sessions', 'bookings.start_session', '=', 'sessions.id')
-            ->select(
-                'bookings.*',
-                'ruangs.nama_ruang',
-                'sessions.name_session',
-                'sessions.start_time',
-                'sessions.end_time'
-            )
-            ->where('bookings.id_student', auth()->id());
+            ->select('bookings.*', 'ruangs.nama_ruang', 'sessions.name_session', 'sessions.start_time', 'sessions.end_time')
+            ->where(function ($q) {
+                $user = auth()->user();
+                if ($user->is_mahasiswa) {
+                    $q->where('id_student', $user->id);
+                }
+                if ($user->is_dosen) {
+                    $q->orWhere('id_dosen', $user->id);
+                }
+            });
+            
 
-        if($request->has('search') && !empty($request->search)) {
+        if ($request->filled('search')) {
             $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('ruangs.nama_ruang', 'like', "%{$searchTerm}%")
-                ->orWhere('sessions.name_session', 'like', "%{$searchTerm}%");
+                  ->orWhere('sessions.name_session', 'like', "%{$searchTerm}%");
             });
         }
+
         $query->orderBy('bookings.created_at', 'desc');
         $bookings = $query->get();
-        
+
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
         $paginatedData = PaginationHelper::paginate($bookings, $perPage, $page, [
@@ -62,285 +66,101 @@ class BookingController extends Controller
 
     public function createBooking(Request $request) {
         $validator = Validator::make($request->all(), [
-        'id_ruang' => 'required|exists:ruangs,id_ruang',
-        'date' => 'required|date',
-        'start_session' => 'required|exists:sessions,id',
-        'end_session' => 'required|exists:sessions,id',
-        'keterangan' => 'nullable|string',
-        'files' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-    ]);
+            'id_ruang' => 'required|exists:ruangs,id_ruang',
+            'date' => 'required|date',
+            'start_session' => 'required|exists:sessions,id',
+            'end_session' => 'required|exists:sessions,id',
+            'keterangan' => 'nullable|string',
+            'files' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Validasi gagal',
-            'errors' => $validator->errors(),
-        ], 422);
-    }
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
+        }
 
-    $startSession = Session::find($request->start_session);
-    $endSession = Session::find($request->end_session);
+        $startSession = Session::find($request->start_session);
+        $endSession = Session::find($request->end_session);
 
-    if (!$startSession || !$endSession) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Sesi tidak ditemukan',
-        ], 404);
-    }
-    
-    if (strtotime($startSession->start_time) >= strtotime($endSession->start_time)) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Sesi akhir harus setelah sesi awal',
-            'details' => [
-                'start_session' => [
-                    'id' => $startSession->id,
-                    'name' => $startSession->name_session,
-                    'time' => $startSession->start_time . ' - ' . $startSession->end_time
-                ],
-                'end_session' => [
-                    'id' => $endSession->id,
-                    'name' => $endSession->name_session,
-                    'time' => $endSession->start_time . ' - ' . $endSession->end_time
-                ]
-            ]
-        ], 422);
-    }
+        if (!$startSession || !$endSession || strtotime($startSession->start_time) >= strtotime($endSession->start_time)) {
+            return response()->json(['status' => 'error', 'message' => 'Sesi tidak valid atau tidak berurutan'], 422);
+        }
 
-    // cek jika ada sesi di antara start dan end, pastikan sesi-sesi tersebut berurutan
-    if ($request->start_session < $request->end_session) {
-        $intermediateSessions = Session::whereBetween('id', [$request->start_session, $request->end_session])
-            ->orderBy('start_time')
-            ->get();
-        
-        // cek apakah jumlah sesi sesuai (tidak ada yang terlewat)
+        $intermediateSessions = Session::whereBetween('id', [$request->start_session, $request->end_session])->orderBy('start_time')->get();
         if (count($intermediateSessions) != ($request->end_session - $request->start_session + 1)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Sesi tidak berurutan, pastikan semua sesi yang dipilih tersedia',
-            ], 422);
+            return response()->json(['status' => 'error', 'message' => 'Sesi tidak lengkap atau tidak tersedia'], 422);
         }
-        
-        // cek apakah waktu sesi berurutan (end time sesi sebelumnya <= start time sesi berikutnya)
+
         for ($i = 0; $i < count($intermediateSessions) - 1; $i++) {
-            $currentSession = $intermediateSessions[$i];
-            $nextSession = $intermediateSessions[$i + 1];
-            
-            if (strtotime($currentSession->end_time) > strtotime($nextSession->start_time)) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Sesi tidak berurutan waktu: {$currentSession->name_session} berakhir setelah {$nextSession->name_session} dimulai",
-                ], 422);
+            if (strtotime($intermediateSessions[$i]->end_time) > strtotime($intermediateSessions[$i + 1]->start_time)) {
+                return response()->json(['status' => 'error', 'message' => 'Waktu sesi tidak berurutan'], 422);
             }
         }
-    }
 
-    $startTime = $startSession->start_time;
-    $endTime = $endSession->end_time;
+        $includedSessions = Session::where(function ($query) use ($startSession, $endSession) {
+            $query->whereBetween('start_time', [$startSession->start_time, $endSession->end_time])
+                  ->orWhereBetween('end_time', [$startSession->start_time, $endSession->end_time])
+                  ->orWhere(function ($q) use ($startSession, $endSession) {
+                      $q->where('start_time', '<=', $startSession->start_time)
+                        ->where('end_time', '>=', $endSession->end_time);
+                  });
+        })->pluck('id');
 
-    // ambil semua sesi yang tumpang tindih dengan rentang waktu
-    $includedSessions = Session::where(function ($query) use ($startTime, $endTime) {
-        $query->whereBetween('start_time', [$startTime, $endTime])
-              ->orWhereBetween('end_time', [$startTime, $endTime])
-              ->orWhere(function ($q) use ($startTime, $endTime) {
-                  $q->where('start_time', '<=', $startTime)
-                    ->where('end_time', '>=', $endTime);
-              });
-    })->pluck('id');
+        $dayOfWeek = date('N', strtotime($request->date));
+        $activeSchedule = FixedSchedule::where('id_ruang', $request->id_ruang)
+            ->where('start_date', '<=', $request->date)
+            ->where('end_date', '>=', $request->date)->first();
 
-    $dayOfWeek = date('N', strtotime($request->date)); // 1=Senin ... 7=Minggu
-
-    // cek rentang tanggal semester aktif
-    $activeSchedule = FixedSchedule::where('id_ruang', $request->id_ruang)
-        ->where('start_date', '<=', $request->date)
-        ->where('end_date', '>=', $request->date)
-        ->first();
-
-    if (!$activeSchedule) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Peminjaman di luar rentang semester/jadwal tetap',
-        ], 422);
-    }
-
-    // cek konflik jadwal tetap
-    $conflictFixed = FixedScheduleSession::where('id_fixed_schedule', $activeSchedule->id)
-        ->where('day_of_week', $dayOfWeek)
-        ->whereIn('id_session', $includedSessions)
-        ->exists();
-
-    if ($conflictFixed) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Sesi telah digunakan oleh jadwal tetap',
-        ], 422);
-    }
-
-    // cek konflik booking lain
-    $conflictBooking = Booking::where('id_ruang', $request->id_ruang)
-        ->where('date', $request->date)
-        ->where('status', 'approve')
-        ->where(function ($query) use ($includedSessions) {
-            foreach ($includedSessions as $sessionId) {
-                $query->orWhere(function ($q) use ($sessionId) {
-                    $q->where('start_session', '<=', $sessionId)
-                      ->where('end_session', '>=', $sessionId);
-                });
-            }
-        })->exists();
-
-    if ($conflictBooking) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Sesi telah dipinjam pada waktu tersebut',
-        ], 422);
-    }
-
-    $filePath = null;
-    if ($request->hasFile('files')) {
-        $file = $request->file('files');
-
-        $uuid = Str::uuid()->toString();
-        $extension = $file->getClientOriginalExtension();
-        $filename = $uuid . '.' . $extension;
-
-        $path = $file->storeAs('public/booking', $filename);
-
-        $filePath = $filename;
-    }
-
-    $booking = Booking::create([
-        'id_student' => auth()->id(),
-        'id_ruang' => $request->id_ruang,
-        'date' => $request->date,
-        'start_session' => $request->start_session,
-        'end_session' => $request->end_session,
-        'keterangan' => $request->keterangan,
-        'status' => 'pending',
-        'files' => $filePath,
-    ]);
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Booking berhasil dibuat',
-        'data' => $booking,
-        'included_sessions' => $includedSessions,
-    ], 201);
-    }
-
-    /**
-     * Get all booking requests with dynamic status filtering
-     * This method now supports filtering by status parameter
-     */
-    public function getRequestBooking(Request $request) {
-        $query = Booking::query()
-            ->leftJoin('ruangs', 'bookings.id_ruang', '=', 'ruangs.id_ruang')
-            ->leftJoin('sessions', 'bookings.start_session', '=', 'sessions.id')
-            ->select(
-                'bookings.*',
-                'ruangs.nama_ruang',
-                'sessions.name_session'
-            );
-
-        // Dynamic status filtering - only apply if status parameter is provided
-        if ($request->has('status') && !empty($request->status)) {
-            $query->where('bookings.status', $request->status);
-        }
-        // If no status filter is provided, show all bookings (removed hardcoded 'pending' filter)
-
-        // Search functionality
-        if($request->has('search') && !empty($request->search)) {
-            $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('ruangs.nama_ruang', 'like', "%{$searchTerm}%")
-                ->orWhere('sessions.name_session', 'like', "%{$searchTerm}%");
-            });
+        if (!$activeSchedule) {
+            return response()->json(['status' => 'error', 'message' => 'Diluar rentang semester'], 422);
         }
 
-        $query->orderBy('bookings.created_at', 'desc');
-        $bookings = $query->get();
-        
-        $perPage = $request->input('per_page', 10);
-        $page = $request->input('page', 1);
-        $paginatedData = PaginationHelper::paginate($bookings, $perPage, $page, [
-            'path' => $request->url(),
-            'query' => $request->query(),
+        $conflictFixed = FixedScheduleSession::where('id_fixed_schedule', $activeSchedule->id)
+            ->where('day_of_week', $dayOfWeek)
+            ->whereIn('id_session', $includedSessions)->exists();
+
+        if ($conflictFixed) {
+            return response()->json(['status' => 'error', 'message' => 'Bertabrakan dengan jadwal tetap'], 422);
+        }
+
+        $conflictBooking = Booking::where('id_ruang', $request->id_ruang)
+            ->where('date', $request->date)
+            ->where('status', 'approve')
+            ->where(function ($query) use ($includedSessions) {
+                foreach ($includedSessions as $sessionId) {
+                    $query->orWhere(function ($q) use ($sessionId) {
+                        $q->where('start_session', '<=', $sessionId)->where('end_session', '>=', $sessionId);
+                    });
+                }
+            })->exists();
+
+        if ($conflictBooking) {
+            return response()->json(['status' => 'error', 'message' => 'Sesi telah dipinjam'], 422);
+        }
+
+        $filePath = null;
+        if ($request->hasFile('files')) {
+            $file = $request->file('files');
+            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('public/booking', $filename);
+            $filePath = $filename;
+        }
+
+        $user = auth()->user();
+        $booking = Booking::create([
+            'id_student' => $user->is_mahasiswa ? $user->id : null,
+            'id_dosen' => $user->is_dosen ? $user->id : null,
+            'id_ruang' => $request->id_ruang,
+            'date' => $request->date,
+            'start_session' => $request->start_session,
+            'end_session' => $request->end_session,
+            'keterangan' => $request->keterangan,
+            'status' => 'pending',
+            'files' => $filePath,
         ]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Data Booking',
-            'data' => $paginatedData->items(),
-            'pagination' => [
-                'total' => $paginatedData->total(),
-                'per_page' => $paginatedData->perPage(),
-                'current_page' => $paginatedData->currentPage(),
-                'last_page' => $paginatedData->lastPage(),
-            ]
-        ], 200);
-    }
+        $this->sendTelegramMessage(env('TELEGRAM_CHAT_ID'), "Booking ruang oleh {$user->name} untuk {$request->date}");
 
-    /**
-     * Alternative method specifically for pending bookings only
-     * Keep this if you need a separate endpoint for pending bookings
-     */
-    public function getPendingBookings(Request $request) {
-        $query = Booking::query()
-            ->leftJoin('ruangs', 'bookings.id_ruang', '=', 'ruangs.id_ruang')
-            ->leftJoin('sessions', 'bookings.start_session', '=', 'sessions.id')
-            ->select(
-                'bookings.*',
-                'ruangs.nama_ruang',
-                'sessions.name_session'
-            )
-            ->where('bookings.status', 'pending'); // Hardcoded pending filter
-
-        if($request->has('search') && !empty($request->search)) {
-            $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('ruangs.nama_ruang', 'like', "%{$searchTerm}%")
-                ->orWhere('sessions.name_session', 'like', "%{$searchTerm}%");
-            });
-        }
-        
-        $query->orderBy('bookings.created_at', 'desc');
-        $bookings = $query->get();
-        
-        $perPage = $request->input('per_page', 10);
-        $page = $request->input('page', 1);
-        $paginatedData = PaginationHelper::paginate($bookings, $perPage, $page, [
-            'path' => $request->url(),
-            'query' => $request->query(),
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Data Booking Pending',
-            'data' => $paginatedData->items(),
-            'pagination' => [
-                'total' => $paginatedData->total(),
-                'per_page' => $paginatedData->perPage(),
-                'current_page' => $paginatedData->currentPage(),
-                'last_page' => $paginatedData->lastPage(),
-            ]
-        ], 200);
-    }
-
-    public function getRequestBookingById($id) {
-        $booking = Booking::find($id);
-
-        if (!$booking) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Booking tidak ditemukan',
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Data Booking',
-            'data' => $booking,
-        ], 200);
+        return response()->json(['status' => 'success', 'message' => 'Booking dibuat', 'data' => $booking], 201);
     }
 
     public function approveBooking(Request $request, $id) {
@@ -350,53 +170,164 @@ class BookingController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['status' => 'error', 'message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
         }
 
         $booking = Booking::find($id);
+        if (!$booking) return response()->json(['status' => 'error', 'message' => 'Booking tidak ditemukan'], 404);
 
-        if (!$booking) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Booking tidak ditemukan',
-            ], 404);
+        $booking->update([
+            'status' => $request->status,
+            'approved_by' => auth()->user()->name,
+            'approved_at' => Carbon::now(),
+            'notes' => $request->notes
+        ]);
+
+        if ($booking->user && $booking->user->email) {
+            $status = $request->status;
+            $emailView = $status === 'approved' ? 'emails.ruang.booking_approved' : 'emails.ruang.booking_rejected';
+            $subject = $status === 'approved' ? 'Peminjaman Disetujui' : 'Peminjaman Ditolak';
+
+            Mail::send($emailView, ['booking' => $booking], function ($message) use ($booking, $subject) {
+                $message->to($booking->user->email)->subject($subject);
+            });
         }
 
-        $booking->status = $request->status;
-        $booking->approved_by = auth()->user()->name;
-        $booking->approved_at = Carbon::now();
-        $booking->notes = $request->notes;
-        $booking->save();
-
-        if ($booking->status === 'approved') {
-            Booking::where('id', '!=', $booking->id)
+        if ($request->status === 'approved') {
+            $conflicts = Booking::where('id', '!=', $booking->id)
                 ->where('id_ruang', $booking->id_ruang)
                 ->where('date', $booking->date)
                 ->where('status', 'pending')
                 ->where(function ($query) use ($booking) {
-                    $query->where(function ($q) use ($booking) {
-                        // Booking lain yang start_session <= end_session kita dan end_session >= start_session kita
-                        $q->where('start_session', '<=', $booking->end_session)
-                        ->where('end_session', '>=', $booking->start_session);
-                    });
-                })
-                ->update([
+                    $query->where('start_session', '<=', $booking->end_session)
+                          ->where('end_session', '>=', $booking->start_session);
+                })->get();
+
+            foreach ($conflicts as $conflict) {
+                $conflict->update([
                     'status' => 'rejected',
                     'approved_by' => auth()->user()->name,
-                    'approved_at' => Carbon::now(),
-                    'notes' => 'Pesan ini dikirim secara otomatis karena sesi booking beririsan atau sudah dipinjam dengan booking lain yang sudah disetujui.',
+                    'approved_at' => now(),
+                    'notes' => 'Ditolak otomatis karena bertabrakan dengan booking yang disetujui.',
                 ]);
+
+                if ($conflict->user && $conflict->user->email) {
+                    Mail::send('emails.ruang.booking_rejected', ['booking' => $conflict], function ($message) use ($conflict) {
+                        $message->to($conflict->user->email)->subject('Peminjaman Ditolak');
+                    });
+                }
+            }
         }
+
+        return response()->json(['status' => 'success', 'message' => 'Booking diperbarui', 'data' => $booking], 200);
+    }
+
+    private function sendTelegramMessage($chatId, $message)
+    {
+        $url = "https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage";
+    
+        $response = Http::withOptions([
+            'verify' => false,
+        ])->post($url, [
+            'chat_id' => $chatId,
+            'text' => $message
+        ]);
+    
+        // \Log::info('Telegram request:', ['chat_id' => $chatId, 'message' => $message]);
+        // \Log::info('Telegram response:', $response->json());
+    }
+    
+
+    public function getRequestBooking(Request $request)
+    {
+        $query = Booking::query()
+            ->leftJoin('ruangs', 'bookings.id_ruang', '=', 'ruangs.id_ruang')
+            ->leftJoin('sessions as start_sess', 'bookings.start_session', '=', 'start_sess.id')
+            ->leftJoin('sessions as end_sess', 'bookings.end_session', '=', 'end_sess.id')
+            ->select(
+                'bookings.*',
+                'ruangs.nama_ruang',
+                'start_sess.name_session as start_session_name',
+                'start_sess.start_time as start_time',
+                'end_sess.name_session as end_session_name',
+                'end_sess.end_time as end_time'
+            )
+            ->orderBy('bookings.created_at', 'desc');
+
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('ruangs.nama_ruang', 'like', "%{$searchTerm}%")
+                  ->orWhere('bookings.keterangan', 'like', "%{$searchTerm}%")
+                  ->orWhere('bookings.status', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $bookings = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Booking berhasil diperbarui',
-            'data' => $booking,
-        ], 200);
+            'message' => 'Data Booking Permintaan',
+            'data' => $bookings->items(),
+            'pagination' => [
+                'total' => $bookings->total(),
+                'per_page' => $bookings->perPage(),
+                'current_page' => $bookings->currentPage(),
+                'last_page' => $bookings->lastPage(),
+            ]
+        ]);
     }
+    public function getAvailableSessions(Request $request)
+{
+    $request->validate([
+        'id_ruang' => 'required|exists:ruangs,id_ruang',
+        'date' => 'required|date',
+    ]);
+
+    $dayOfWeek = date('N', strtotime($request->date));
+
+    // Ambil semua sesi
+    $allSessions = Session::orderBy('start_time')->get();
+
+    // Cek jadwal tetap
+    $fixedSchedule = FixedSchedule::where('id_ruang', $request->id_ruang)
+        ->where('start_date', '<=', $request->date)
+        ->where('end_date', '>=', $request->date)
+        ->first();
+
+    $blockedFixed = [];
+    if ($fixedSchedule) {
+        $blockedFixed = FixedScheduleSession::where('id_fixed_schedule', $fixedSchedule->id)
+            ->where('day_of_week', $dayOfWeek)
+            ->pluck('id_session')
+            ->toArray();
+    }
+
+    // Cek booking approved
+    $bookings = Booking::where('id_ruang', $request->id_ruang)
+        ->where('date', $request->date)
+        ->where('status', 'approved')
+        ->get();
+
+    $blockedBooking = [];
+    foreach ($bookings as $booking) {
+        for ($i = $booking->start_session; $i <= $booking->end_session; $i++) {
+            $blockedBooking[] = $i;
+        }
+    }
+
+    $blockedSessions = array_unique(array_merge($blockedFixed, $blockedBooking));
+
+    $availableSessions = $allSessions->filter(function ($session) use ($blockedSessions) {
+        return !in_array($session->id, $blockedSessions);
+    })->values();
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $availableSessions
+    ]);
+}
 
 }

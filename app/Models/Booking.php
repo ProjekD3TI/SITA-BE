@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User; // Assuming User model is in the same namespace
+use App\Models\Dosen; // Assuming Dosen model is in the AdminPengelola namespace
+
 
 class Booking extends Model
 {
@@ -12,6 +15,7 @@ class Booking extends Model
     protected $primaryKey = 'id';
     protected $fillable = [
         'id_student',
+        'id_dosen',
         'id_ruang',
         'date',
         'start_session',
@@ -23,5 +27,19 @@ class Booking extends Model
         'notes',
         'files',
     ];
+    public function mahasiswa()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'id_student');
+    }
+    
+    public function dosen()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'id_dosen');
+    }
+    
+    public function getUserAttribute()
+    {
+        return $this->mahasiswa ?: $this->dosen;
+    }
+    
 }
-

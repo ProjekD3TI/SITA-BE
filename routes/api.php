@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminPengelola\LantaiController;
 use App\Http\Controllers\Admin\AdminPengelola\RuangController;
 use App\Http\Controllers\Admin\AdminPengelola\MahasiswaAdminController;
 use App\Http\Controllers\Admin\AdminPengelola\DosenAdminController;
+use App\Http\Controllers\Admin\AdminPengelola\GedungLantaiController;
 use App\Http\Controllers\Admin\AdminPengelola\BookingController;
 use App\Http\Controllers\Admin\AdminPengelola\ClassesController;
 use App\Http\Controllers\Admin\AdminPengelola\FixedScheduleController;
@@ -42,6 +43,8 @@ Route::get('/ruang', [RuangController::class, 'showRuang']);
 Route::get('/access/log', [AccessController::class, 'getLogs']);
 Route::post('/access/log', [AccessController::class, 'log']);
 Route::post('/access/check', [AccessController::class, 'check']);
+Route::get('/booking/request', [BookingController::class, 'getRequestBooking']);
+
 
 // route sanctum global
 Route::middleware('auth:sanctum')->group(function () {
@@ -70,8 +73,10 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
     Route::get('mahasiswa/dashboard', [MahasiswaController::class, 'dashboard']);
     Route::get('mahasiswa/profile', [MahasiswaController::class, 'getProfileMahasiswa']);
     Route::put('mahasiswa/profile/edit', [MahasiswaController::class, 'editProfileMahasiswa']);
+    Route::get('/mahasiswa/statistik', [MahasiswaController::class, 'getStatistik']);
 
-    
+
+    Route::get('/mahasiswa/available-sessions', [BookingController::class, 'getAvailableSessions']);    
     Route::get('/mahaiswa/fixed_schedule', [FixedScheduleController::class, 'getSchedule']);
     Route::get('/mahasiswa/booking', [BookingController::class, 'getUserBooking']);
     Route::get('/mahasiswa/session', [SessionController::class, 'getSession']);
@@ -109,6 +114,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
         Route::get('/dosen/session', [SessionController::class, 'getSession']);
         Route::get('/dosen/ruang', [RuangController::class, 'showRuang']);
         Route::post('/dosen/booking/create', [BookingController::class, 'createBooking']);
+        Route::get('/dosen/booking', [BookingController::class, 'getDosenBooking']);
     });
 
     // Route Kalab
@@ -119,6 +125,7 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
         Route::get('/kalab/booking', [BookingController::class, 'getRequestBooking']);
         Route::get('/kalab/booking/{id}', [BookingController::class, 'getRequestBookingById']);
         Route::put('/kalab/booking/approve/{id}', [BookingController::class, 'approveBooking']);
+        Route::get('/kalab/booking', [BookingController::class, 'getRequestBooking']);
     });
 
     // Route Kaprodi
@@ -196,6 +203,13 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('/admin_pengelola/gedung/{id}', [GedungController::class, 'findGedung']);
         Route::put('/admin_pengelola/gedung/edit/{id}', [GedungController::class, 'editGedung']);
         Route::delete('/admin_pengelola/gedung/{id}', [GedungController::class, 'deleteGedung']);
+
+        //gedunglantai
+        Route::get('/gedung-lantai', [GedungLantaiController::class, 'getGedungLantai']);
+        Route::post('/gedung-lantai/create', [GedungLantaiController::class, 'createGedungLantai']);
+        Route::get('/gedung-lantai/{id}', [GedungLantaiController::class, 'getGedungLantaiById']);
+        Route::put('/gedung-lantai/edit/{id}', [GedungLantaiController::class, 'updateGedungLantai']);
+        Route::delete('/gedung-lantai/{id}', [GedungLantaiController::class, 'deleteGedungLantai']);
 
         // Ruang
         Route::get('/admin_pengelola/ruang', [RuangController::class, 'showRuang']);

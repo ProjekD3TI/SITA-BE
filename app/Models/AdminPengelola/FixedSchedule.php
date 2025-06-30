@@ -28,4 +28,8 @@ class FixedSchedule extends Model
     {
         return $this->belongsTo(Ruang::class, 'id_ruang');
     }
+    public function dosen()
+{
+    return $this->belongsTo(Dosen::class, 'penanggung_jawab');
+}
 }
