@@ -65,6 +65,15 @@ class NilaiBimbinganController extends Controller
                 return ApiResponse::error('Tugas akhir tidak ditemukan atau tidak sesuai dengan dosen yang sedang login', 404);
             }
 
+            // ✅ VALIDASI BARU: Cek status aktif dan status kelulusan
+            if ($tugasAkhir->status_aktif == 0) {
+                return ApiResponse::error('Tidak dapat menambah nilai bimbingan karena tugas akhir sudah non-aktif', 403);
+            }
+
+            if ($tugasAkhir->status_kelulusan == 4) {
+                return ApiResponse::error('Tidak dapat menambah nilai bimbingan karena mahasiswa sudah dinyatakan tidak lulus', 403);
+            }
+
             // Periksa apakah nilai bimbingan sudah ada
             $nilaiBimbingan = $tugasAkhir->nilaiBimbingan;
             if ($nilaiBimbingan) {
@@ -147,6 +156,15 @@ class NilaiBimbinganController extends Controller
 
             if (!$tugasAkhir) {
                 return ApiResponse::error('Tugas akhir tidak ditemukan atau tidak sesuai dengan dosen yang sedang login', 404);
+            }
+
+            // Cek status aktif dan status kelulusan
+            if ($tugasAkhir->status_aktif == 0) {
+                return ApiResponse::error('Tidak dapat mengedit nilai bimbingan karena tugas akhir sudah non-aktif', 403);
+            }
+
+            if ($tugasAkhir->status_kelulusan == 4) {
+                return ApiResponse::error('Tidak dapat mengedit nilai bimbingan karena mahasiswa sudah dinyatakan tidak lulus', 403);
             }
 
             // Periksa apakah nilai bimbingan sudah ada
