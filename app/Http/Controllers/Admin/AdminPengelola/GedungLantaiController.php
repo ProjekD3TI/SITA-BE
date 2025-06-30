@@ -53,12 +53,14 @@ class GedungLantaiController extends Controller
 
     public function createGedungLantai(Request $request)
     {
+        // Validasi input
         $validator = Validator::make($request->all(), [
-            'id_gedung' => 'required',
-            'id_lantai' => 'required',
-
+            'id_gedung' => 'required|exists:gedung,id_gedung',
+            'id_lantai' => 'required|array|min:1',
+            'id_lantai.*' => 'required|distinct|exists:lantai_gedung,id_lantai',  // Validasi setiap id_lantai
         ]);
 
+        // Jika validasi gagal
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -66,45 +68,89 @@ class GedungLantaiController extends Controller
                 'errors' => $validator->errors(),
             ], 422);
         }
-        $gedung_lantai = GedungLantai::create([
-            'id_lantai' => $request->id_lantai,
-            'id_gedung' => $request->id_gedung,
-        ]);
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Gedung Lantai Berhasil Dibuat',
-            'data' => $gedung_lantai,
-        ], 201);
-    }
 
-    public function getGedungLantaiById($id) {
-        $gedung_lantai = DB::table('gedung_lantai')
-            ->join('gedung', 'gedung_lantai.id_gedung', '=', 'gedung.id')
-            ->join('lantai_gedung', 'gedung_lantai.id_lantai', '=', 'lantai_gedung.id')
-            ->select('gedung_lantai.id', 'gedung.nama_gedung', 'lantai_gedung.nama_lantai')
-            ->where('gedung_lantai.id', $id)
-            ->first();
-
-        if (!$gedung_lantai) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gedung Lantai Tidak Ditemukan',
-            ], 404);
-        }
+        // Deteksi apakah data berupa satu atau banyak lantai
+        $isBulk = is_array($request->id_lantai);
         
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Detail Gedung Lantai',
-            'data' => $gedung_lantai,
-        ], 200);
+        if ($isBulk) {
+            // Bulk insert (multiple lantai untuk satu gedung)
+            $insertData = collect($request->id_lantai)->map(function ($lantaiId) use ($request) {
+                return [
+                    'id_gedung' => $request->id_gedung,
+                    'id_lantai' => $lantaiId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })->toArray();
+
+            // Optional: hilangkan duplikat sebelum insert
+            $insertData = array_filter($insertData, function ($data) {
+                return !GedungLantai::where('id_gedung', $data['id_gedung'])
+                    ->where('id_lantai', $data['id_lantai'])
+                    ->exists();
+            });
+
+            GedungLantai::insert($insertData);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => count($insertData) . ' lantai berhasil ditambahkan ke gedung.',
+            ], 201);
+
+        } else {
+            // Single insert (satu lantai untuk satu gedung)
+            $exists = GedungLantai::where('id_gedung', $request->id_gedung)
+                                  ->where('id_lantai', $request->id_lantai)
+                                  ->exists();
+            
+            if ($exists) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Lantai sudah terdaftar di gedung ini.',
+                ], 409);
+            }
+
+            GedungLantai::create([
+                'id_gedung' => $request->id_gedung,
+                'id_lantai' => $request->id_lantai,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Lantai berhasil ditambahkan ke gedung.',
+            ], 201);
+        }
     }
 
-    public function updateGedungLantai(Request $request, $id) {
+
+public function getGedungLantaiById($id)
+{
+    $gedung_lantai = GedungLantai::find($id); // Pastikan find digunakan dengan ID yang benar
+    if (!$gedung_lantai) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Gedung Lantai Tidak Ditemukan',
+        ], 404);
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Detail Gedung Lantai',
+        'data' => $gedung_lantai,
+    ], 200);
+}
+
+
+    // Update GedungLantai by ID
+    public function updateGedungLantai(Request $request, $id)
+    {
+        // Validasi input
         $validator = Validator::make($request->all(), [
-            'id_gedung' => 'required|string|max:255',
-            'id_lantai' => 'nullable',
+            'id_gedung' => 'required|exists:gedung,id_gedung',
+            'id_lantai' => 'nullable|exists:lantai_gedung,id_lantai',
         ]);
 
+        // Jika validasi gagal
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -113,25 +159,23 @@ class GedungLantaiController extends Controller
             ], 422);
         }
 
+        // Ambil data GedungLantai berdasarkan ID
         $gedung_lantai = GedungLantai::findOrFail($id);
-        if (!$gedung_lantai) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gedung Lantai Tidak Ditemukan',
-            ], 404);
-        }
 
+        // Perbarui data gedung lantai
         $gedung_lantai->update([
             'id_gedung' => $request->id_gedung,
             'id_lantai' => $request->id_lantai,
         ]);
 
+        // Respons sukses
         return response()->json([
             'status' => 'success',
             'message' => 'Gedung Lantai Berhasil Diperbarui',
             'data' => $gedung_lantai,
         ], 200);
     }
+    
     public function deleteGedungLantai($id) {
         $gedung_lantai = GedungLantai::findOrFail($id);
         if (!$gedung_lantai) {
