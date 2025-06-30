@@ -754,8 +754,7 @@ class TugasAkhirController extends Controller
                 ],
                 // Tambahkan flag sudah ada dosen penguji
                 'has_dosen_penguji' => $tugasAkhir->dosenPenguji && $tugasAkhir->dosenPenguji->count() > 0,
-            ];
-            ;
+            ];;
 
             return ApiResponse::success([
                 [
@@ -816,7 +815,6 @@ class TugasAkhirController extends Controller
                     ]
                 ]
             ], 'Dosen pembimbing berhasil ditetapkan', 200);
-
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
@@ -1185,7 +1183,6 @@ class TugasAkhirController extends Controller
                 $result,
                 'List Tugas Akhir dengan minimal 9 bimbingan disetujui berhasil diambil'
             );
-
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
@@ -1450,8 +1447,7 @@ class TugasAkhirController extends Controller
         try {
             $tugasAkhir = TugasAkhir::with(
                 ['berkas']
-            )->
-                findOrFail($tugasAkhirId);
+            )->findOrFail($tugasAkhirId);
 
             // Ambil semua nama berkas yang ada di DB untuk tugas akhir ini
             $berkasList = $tugasAkhir->berkas->pluck('nama_berkas')->toArray();
@@ -1878,7 +1874,6 @@ class TugasAkhirController extends Controller
                 'available_ruang' => $availableRuang,
                 'available_sesi' => $availableSesi,
             ], 'Data availability berhasil diambil');
-
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
         }
@@ -2423,7 +2418,9 @@ class TugasAkhirController extends Controller
                 }
             }
 
-            $query->orderByDesc('tanggal_ujian');
+            // $query->orderByDesc('tanggal_ujian');
+            $query->orderByRaw('CASE WHEN status_kelulusan IS NULL THEN 0 ELSE 1 END')
+                ->orderByDesc('tanggal_ujian');
 
             $ujianTA = $query->paginate(10);
 
@@ -2612,8 +2609,8 @@ class TugasAkhirController extends Controller
             return ApiResponse::success(
                 $data,
                 $ujianRevisiSebelumnya
-                ? 'Ujian ini adalah ujian ulang setelah revisi'
-                : 'Ujian ini bukan ujian ulang'
+                    ? 'Ujian ini adalah ujian ulang setelah revisi'
+                    : 'Ujian ini bukan ujian ulang'
             );
         } catch (Exception $e) {
             return ApiResponse::error('Terjadi kesalahan: ' . $e->getMessage(), 500);
@@ -2657,8 +2654,8 @@ class TugasAkhirController extends Controller
                     ->filter(function ($penguji) use ($dosenId, $ujianTA) {
                         return $penguji->id != $dosenId &&
                             NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
-                                ->where('dosen_id', $penguji->id)
-                                ->exists();
+                            ->where('dosen_id', $penguji->id)
+                            ->exists();
                     })
                     ->count();
 
@@ -2787,8 +2784,8 @@ class TugasAkhirController extends Controller
                         $rerataUjianTA = $nilaiUjianTACollection->avg();
                         $nilaiAkhir = round(
                             ($nilaiProposal * 0.1) +
-                            ($nilaiBimbingan * 0.3) +
-                            ($rerataUjianTA * 0.6),
+                                ($nilaiBimbingan * 0.3) +
+                                ($rerataUjianTA * 0.6),
                             2
                         );
                         $tugasAkhir->update([
