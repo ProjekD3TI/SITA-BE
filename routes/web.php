@@ -15,5 +15,5 @@ use App\Http\Controllers\Admin\AdminTa\AdminTaController;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return dd(phpinfo());
 });

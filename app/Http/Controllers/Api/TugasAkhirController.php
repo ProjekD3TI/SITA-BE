@@ -2788,7 +2788,7 @@ class TugasAkhirController extends Controller
                 }
 
                 // === Hitung nilai akhir jika semua nilai sudah ada, KECUALI status_kelulusan == 3 ===
-                if ($request->status_kelulusan != 3) {
+                if ($request->status_kelulusan != 3 && $request->status_kelulusan != 4) {
                     $nilaiProposal = $tugasAkhir->nilai_proposal;
                     $nilaiBimbingan = $tugasAkhir->nilaiBimbingan ? $tugasAkhir->nilaiBimbingan->rerata_bimbingan : null;
                     $nilaiUjianTACollection = NilaiUjianTA::where('ujian_ta_id', $ujianTA->id)
