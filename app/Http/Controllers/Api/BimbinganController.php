@@ -96,7 +96,6 @@ class BimbinganController extends Controller
                 new BimbinganResource($bimbingan->load(['tugasAkhir'])),
                 'Data bimbingan berhasil diubah'
             );
-
         } catch (ValidationException $e) {
             return ApiResponse::error('Validasi gagal: ' . $e->getMessage(), 422);
         } catch (Exception $e) {
@@ -305,6 +304,9 @@ class BimbinganController extends Controller
             $data = [
                 'tugas_akhir_id' => $tugasAkhir->id,
                 'judul_tugas_akhir' => $tugasAkhir->judul_tugas_akhir ?? null,
+                'status_aktif' => (int) $tugasAkhir->status_aktif,
+                'status_kelulusan' => (int) $tugasAkhir->status_kelulusan,
+
                 'mahasiswa' => [
                     'mahasiswa_id' => $tugasAkhir->mahasiswa->id ?? null,
                     'name' => $tugasAkhir->mahasiswa->name ?? null,
