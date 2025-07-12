@@ -22,7 +22,6 @@ class PeminjamanBhp extends Model
         'no_telp', 
         'kegunaan', 
         'tanggal_pinjam', 
-        'tanggal_pengembalian', //estimasi tanggal pengembalian 
         'tanggal_kembali', 
         'jumlah_penggunaan', 
         'status_pengembalian', // dipinjam, dikembalikan, sebagian dikembalikan

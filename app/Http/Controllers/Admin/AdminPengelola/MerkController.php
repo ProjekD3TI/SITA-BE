@@ -21,28 +21,11 @@ class MerkController extends Controller
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('nama_merk', 'like', "%{$searchTerm}%");
-            });
+            }
+        );
         }
-
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortType = $request->input('sort_type', 'desc');
-
-        $sortableColumns = [
-            'no' => 'id_merk',
-            'nama_merk' => 'nama_merk',
-            'created_at' => 'created_at',
-        ];
-
-        if (array_key_exists($sortBy, $sortableColumns)) {
-            $sortColumn = $sortableColumns[$sortBy];
-        } else {
-            $sortColumn = 'created_at';
-        }
-
-        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
-
-        $query->orderBy($sortColumn, $sortDirection);
         
+        $query->orderBy('created_at', 'desc');
         $merk = $query->get();
 
         $perPage = $request->input('per_page', 10);
@@ -62,10 +45,6 @@ class MerkController extends Controller
                 'per_page' => $paginatedData->perPage(),
                 'current_page' => $paginatedData->currentPage(),
                 'last_page' => $paginatedData->lastPage(),
-            ],
-            'sorting' => [
-                'sort_by' => $sortBy,
-                'sort_type' => $sortType,
             ]
         ], 200);
     }
