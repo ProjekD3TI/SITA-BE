@@ -19,6 +19,7 @@ class PeminjamanInventaris extends Model
         'ni_peminjam',
         'no_telp', 
         'tanggal_pinjam', 
+        'tanggal_pengembalian', 
         'kegunaan', 
         'referensi', 
         'qr_code_path', 

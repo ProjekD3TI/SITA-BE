@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -144,6 +145,7 @@ class PeminjamanInventarisController extends Controller
             'tipe_peminjam' => 'required|in:mahasiswa,dosen',
             'kegunaan' => 'required',
             'tanggal_pinjam' => 'required|date',
+            'tanggal_pengembalian' => 'required|date',
         ]);
     
         if ($validator->fails()) {
@@ -182,6 +184,21 @@ class PeminjamanInventarisController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Tanggal pinjam tidak boleh lebih dari hari ini',
+                'errors' => [
+                    'tanggal_pinjam' => ['Tanggal pinjam tidak boleh lebih dari hari ini'],
+                ],
+            ], 400);
+            
+        }
+        
+        $tanggal_pengembalian = date('Y-m-d', strtotime($request->tanggal_pengembalian));
+        if ($tanggal_pengembalian < $tanggal_pinjam) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tanggal pengembalian tidak boleh sebelum tanggal pinjam',
+                'errors' => [
+                    'tanggal_pengembalian' => ['Tanggal Pengembalian tidak boleh sebelum tanggal pinjam'],
+                ],
             ], 400);
         }
     
@@ -224,6 +241,7 @@ class PeminjamanInventarisController extends Controller
                 'no_telp' => $user->no_telp,
                 'kegunaan' => $request->kegunaan,
                 'tanggal_pinjam' => $request->tanggal_pinjam,
+                'tanggal_pengembalian' => $request->tanggal_pengembalian,
                 'status_peminjaman' => 'dipinjam',
                 'referensi' => $no_referensi,
                 'created_by' => auth()->user()->name,
@@ -330,6 +348,7 @@ class PeminjamanInventarisController extends Controller
             'tipe_peminjam' => 'required|in:mahasiswa,dosen',
             'kegunaan' => 'required',
             'tanggal_pinjam' => 'required|date',
+            'tanggal_pengembalian' => 'required|date',
             'id_inventaris' => 'required|array',
             'id_inventaris.*' => 'required|exists:inventaris,id_inventaris',
         ]);
@@ -392,6 +411,19 @@ class PeminjamanInventarisController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'peminjaman tidak boleh lebih dari hari ini',
+                'errors' => [
+                    'tanggal_pinjam' => ['Tanggal pinjam tidak boleh lebih dari hari ini'],
+                ],
+            ], 400);
+        }
+
+        if (date('Y-m-d', strtotime($request->tanggal_pengembalian)) < date('Y-m-d', strtotime($request->tanggal_pinjam))) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'tanggal pengembalian tidak boleh sebelum tanggal pinjam',
+                'errors' => [
+                    'tanggal_pengembalian' => ['Tanggal Pengembalian tidak boleh sebelum tanggal pinjam'],
+                ],
             ], 400);
         }
 
@@ -417,6 +449,7 @@ class PeminjamanInventarisController extends Controller
                 'no_telp' => $pengguna->no_telp,
                 'kegunaan' => $request->kegunaan,
                 'tanggal_pinjam' => $request->tanggal_pinjam,
+                'tanggal_pengembalian' => $request->tanggal_pengembalian,
             ]);
 
             // mengganti inventaris
@@ -704,5 +737,92 @@ class PeminjamanInventarisController extends Controller
             new PeminjamanInventarisExport($searchTerm, $status, $start_date, $end_date),
             'peminjaman_inventaris.xlsx'
         );
+    }
+
+    public function sendOverdueReminders() {
+    \Log::info('Memulai proses pengiriman pengingat peminjaman terlambat');
+    
+        // Ambil semua peminjaman yang belum dikembalikan dan melewati tanggal pengembalian
+        $peminjaman_terlambat = PeminjamanInventaris::where('status_peminjaman', 'dipinjam')
+            ->where('tanggal_pengembalian', '<', now()->format('Y-m-d'))
+            ->with(['detailPeminjamanInventaris.inventaris.jenisInventaris'])
+            ->get();
+        
+        if ($peminjaman_terlambat->count() == 0) {
+            \Log::info('Tidak ada peminjaman yang melewati tanggal pengembalian');
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Tidak ada peminjaman yang melewati tanggal pengembalian'
+            ]);
+        }
+        
+        $pengingat_terkirim = 0;
+        
+        foreach ($peminjaman_terlambat as $peminjaman) {
+            $tanggal_harus_kembali = Carbon::parse($peminjaman->tanggal_pengembalian);
+            $hari_terlambat = now()->diffInDays($tanggal_harus_kembali);
+            
+            $detail_barang_belum_kembali = $peminjaman->detailPeminjamanInventaris
+                ->where('status', 0);
+            
+            $barang_belum_kembali = $detail_barang_belum_kembali->count();
+                    
+            if ($barang_belum_kembali > 0) {
+                $email_peminjam = null;
+                
+                if ($peminjaman->tipe_peminjam === 'mahasiswa') {
+                    $mahasiswa = User::find($peminjaman->id_peminjam);
+                    if ($mahasiswa) {
+                        $email_peminjam = $mahasiswa->email;
+                    }
+                } else if ($peminjaman->tipe_peminjam === 'dosen') {
+                    $dosen = Dosen::find($peminjaman->id_peminjam);
+                    if ($dosen) {
+                        $email_peminjam = $dosen->email;
+                    }
+                }
+                
+                if ($email_peminjam) {
+                    $subject = "Pengingat Peminjaman Inventaris Terlambat";
+                    
+                    $data = [
+                        'peminjaman' => $peminjaman,
+                        'hari_terlambat' => $hari_terlambat,
+                        'barang_belum_kembali' => $barang_belum_kembali,
+                        'tanggal_kembali' => Carbon::parse($peminjaman->tanggal_pengembalian)->format('d-m-Y'),
+                        'detail_barang' => $detail_barang_belum_kembali
+                    ];
+                    
+                    try {
+                        Mail::send('emails.reminder_inventaris', $data, function($message) use ($email_peminjam, $subject, $peminjaman) {
+                            $message->to($email_peminjam)
+                                    ->subject($subject . ': ' . $peminjaman->referensi);
+                        });
+                        
+                        $pengingat_terkirim++;
+                        
+                        \Log::info("Pengingat keterlambatan berhasil dikirim ke {$email_peminjam} untuk peminjaman {$peminjaman->referensi}");
+                        
+                    } catch (\Exception $e) {
+                        \Log::error('Gagal mengirim pengingat email: ' . $e->getMessage());
+                        \Log::error($e->getTraceAsString());
+                    }
+                } else {
+                    \Log::warning("Email peminjam tidak ditemukan untuk ID: {$peminjaman->id_peminjam}, Tipe: {$peminjaman->tipe_peminjam}");
+                }
+            }
+        }
+        
+        \Log::info("Total pengingat terkirim: {$pengingat_terkirim}");
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => "Berhasil mengirim {$pengingat_terkirim} pengingat untuk peminjaman terlambat"
+        ]);
+    }
+
+    public function manualSendOverdueReminders()
+    {
+        return $this->sendOverdueReminders();
     }
 }
