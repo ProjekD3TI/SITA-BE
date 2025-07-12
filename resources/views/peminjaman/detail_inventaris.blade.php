@@ -23,7 +23,6 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 25px;
-            padding-top: 20px;
         }
 
         .info-table td {
@@ -70,39 +69,9 @@
             margin-top: 20px;
         }
 
-        .signature-container {
-            display: table;
-            width: 100%;
-            margin-top: 5px;
-            border-collapse: separate;
-            border-spacing: 10px;
-        }
-
-        .signature-box {
-            display: table-cell;
-            width: 50%;
-            /* border: 1px solid #000; */
-            padding: 15px;
-            height: 120px;
-            text-align: center;
-            vertical-align: top;
-            box-sizing: border-box;
-        }
-
-        .signature-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .signature-date {
-            margin-bottom: 40px;
-        }
-
-        .signature-name {
-            font-weight: bold;
-            border-bottom: 1px solid #000;
-            padding-bottom: 5px;
-            margin-top: 50px;
+        .signature {
+            margin-top: 60px;
+            text-align: right;
         }
 
         .footer hr {
@@ -111,8 +80,8 @@
 
         .qr-code {
             position: absolute;
-            top: 0px;
-            left: 20px;
+            bottom: 40px;
+            left: 40px;
             width: 100px;
         }
 
@@ -128,13 +97,6 @@
     </style>
 </head>
 <body>
-    <div class="qr-code">
-            @if(!empty($peminjaman->qr_code_path) && file_exists(public_path('storage/inventaris/peminjaman/qrcode/' . $peminjaman->qr_code_path)) && is_file(public_path('storage/inventaris/peminjaman/qrcode/' . $peminjaman->qr_code_path)))
-                <img src="{{ public_path('storage/inventaris/peminjaman/qrcode/' . $peminjaman->qr_code_path) }}" width="120">
-            @else
-                <p>QR Code tidak ditemukan</p>
-            @endif
-        </div>
 
     <h2>Invoice Peminjaman Inventaris</h2>
 
@@ -198,7 +160,7 @@
             <div>4. Peminjam tidak diperkenankan memindahtangankan barang tanpa izin.</div>
         </div>
 
-        <!-- <div class="signature">
+        <div class="signature">
             <p>Surakarta, {{ now()->locale('id')->translatedFormat('d F Y') }}</p>
             <br><br><br>
             <p><strong>{{
@@ -209,33 +171,15 @@
                         })
                         ->implode(' ')
                 }}</strong></p>
-        </div> -->
-        <p style="text-align: right; margin-right: 30px;">Surakarta, {{ now()->locale('id')->translatedFormat('d F Y') }}</p>
-        <p style="text-align: center;">Mengetahui</p>
-        <div class="signature-container">
-            <div class="signature-box">
-                <div class="signature-title">Admin</div>
-                <div class="signature-name">
-                    {{
-                        collect(explode(' ', $peminjaman->created_by))
-                            ->take(2)
-                            ->implode(' ')
-                    }}
-                </div>
-            </div>
-            <div class="signature-box">
-                <div class="signature-date">Peminjam</div>
-                <div class="signature-name">
-                    {{
-                        collect(explode(' ', $peminjaman->nama_peminjam))
-                            ->take(2)
-                            ->implode(' ')
-                    }}
-                </div>
-            </div>
         </div>
         
-        
+        <div class="qr-code">
+            @if(!empty($peminjaman->qr_code_path) && file_exists(public_path('storage/inventaris/peminjaman/qrcode/' . $peminjaman->qr_code_path)) && is_file(public_path('storage/inventaris/peminjaman/qrcode/' . $peminjaman->qr_code_path)))
+                <img src="{{ public_path('storage/inventaris/peminjaman/qrcode/' . $peminjaman->qr_code_path) }}" width="120">
+            @else
+                <p>QR Code tidak ditemukan</p>
+            @endif
+        </div>
     </div>
 
 </body>

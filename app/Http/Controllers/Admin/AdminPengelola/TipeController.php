@@ -21,28 +21,11 @@ class TipeController extends Controller
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('nama_tipe', 'like', "%{$searchTerm}%");
-            });
+            }
+        );
         }
-
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortType = $request->input('sort_type', 'desc');
-
-        $sortableColumns = [
-            'no' => 'id_tipe',
-            'nama_tipe' => 'nama_tipe',
-            'created_at' => 'created_at',
-        ];
-
-        if (array_key_exists($sortBy, $sortableColumns)) {
-            $sortColumn = $sortableColumns[$sortBy];
-        } else {
-            $sortColumn = 'created_at';
-        }
-
-        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
-
-        $query->orderBy($sortColumn, $sortDirection);
         
+        $query->orderBy('created_at', 'desc');
         $tipe = $query->get();
 
         $perPage = $request->input('per_page', 10);
@@ -55,17 +38,13 @@ class TipeController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Data Tipe',
+            'message' => 'Data tipe',
             'data' => $paginatedData->items(),
             'pagination' => [
                 'total' => $paginatedData->total(),
                 'per_page' => $paginatedData->perPage(),
                 'current_page' => $paginatedData->currentPage(),
                 'last_page' => $paginatedData->lastPage(),
-            ],
-            'sorting' => [
-                'sort_by' => $sortBy,
-                'sort_type' => $sortType,
             ]
         ], 200);
     }
