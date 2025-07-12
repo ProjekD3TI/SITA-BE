@@ -17,37 +17,67 @@ use Illuminate\Support\Facades\Validator;
 
 class MahasiswaController extends Controller
 {
+  
     public function dashboard() {
-        //menampilkan data peminjaman bhp dan inventaris user yang login dengan status peminjaman yang belum dikembalikan
-         $peminjaman_bhp = PeminjamanBhp::where(function($q) {
-            $q->where('id_peminjam', Auth::id())
-              ->where('tipe_peminjam', 'mahasiswa')
-              ->orWhere(function($subQ) {
-                  $subQ->where('id_peminjam', Auth::guard('dosen')->id())
-                       ->where('tipe_peminjam', 'dosen');
-              });
-        })
-        ->where('status_pengembalian', '!=', 'selesai')
-        ->orderBy('created_at', 'desc')
-        ->get();
-    
-    $peminjaman_inventaris = PeminjamanInventaris::where(function($q) {
-            $q->where('id_peminjam', Auth::id())
-              ->where('tipe_peminjam', 'mahasiswa')
-              ->orWhere(function($subQ) {
-                  $subQ->where('id_peminjam', Auth::guard('dosen')->id())
-                       ->where('tipe_peminjam', 'dosen');
-              });
-        })
-        ->where('status_peminjaman', '!=', 'selesai') 
-        ->get();
+        $peminjaman_bhp = PeminjamanBhp::where(function($q) {
+                $q->where('id_peminjam', Auth::id())
+                ->where('tipe_peminjam', 'mahasiswa')
+                ->orWhere(function($subQ) {
+                    $subQ->where('id_peminjam', Auth::guard('dosen')->id())
+                        ->where('tipe_peminjam', 'dosen');
+                });
+            })
+            ->where('status_pengembalian', '!=', 'selesai')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        $peminjaman_inventaris = PeminjamanInventaris::where(function($q) {
+                $q->where('id_peminjam', Auth::id())
+                ->where('tipe_peminjam', 'mahasiswa')
+                ->orWhere(function($subQ) {
+                    $subQ->where('id_peminjam', Auth::guard('dosen')->id())
+                        ->where('tipe_peminjam', 'dosen');
+                });
+            })
+            ->where('status_peminjaman', '!=', 'selesai') 
+            ->get();
+
+        $baseBhpQuery = function() {
+            return PeminjamanBhp::where(function($q) {
+                $q->where('id_peminjam', Auth::id())
+                ->where('tipe_peminjam', 'mahasiswa')
+                ->orWhere(function($subQ) {
+                    $subQ->where('id_peminjam', Auth::guard('dosen')->id())
+                        ->where('tipe_peminjam', 'dosen');
+                });
+            });
+        };
+
+        $baseInventarisQuery = function() {
+            return PeminjamanInventaris::where(function($q) {
+                $q->where('id_peminjam', Auth::id())
+                ->where('tipe_peminjam', 'mahasiswa')
+                ->orWhere(function($subQ) {
+                    $subQ->where('id_peminjam', Auth::guard('dosen')->id())
+                        ->where('tipe_peminjam', 'dosen');
+                });
+            });
+        };
 
         return response()->json([
             'success' => true,
             'message' => 'Dashboard Mahasiswa',
             'data' => [
+                'peminjaman_inventaris_selesai' => $baseInventarisQuery()->where('status_peminjaman', 'selesai')->count(),
+                'peminjaman_inventaris_dipinjam' => $baseInventarisQuery()->where('status_peminjaman', 'dipinjam')->count(),
+                'peminjaman_inventaris_dikembalikan_sebagian' => $baseInventarisQuery()->where('status_peminjaman', 'dikembalikan_sebagian')->count(),
+                
                 'peminjaman_bhp' => $peminjaman_bhp,
                 'peminjaman_inventaris' => $peminjaman_inventaris,
+                
+                'peminjaman_bhp_selesai' => $baseBhpQuery()->where('status_pengembalian', 'selesai')->count(),
+                'peminjaman_bhp_dipinjam' => $baseBhpQuery()->where('status_pengembalian', 'dipinjam')->count(),
+                'peminjaman_bhp_dikembalikan_sebagian' => $baseBhpQuery()->where('status_pengembalian', 'dikembalikan_sebagian')->count(),
             ],
         ]);
     }

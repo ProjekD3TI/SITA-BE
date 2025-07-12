@@ -132,14 +132,19 @@ Route::post('/login/admin', [AuthAdminController::class, 'loginAdmin']);
 
 // Route Global Middleware Admin 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-
+//  Route::get('/admin/peminjaman-inventaris/send-reminders',  [PeminjamanInventarisController::class, 'manualSendOverdueReminders']);
     // Route::post('/logout', [AuthController::class, 'logoutUser']);
 
     // Route Superadmin
     Route::middleware(['auth:sanctum', 'admin.role:superadmin'])->group(function () {
 
         // cuma superadmin yg boleh buat admin klo localan dipindah dlu ke public
-        Route::post('/register/admin', [AuthAdminController::class, 'registerAdmin']);
+        Route::get('/superadmin/admin', [AuthAdminController::class, 'showAdmin']);
+        Route::post('/superadmin/create_admin', [AuthAdminController::class, 'registerAdmin']);
+        Route::get('/superadmin/{id}', [AuthAdminController::class, 'findAdmin']);
+        Route::put('/superadmin/edit/{id}', [AuthAdminController::class, 'editAdmin']);
+        Route::delete('/superadmin/{id}', [AuthAdminController::class, 'deleteAdmin']);
+
 
 
         //Superadmin -> dosen

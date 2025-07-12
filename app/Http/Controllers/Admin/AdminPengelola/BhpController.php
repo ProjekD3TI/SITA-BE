@@ -27,12 +27,36 @@ class BhpController extends Controller
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('nama_bhp', 'like', "%{$searchTerm}%")
-                  ->orWhere('peruntukan', 'like', "%{$searchTerm}%");
-            }
-        );
+                ->orWhere('peruntukan', 'like', "%{$searchTerm}%");
+            });
         }
+
+        if ($request->has('peruntukan') && $request->peruntukan !== '') {
+            $query->where('peruntukan', $request->peruntukan);
+        }
+
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortType = $request->input('sort_type', 'desc');
+
+        $sortableColumns = [
+            'no' => 'id_bhp', 
+            'nama_bhp' => 'nama_bhp',
+            'peruntukan' => 'peruntukan',
+            'kondisi_bagus' => 'kondisi_bagus',
+            'kondisi_rusak' => 'kondisi_rusak',
+            'created_at' => 'created_at',
+        ];
+
+        if (array_key_exists($sortBy, $sortableColumns)) {
+            $sortColumn = $sortableColumns[$sortBy];
+        } else {
+            $sortColumn = 'created_at';
+        }
+
+        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
+
+        $query->orderBy($sortColumn, $sortDirection);
         
-        $query->orderBy('created_at', 'desc');
         $bhp = $query->get();
 
         $perPage = $request->input('per_page', 10);
@@ -52,9 +76,12 @@ class BhpController extends Controller
                 'per_page' => $paginatedData->perPage(),
                 'current_page' => $paginatedData->currentPage(),
                 'last_page' => $paginatedData->lastPage(),
+            ],
+            'sorting' => [
+                'sort_by' => $sortBy,
+                'sort_type' => $sortType,
             ]
         ], 200);
-    
     }
 
     public function createBhp(Request $request) {

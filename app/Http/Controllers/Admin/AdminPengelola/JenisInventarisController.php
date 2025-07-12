@@ -163,6 +163,18 @@ class JenisInventarisController extends Controller
         $inventaris->total_inventaris = DB::table('inventaris')
             ->where('id_jenis_inventaris', $id)
             ->count();
+
+        // hitung inventaris yang dipinjam
+        $inventaris->total_inventaris_dipinjam = DB::table('inventaris')
+            ->where('id_jenis_inventaris', $id)
+            ->where('status', '0')
+            ->count();
+
+        // hitung inventaris yang tersedia
+        $inventaris->total_inventaris_tersedia = DB::table('inventaris')
+            ->where('id_jenis_inventaris', $id)
+            ->where('status', '1')
+            ->count();    
         
         $photos = DB::table('foto')
                     ->where('id_jenis_inventaris', $id)
@@ -174,7 +186,9 @@ class JenisInventarisController extends Controller
             'message' => 'Detail inventaris',
             'data' => $inventaris,
             'photos' => $photos,
-            'total_inventaris' => $inventaris->total_inventaris
+            'total_inventaris' => $inventaris->total_inventaris,
+            'total_inventaris_dipinjam' => $inventaris->total_inventaris_dipinjam,
+            'total_inventaris_tersedia' => $inventaris->total_inventaris_tersedia
         ], 200);
     }
 

@@ -56,15 +56,45 @@
             padding: 6px 0;
         }
 
-        .signature {
+        .signature-container {
+            display: table;
+            width: 100%;
+            margin-top: 5px;
+            border-collapse: separate;
+            border-spacing: 10px;
+        }
+
+        .signature-box {
+            display: table-cell;
+            width: 50%;
+            /* border: 1px solid #000; */
+            padding: 15px;
+            height: 120px;
+            text-align: center;
+            vertical-align: top;
+            box-sizing: border-box;
+        }
+
+        .signature-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .signature-date {
+            margin-bottom: 40px;
+        }
+
+        .signature-name {
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
             margin-top: 50px;
-            text-align: right;
         }
 
         .qr-code {
             position: absolute;
-            bottom: 40px;
-            left: 40px;
+            top: 40px;
+            left: 35px;
             width: 100px;
         }
 
@@ -80,6 +110,13 @@
     </style>
 </head>
 <body>
+    <div class="qr-code">
+        @if(!empty($peminjaman->qr_code_path) && file_exists(public_path('storage/bhp/peminjaman/qrcode/' . $peminjaman->qr_code_path)) && is_file(public_path('storage/bhp/peminjaman/qrcode/' . $peminjaman->qr_code_path)))
+            <img src="{{ public_path('storage/bhp/peminjaman/qrcode/' . $peminjaman->qr_code_path) }}" width="120">
+        @else
+            <p>QR Code tidak ditemukan</p>
+        @endif
+    </div>
 
     <h2>Invoice Peminjaman BHP</h2>
     <div class="subtitle">{{ $tanggalPinjam }}</div>
@@ -115,30 +152,40 @@
     <div class="section-title">Detail Barang Habis Pakai</div>
 
     <table class="info-table">
-    <tr>
-        <td class="label">Nama Barang</td>
-        <td>: {{ $bhp->nama_bhp }}</td>
-    </tr>
-    <tr>
-        <td class="label">Jumlah Peminjaman</td>
-        <td>: {{ $peminjaman->jumlah_penggunaan }} unit</td>
-    </tr>
-</table>
+        <tr>
+            <td class="label">Nama Barang</td>
+            <td>: {{ $bhp->nama_bhp }}</td>
+        </tr>
+        <tr>
+            <td class="label">Jumlah Peminjaman</td>
+            <td>: {{ $peminjaman->jumlah_penggunaan }} unit</td>
+        </tr>
+    </table>
 
-
-    <div class="signature">
-        <p>Surakarta, {{ now()->locale('id')->translatedFormat('d F Y') }}</p>
-        <br><br><br>
-        <p><strong>{{ $peminjaman->nama_peminjam }}</strong></p>
+    <p style="text-align: right; margin-right: 30px;">Surakarta, {{ now()->locale('id')->translatedFormat('d F Y') }}</p>
+    <p style="text-align: center;">Mengetahui</p>
+    <div class="signature-container">
+        <div class="signature-box">
+            <div class="signature-title">Admin</div>
+            <div class="signature-name">
+                {{
+                    collect(explode(' ', $peminjaman->created_by))
+                        ->take(2)
+                        ->implode(' ')
+                }}
+            </div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-date">Peminjam</div>
+            <div class="signature-name">
+                {{
+                    collect(explode(' ', $peminjaman->nama_peminjam))
+                        ->take(2)
+                        ->implode(' ')
+                }}
+            </div>
+        </div>
     </div>
-
-<div class="qr-code">
-    @if(!empty($peminjaman->qr_code_path) && file_exists(public_path('storage/bhp/peminjaman/qrcode/' . $peminjaman->qr_code_path)) && is_file(public_path('storage/bhp/peminjaman/qrcode/' . $peminjaman->qr_code_path)))
-        <img src="{{ public_path('storage/bhp/peminjaman/qrcode/' . $peminjaman->qr_code_path) }}" width="120">
-    @else
-        <p>QR Code tidak ditemukan</p>
-    @endif
-</div>
 
 </body>
 </html>
