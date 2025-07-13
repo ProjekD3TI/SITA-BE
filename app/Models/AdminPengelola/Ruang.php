@@ -18,6 +18,7 @@ class Ruang extends Model
         'fasilitas',
         'dimensi',
         'id_gedung',
+        'id_lantai',
         'status',
     ];
     public function fotos() {
@@ -27,4 +28,18 @@ class Ruang extends Model
     {
         return $this->hasMany(FixedSchedule::class, 'id_ruang');
     }
+    public function gedung()
+    {
+        return $this->belongsTo(Gedung::class, 'id_gedung', 'id_gedung');
+    }
+    
+    public function lantaiGedung()
+    {
+        return $this->belongsTo(LantaiGedung::class, 'id_lantai', 'id_lantai');
+    }
+    public function lantai()
+{
+    return $this->belongsTo(LantaiGedung::class, 'id_lantai');
+}
+
 }

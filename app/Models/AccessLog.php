@@ -21,6 +21,7 @@ class AccessLog extends Model
     public function ruang() {
         return $this->belongsTo(\App\Models\AdminPengelola\Ruang::class, 'id_ruang');
     }
+    
     public function dosen() {
         return $this->belongsTo(\App\Models\Dosen::class, 'id_dosen');
     }

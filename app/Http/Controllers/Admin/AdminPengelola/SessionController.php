@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\Validator;
 
 class SessionController extends Controller
 {
-    public function getSession(Request $request) {
+    public function getSession(Request $request) 
+    {
         $query = Session::query();
+        
         if($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
@@ -20,27 +22,40 @@ class SessionController extends Controller
                   ->orWhere('end_time', 'like', "%{$searchTerm}%");
             });
         }
+        
         $query->orderBy('created_at', 'desc');
-        $sessions = $query->get();
+        
+        if ($request->has('all') && $request->all == 'true') {
+            $sessions = $query->get();
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Semua data sesi',
+                'data' => $sessions,
+                'total' => $sessions->count()
+            ], 200);
+        } else {
+            $sessions = $query->get();
 
-        $perPage = $request->input('per_page', 10);
-        $page = $request->input('page', 1);
-        $paginatedData = PaginationHelper::paginate($sessions, $perPage, $page, [
-            'path' => $request->url(),
-            'query' => $request->query(),
-        ]);
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
+            $paginatedData = PaginationHelper::paginate($sessions, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Data Sesi',
-            'data' => $paginatedData->items(),
-            'pagination' => [
-                'total' => $paginatedData->total(),
-                'per_page' => $paginatedData->perPage(),
-                'current_page' => $paginatedData->currentPage(),
-                'last_page' => $paginatedData->lastPage(),
-            ]
-        ], 200);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data Sesi',
+                'data' => $paginatedData->items(),
+                'pagination' => [
+                    'total' => $paginatedData->total(),
+                    'per_page' => $paginatedData->perPage(),
+                    'current_page' => $paginatedData->currentPage(),
+                    'last_page' => $paginatedData->lastPage(),
+                ]
+            ], 200);
+        }
     }
 
     public function createSession(Request $request) {

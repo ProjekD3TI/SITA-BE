@@ -8,6 +8,7 @@ use App\Models\AdminPengelola\Classes;
 use App\Models\AdminPengelola\FixedSchedule;
 use App\Models\AdminPengelola\FixedScheduleSession;
 use App\Models\AdminPengelola\Ruang;
+use App\Models\AdminPengelola\SchoolYear;
 use App\Models\AdminPengelola\Session;
 use App\Models\Dosen;
 use Carbon\Carbon;
@@ -20,7 +21,7 @@ class FixedScheduleController extends Controller
 {
     public function getSchedule(Request $request)
     {
-        $query = FixedSchedule::with(['sessions.session', 'ruang']);
+        $query = FixedSchedule::with(['sessions.session', 'ruang', 'schoolYear']);
     
         if($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
@@ -65,16 +66,25 @@ class FixedScheduleController extends Controller
                     })->toArray()
                 ];
             }
-    
+            //get start date and end date of school year and return
+            $schoolYear = $schedule->schoolYear;
+            if ($schoolYear) {
+                $startDate = Carbon::parse($schoolYear->start_date)->format('Y-m-d');
+                $endDate = Carbon::parse($schoolYear->end_date)->format('Y-m-d');
+            } else {
+                $startDate = null;
+                $endDate = null;
+            }
+
             return [
                 'id' => $schedule->id,
                 'pemakaian' => $schedule->pemakaian,
                 'penanggung_jawab' => $namaDosen,
-                'start_date' => $schedule->start_date,
-                'end_date' => $schedule->end_date,
                 'created_at' => $schedule->created_at,
                 'sessions' => $sessionInfo,
-                'ruang' => $schedule->ruang ? $schedule->ruang->nama_ruang : null
+                'ruang' => $schedule->ruang ? $schedule->ruang->nama_ruang : null,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
             ];
         });
     
@@ -103,8 +113,7 @@ class FixedScheduleController extends Controller
         'pemakaian' => 'required|string|max:255',
         'id_class' => 'required',
         'penanggung_jawab' => 'required|integer|exists:dosen,id',
-        'start_date' => 'required|date',
-        'end_date' => 'required|date',
+        'id_school_year' => 'required|integer',
         'sessions' => 'required|array|min:1',
         'sessions.*.day_of_week' => 'required|integer|between:1,7',
         'sessions.*.id_session' => 'required|exists:sessions,id',
@@ -118,17 +127,15 @@ class FixedScheduleController extends Controller
         ], 422);
     }
 
-    $startDate = Carbon::parse($request->start_date);
-    $endDate = Carbon::parse($request->end_date);
-
-    if ($endDate->lt($startDate)) {
+    // check kelas dan ruang apakah ada
+    $school_year = SchoolYear::find($request->id_school_year);
+    if (!$school_year) {
         return response()->json([
             'status' => 'error',
-            'message' => 'Tanggal berakhir harus sama atau setelah tanggal mulai.',
+            'message' => 'Tahun Ajaran tidak ditemukan',
         ], 422);
     }
 
-    // check kelas dan ruang apakah ada
     $ruang = Ruang::find($request->id_ruang);
     if (!$ruang) {
         return response()->json([
@@ -143,6 +150,7 @@ class FixedScheduleController extends Controller
             'message' => 'Kelas tidak ditemukan',
         ], 422);
     }
+    
     $penanggung_jawab = Dosen::find($request->penanggung_jawab);
     if (!$penanggung_jawab) {
         return response()->json([
@@ -197,8 +205,7 @@ class FixedScheduleController extends Controller
             'pemakaian' => $request->pemakaian,
             'id_class' => $request->id_class,
             'penanggung_jawab' => $request->penanggung_jawab,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
+            'id_school_year' => $request->id_school_year,
         ]);
 
         // Buat fix jadwal sesi otomatis
@@ -262,8 +269,7 @@ class FixedScheduleController extends Controller
         'pemakaian' => 'required|string|max:255',
         'id_class' => 'required',
         'penanggung_jawab' => 'required|integer|exists:dosen,id',
-        'start_date' => 'required|date',
-        'end_date' => 'required|date',
+        'id_school_year' => 'required|integer',
         'sessions' => 'required|array|min:1',
         'sessions.*.day_of_week' => 'required|integer|between:1,7',
         'sessions.*.id_session' => 'required|exists:sessions,id',
@@ -277,15 +283,6 @@ class FixedScheduleController extends Controller
         ], 422);
     }
 
-    $startDate = Carbon::parse($request->start_date);
-    $endDate = Carbon::parse($request->end_date);
-
-    if ($endDate->lt($startDate)) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Tanggal berakhir harus sama atau setelah tanggal mulai.',
-        ], 422);
-    }
 
     $schedule = FixedSchedule::find($id);
     if (!$schedule) {
@@ -293,6 +290,15 @@ class FixedScheduleController extends Controller
             'status' => 'error',
             'message' => 'Jadwal Tetap Tidak Ditemukan',
         ], 404);
+    }
+
+    // check tahun ajaran apakah ada
+    $school_year = SchoolYear::find($request->id_school_year);
+    if (!$school_year) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Tahun Ajaran tidak ditemukan',
+        ], 422);
     }
 
     // check kelas dan ruang apakah ada
@@ -311,6 +317,7 @@ class FixedScheduleController extends Controller
             'message' => 'Kelas tidak ditemukan',
         ], 422);
     }
+
     $penanggung_jawab = Dosen::find($request->penanggung_jawab);
     if (!$penanggung_jawab) {
         return response()->json([
@@ -365,8 +372,7 @@ class FixedScheduleController extends Controller
             'pemakaian' => $request->pemakaian,
             'id_class' => $request->id_class,
             'penanggung_jawab' => $request->penanggung_jawab,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
+            'id_school_year' => $request->id_school_year,
         ]);
 
         // Hapus semua sesi lama

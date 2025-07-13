@@ -43,5 +43,14 @@ class Dosen extends Authenticatable
                     ->withTimestamps()
                     ->withPivot('is_active');
     }
+    public function getIsDosenAttribute()
+    {
+        return true;
+    }
+
+    public function getIsMahasiswaAttribute()
+    {
+        return false;
+    }
 }
 

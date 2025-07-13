@@ -14,6 +14,7 @@ class FixedSchedule extends Model
         'id_class',
         'id_ruang',
         'pemakaian',
+        'id_school_year',
         'start_date',
         'end_date',
         'penanggung_jawab',
@@ -31,5 +32,9 @@ class FixedSchedule extends Model
     public function dosen()
 {
     return $this->belongsTo(Dosen::class, 'penanggung_jawab');
+}
+public function schoolYear()
+{
+    return $this->belongsTo(SchoolYear::class, 'id_school_year');
 }
 }

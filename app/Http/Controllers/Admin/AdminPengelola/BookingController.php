@@ -71,7 +71,7 @@ class BookingController extends Controller
             'start_session' => 'required|exists:sessions,id',
             'end_session' => 'required|exists:sessions,id',
             'keterangan' => 'nullable|string',
-            'files' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'files' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -327,6 +327,19 @@ class BookingController extends Controller
     return response()->json([
         'status' => 'success',
         'data' => $availableSessions
+    ]);
+}
+public function getDosenBooking()
+{
+    $bookings = Booking::with(['ruang', 'startSession', 'endSession', 'dosen'])
+        ->whereNotNull('id_dosen') // hanya booking oleh dosen
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Daftar booking oleh dosen',
+        'data' => $bookings
     ]);
 }
 

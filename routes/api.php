@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AdminPengelola\BookingController;
 use App\Http\Controllers\Admin\AdminPengelola\ClassesController;
 use App\Http\Controllers\Admin\AdminPengelola\FixedScheduleController;
 use App\Http\Controllers\Admin\AdminPengelola\RfidTagController;
+use App\Http\Controllers\Admin\AdminPengelola\SchoolYearController;
 use App\Http\Controllers\Admin\AdminPengelola\SemesterController;
 use App\Http\Controllers\RFID\AccessController;
 use App\Http\Controllers\Admin\AdminPengelola\SessionController;
@@ -114,7 +115,8 @@ Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
         Route::get('/dosen/session', [SessionController::class, 'getSession']);
         Route::get('/dosen/ruang', [RuangController::class, 'showRuang']);
         Route::post('/dosen/booking/create', [BookingController::class, 'createBooking']);
-        Route::get('/dosen/booking', [BookingController::class, 'getDosenBooking']);
+        // Route::get('/dosen/booking', [BookingController::class, 'getDosenBooking']);
+        Route::get('/dosen/bookings', [BookingController::class, 'getDosenBooking']);
     });
 
     // Route Kalab
@@ -211,12 +213,21 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/gedung-lantai/edit/{id}', [GedungLantaiController::class, 'updateGedungLantai']);
         Route::delete('/gedung-lantai/{id}', [GedungLantaiController::class, 'deleteGedungLantai']);
 
+        //School Year
+        Route::get('/admin_pengelola/school_year', [SchoolYearController::class, 'showSchoolYear']);
+        Route::post('/admin_pengelola/school_year/create', [SchoolYearController::class, 'createSchoolYear']);
+        Route::get('/admin_pengelola/school_year/{id}', [SchoolYearController::class, 'findSchoolYear']);
+        Route::put('/admin_pengelola/school_year/update/{id}', [SchoolYearController::class, 'editSchoolYear']);
+        Route::delete('/admin_pengelola/school_year/{id}', [SchoolYearController::class, 'deleteSchoolYear']);
+
         // Ruang
         Route::get('/admin_pengelola/ruang', [RuangController::class, 'showRuang']);
         Route::post('/admin_pengelola/ruang/create', [RuangController::class, 'createRuang']);
         Route::get('/admin_pengelola/ruang/{id}', [RuangController::class, 'findRuang']);
         Route::put('/admin_pengelola/ruang/edit/{id}', [RuangController::class, 'editRuang']);
         Route::delete('/admin_pengelola/ruang/{id}', [RuangController::class, 'deleteRuang']);
+        Route::get('/lantai/by-gedung/{id_gedung}', [RuangController::class, 'getLantaiByGedung']);
+
 
         // Session
         Route::get('/admin_pengelola/session', [SessionController::class, 'getSession']);

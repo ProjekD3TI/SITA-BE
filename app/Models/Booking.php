@@ -41,5 +41,15 @@ class Booking extends Model
     {
         return $this->mahasiswa ?: $this->dosen;
     }
+    public function ruang() {
+        return $this->belongsTo(Ruang::class, 'id_ruang');
+    }
     
+    public function startSession() {
+        return $this->belongsTo(Session::class, 'start_session');
+    }
+    
+    public function endSession() {
+        return $this->belongsTo(Session::class, 'end_session');
+    }
 }

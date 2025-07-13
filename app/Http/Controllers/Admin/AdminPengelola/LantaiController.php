@@ -15,16 +15,18 @@ use Illuminate\Support\Str;
 class LantaiController extends Controller
 {
     public function showLantai(Request $request) {
-        $query = LantaiGedung::query();
+        $query = LantaiGedung::with('gedung'); // include relasi ke gedung
 
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
-                $q->where('nama_lantai', 'like', "%{$searchTerm}%");
-            }
-        );
+                $q->where('nama_lantai', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('gedung', function($q2) use ($searchTerm) {
+                      $q2->where('nama_gedung', 'like', "%{$searchTerm}%");
+                  });
+            });
         }
-        
+
         $query->orderBy('created_at', 'desc');
         $lantai = $query->get();
 
@@ -52,6 +54,7 @@ class LantaiController extends Controller
     public function createLantai(Request $request) {
         $validator = Validator::make($request->all(), [
             'nama_lantai' => 'required',
+            'id_gedung' => 'required|exists:gedung,id_gedung',
         ]);
 
         if ($validator->fails()) {
@@ -60,51 +63,50 @@ class LantaiController extends Controller
 
         $lantai = LantaiGedung::create([
             'nama_lantai' => $request->nama_lantai,
+            'id_gedung' => $request->id_gedung,
         ]);
 
-        return response()->json(['message' => 'lantai berhasil ditambahkan']);
-
+        return response()->json(['message' => 'Lantai berhasil ditambahkan']);
     }
 
     public function findLantai($id) {
-        $lantai = LantaiGedung::find($id);
+        $lantai = LantaiGedung::with('gedung')->find($id);
         if ($lantai) {
             return response()->json($lantai);
         } else {
-            return response()->json(['message' => 'lantai tidak ditemukan'], 404);
+            return response()->json(['message' => 'Lantai tidak ditemukan'], 404);
         }
     }
 
     public function editLantai(Request $request, $id) {
-        
-            $db_lantai = LantaiGedung::findOrFail($id);
+        $db_lantai = LantaiGedung::findOrFail($id);
 
-            $validator = Validator::make($request->all(), [
-                'nama_lantai' => 'required',
-            ]);
+        $validator = Validator::make($request->all(), [
+            'nama_lantai' => 'required',
+            'id_gedung' => 'required|exists:gedung,id_gedung',
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json($validator->errors(), 400);
-            }
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
 
-            $data = [
-                'nama_lantai' => $request->nama_lantai,
-            ];
+        $db_lantai->update([
+            'nama_lantai' => $request->nama_lantai,
+            'id_gedung' => $request->id_gedung,
+        ]);
 
-            $db_lantai->update($data);
-
-            return response()->json(['message' => 'lantai berhasil diupdate'], 200);
+        return response()->json(['message' => 'Lantai berhasil diupdate'], 200);
     }
 
     public function deleteLantai($id) {
-        $lantai = LantaiGedung::findOrFail($id);
+        $lantai = LantaiGedung::find($id);
 
         if (!$lantai) {
-            return response()->json(['message' => 'lantai tidak ditemukan'], 404);
+            return response()->json(['message' => 'Lantai tidak ditemukan'], 404);
         }
 
         $lantai->delete();
 
-        return response()->json(['message' => 'lantai berhasil dihapus']);
+        return response()->json(['message' => 'Lantai berhasil dihapus']);
     }
 }

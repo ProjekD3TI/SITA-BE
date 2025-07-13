@@ -47,4 +47,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+    public function getIsMahasiswaAttribute()
+    {
+        return true;
+    }
+
+    public function getIsDosenAttribute()
+    {
+        return false;
+    }
 }

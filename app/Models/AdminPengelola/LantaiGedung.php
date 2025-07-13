@@ -13,5 +13,12 @@ class LantaiGedung extends Model
 
     protected $fillable = [
         'nama_lantai',
+        'id_gedung',
     ];
+
+    // Many-to-One
+    public function gedung()
+    {
+        return $this->belongsTo(Gedung::class, 'id_gedung');
+    }
 }
