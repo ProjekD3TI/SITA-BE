@@ -108,136 +108,132 @@ class FixedScheduleController extends Controller
         ], 200);
     }
     public function createSchedule(Request $request) {
-    $validator = Validator::make($request->all(), [
-        'id_ruang' => 'required|exists:ruangs,id_ruang',
-        'pemakaian' => 'required|string|max:255',
-        'id_class' => 'required',
-        'penanggung_jawab' => 'required|integer|exists:dosen,id',
-        'id_school_year' => 'required|integer',
-        'sessions' => 'required|array|min:1',
-        'sessions.*.day_of_week' => 'required|integer|between:1,7',
-        'sessions.*.id_session' => 'required|exists:sessions,id',
-    ]);
+        $validator = Validator::make($request->all(), [
+            'id_ruang' => 'required|exists:ruangs,id_ruang',
+            'pemakaian' => 'required|string|max:255',
+            'id_class' => 'required',
+            'penanggung_jawab' => 'required|integer|exists:dosen,id',
+            'id_school_year' => 'required|exists:school_years,id', // Changed from id_school_year to id
+            'sessions' => 'required|array|min:1',
+            'sessions.*.day_of_week' => 'required|integer|between:1,7',
+            'sessions.*.id_session' => 'required|exists:sessions,id',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Validation Error',
-            'errors' => $validator->errors(),
-        ], 422);
-    }
-
-    // check kelas dan ruang apakah ada
-    $school_year = SchoolYear::find($request->id_school_year);
-    if (!$school_year) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Tahun Ajaran tidak ditemukan',
-        ], 422);
-    }
-
-    $ruang = Ruang::find($request->id_ruang);
-    if (!$ruang) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Ruang tidak ditemukan',
-        ], 422);
-    }
-    $kelas = Classes::find($request->id_class);
-    if (!$kelas) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Kelas tidak ditemukan',
-        ], 422);
-    }
-    
-    $penanggung_jawab = Dosen::find($request->penanggung_jawab);
-    if (!$penanggung_jawab) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Dosen Penanggung jawab tidak ditemukan',
-        ], 422);
-    }
-
-    $conflictingSessions = [];
-
-     // verify bahwa sesi yang dipilih ada
-    foreach ($request->sessions as $sessionData) {
-        $session = Session::find($sessionData['id_session']);
-            
-        if (!$session) {
+        if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Sesi tidak ditemukan',
+                'message' => 'Validation Error',
+                'errors' => $validator->errors(),
             ], 422);
         }
 
-        // Cek konflik: apakah sesi ini sudah dipakai di ruangan & hari yang sama
-        $conflict = FixedScheduleSession::whereHas('fixedSchedule', function ($query) use ($request) {
-                $query->where('id_ruang', $request->id_ruang);
-            })
-            ->where('day_of_week', $sessionData['day_of_week'])
-            ->where('id_session', $sessionData['id_session'])
-            ->exists();
-
-        if ($conflict) {
-            // Tambahkan sesi yang konflik ke array
-            $conflictingSessions[] = $sessionData['id_session'];
-        }
-    }
-    // Jika ada konflik, tampilkan semua sesi yang konflik sekaligus
-    if (!empty($conflictingSessions)) {
-        $sessionsText = implode(',', $conflictingSessions);
-        
-        return response()->json([
-            'status' => 'error',
-            'message' => "Konflik sesi: Ruangan {$ruang->nama_ruang} sudah digunakan pada sesi $sessionsText"
-        ], 422);
-    }
-    
-
-    try {
-        DB::beginTransaction();
-
-       // Buat jadwal tetap
-        $fixedSchedule = FixedSchedule::create([
-            'id_ruang' => $request->id_ruang,
-            'pemakaian' => $request->pemakaian,
-            'id_class' => $request->id_class,
-            'penanggung_jawab' => $request->penanggung_jawab,
-            'id_school_year' => $request->id_school_year,
-        ]);
-
-        // Buat fix jadwal sesi otomatis
-        $fixedScheduleSessions = [];
-        foreach ($request->sessions as $sessionData) {
-            $scheduleSession = FixedScheduleSession::create([
-                'id_fixed_schedule' => $fixedSchedule->id,
-                'id_session' => $sessionData['id_session'],
-                'day_of_week' => $sessionData['day_of_week'],
-            ]);
-            $fixedScheduleSessions[] = $scheduleSession;
-        }
-
-        DB::commit();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Jadwal tetap berhasil dibuat',
-            'data' => [
-                'fixed_schedule' => $fixedSchedule,
-                'sessions' => $fixedScheduleSessions
-            ]
-        ], 201);
-        } catch (Exception $e) {
-            DB::rollBack();
+        $school_year = SchoolYear::find($request->id_school_year);
+        if (!$school_year) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal membuat jadwal tetap',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => 'Tahun Ajaran tidak ditemukan',
+            ], 422);
         }
-    }
+
+        $ruang = Ruang::find($request->id_ruang);
+        if (!$ruang) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Ruang tidak ditemukan',
+            ], 422);
+        }
+        $kelas = Classes::find($request->id_class);
+        if (!$kelas) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kelas tidak ditemukan',
+            ], 422);
+        }
+        
+        $penanggung_jawab = Dosen::find($request->penanggung_jawab);
+        if (!$penanggung_jawab) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Dosen Penanggung jawab tidak ditemukan',
+            ], 422);
+        }
+
+        $conflictingSessions = [];
+
+        foreach ($request->sessions as $sessionData) {
+            $session = Session::find($sessionData['id_session']);
+                
+            if (!$session) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Sesi tidak ditemukan',
+                ], 422);
+            }
+
+            $conflict = FixedScheduleSession::whereHas('fixedSchedule', function ($query) use ($request) {
+                    $query->where('id_ruang', $request->id_ruang);
+                })
+                ->where('day_of_week', $sessionData['day_of_week'])
+                ->where('id_session', $sessionData['id_session'])
+                ->exists();
+
+            if ($conflict) {
+                $conflictingSessions[] = $sessionData['id_session'];
+            }
+        }
+
+        if (!empty($conflictingSessions)) {
+            $sessionsText = implode(',', $conflictingSessions);
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => "Konflik sesi: Ruangan {$ruang->nama_ruang} sudah digunakan pada sesi $sessionsText"
+            ], 422);
+        }
+        
+
+        try {
+            DB::beginTransaction();
+
+            $fixedSchedule = FixedSchedule::create([
+                'id_ruang' => $request->id_ruang,
+                'pemakaian' => $request->pemakaian,
+                'start_date' => $school_year->start_date,
+                'end_date' => $school_year->end_date,
+                'id_class' => $request->id_class,
+                'penanggung_jawab' => $request->penanggung_jawab,
+                'id_school_year' => $request->id_school_year,
+            ]);
+            
+            $fixedScheduleSessions = [];
+            foreach ($request->sessions as $sessionData) {
+                $scheduleSession = FixedScheduleSession::create([
+                    'id_fixed_schedule' => $fixedSchedule->id,
+                    'id_session' => $sessionData['id_session'],
+                    'day_of_week' => $sessionData['day_of_week'],
+                ]);
+                $fixedScheduleSessions[] = $scheduleSession;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Jadwal tetap berhasil dibuat',
+                'data' => [
+                    'fixed_schedule' => $fixedSchedule,
+                    'sessions' => $fixedScheduleSessions
+                ]
+            ], 201);
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Gagal membuat jadwal tetap',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+        }
 
     public function getScheduleById($id) {
         $schedule = FixedSchedule::with(['sessions.session'])->find($id);
@@ -263,13 +259,13 @@ class FixedScheduleController extends Controller
         ], 200);
     }
 
-    public function updateSchedule(Request $request, $id) {
+public function updateSchedule(Request $request, $id) {
     $validator = Validator::make($request->all(), [
         'id_ruang' => 'required|exists:ruangs,id_ruang',
         'pemakaian' => 'required|string|max:255',
         'id_class' => 'required',
         'penanggung_jawab' => 'required|integer|exists:dosen,id',
-        'id_school_year' => 'required|integer',
+        'id_school_year' => 'required|integer|exists:school_years,id', // Fixed validation rule
         'sessions' => 'required|array|min:1',
         'sessions.*.day_of_week' => 'required|integer|between:1,7',
         'sessions.*.id_session' => 'required|exists:sessions,id',
@@ -283,7 +279,6 @@ class FixedScheduleController extends Controller
         ], 422);
     }
 
-
     $schedule = FixedSchedule::find($id);
     if (!$schedule) {
         return response()->json([
@@ -292,7 +287,7 @@ class FixedScheduleController extends Controller
         ], 404);
     }
 
-    // check tahun ajaran apakah ada
+    // Check if school year exists
     $school_year = SchoolYear::find($request->id_school_year);
     if (!$school_year) {
         return response()->json([
@@ -301,7 +296,7 @@ class FixedScheduleController extends Controller
         ], 422);
     }
 
-    // check kelas dan ruang apakah ada
+    // Check if room exists
     $ruang = Ruang::find($request->id_ruang);
     if (!$ruang) {
         return response()->json([
@@ -310,6 +305,7 @@ class FixedScheduleController extends Controller
         ], 422);
     }
     
+    // Check if class exists
     $kelas = Classes::find($request->id_class);
     if (!$kelas) {
         return response()->json([
@@ -318,6 +314,7 @@ class FixedScheduleController extends Controller
         ], 422);
     }
 
+    // Check if lecturer exists
     $penanggung_jawab = Dosen::find($request->penanggung_jawab);
     if (!$penanggung_jawab) {
         return response()->json([
@@ -328,7 +325,7 @@ class FixedScheduleController extends Controller
 
     $conflictingSessions = [];
 
-    // verify bahwa sesi yang dipilih ada
+    // Verify that selected sessions exist and check for conflicts
     foreach ($request->sessions as $sessionData) {
         $session = Session::find($sessionData['id_session']);
             
@@ -339,17 +336,16 @@ class FixedScheduleController extends Controller
             ], 422);
         }
 
-         // Cek konflik sesi pada ruangan & hari yang sama, kecuali jadwal ini sendiri
+        // Check for session conflicts in the same room and day, excluding this schedule
         $conflict = FixedScheduleSession::whereHas('fixedSchedule', function ($query) use ($request, $id) {
                 $query->where('id_ruang', $request->id_ruang)
-                    ->where('id', '!=', $id); // abaikan jadwal ini sendiri
+                    ->where('id', '!=', $id); // Exclude current schedule
             })
             ->where('day_of_week', $sessionData['day_of_week'])
             ->where('id_session', $sessionData['id_session'])
             ->exists();
 
         if ($conflict) {
-            // Tambahkan sesi yang konflik ke array
             $conflictingSessions[] = $sessionData['id_session'];
         }
     }
@@ -366,19 +362,21 @@ class FixedScheduleController extends Controller
     try {
         DB::beginTransaction();
 
-        // Update jadwal tetap
+        // Update fixed schedule with school year dates
         $schedule->update([
             'id_ruang' => $request->id_ruang,
             'pemakaian' => $request->pemakaian,
             'id_class' => $request->id_class,
             'penanggung_jawab' => $request->penanggung_jawab,
             'id_school_year' => $request->id_school_year,
+            'start_date' => $school_year->start_date, // Update dates from school year
+            'end_date' => $school_year->end_date,     // Update dates from school year
         ]);
 
-        // Hapus semua sesi lama
+        // Delete all old sessions
         FixedScheduleSession::where('id_fixed_schedule', $id)->delete();
 
-        // Buat sesi baru
+        // Create new sessions
         $fixedScheduleSessions = [];
         foreach ($request->sessions as $sessionData) {
             $scheduleSession = FixedScheduleSession::create([
@@ -399,15 +397,15 @@ class FixedScheduleController extends Controller
                 'sessions' => $fixedScheduleSessions
             ]
         ], 200);
-        } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal memperbarui jadwal tetap',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+    } catch (Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Gagal memperbarui jadwal tetap',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     public function deleteSchedule($id) {
         try {

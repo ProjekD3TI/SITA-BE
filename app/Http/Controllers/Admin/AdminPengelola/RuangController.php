@@ -46,11 +46,11 @@ class RuangController extends Controller
             $item->display_name = $item->nama_ruang;
     
             if (isset($item->nama_gedung)) {
-                $item->display_name .= ' -- ' . $item->nama_gedung;
+                $item->display_name .= ' , ' . $item->nama_gedung;
             }
     
             if (isset($item->nama_lantai)) {
-                $item->display_name .= ' -- ' . $item->nama_lantai;
+                $item->display_name .= ', ' . $item->nama_lantai;
             }
     
             return $item;
