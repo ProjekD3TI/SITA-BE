@@ -4,6 +4,11 @@ namespace App\Http\Controllers\Admin\Superadmin;
 
 use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
+use App\Models\AdminPengelola\Bhp;
+use App\Models\AdminPengelola\Gedung;
+use App\Models\AdminPengelola\Inventaris;
+use App\Models\AdminPengelola\Ruang;
 use App\Models\Dosen;
 use App\Models\Jabatan;
 use App\Models\JabatanDosen;
@@ -20,14 +25,28 @@ class SuperadminController extends Controller
     public function dashboard()
     {
         return response()->json([
-            'message' => 'Welcome to Superadmin Dashboard',
+            'status' => 'success',
+            'message' => 'Dashboard Superadmin',
+            'data' => [
+                'total_dosen' => Dosen::count(),
+                'total_mahasiswa' => User::count(),
+                'total_admin' => Admin::count(),
+                'total_inventaris' => Inventaris::count(), 
+                'total_bhp' => Bhp::count(),
+                'total_ruang' => Ruang::count(), 
+                'total_gedung' => Gedung::count(),
+            ]
         ]);
     }
 
     public function createDosen(Request $request) {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
-            'email' => 'required|email|unique:dosen', //pake staff g yh
+            'email' => ['required', 'email', 'unique:dosen', function ($attribute, $value, $fail) {
+                if (!preg_match('/staff.uns.ac.id$/', $value)) {
+                    return $fail("Email yang didaftar harus menggunakan format email staff");
+                }
+            }], 
             'password' => [
             'required',
             'min:8',
@@ -36,6 +55,7 @@ class SuperadminController extends Controller
             'regex:/[0-9]/',
             ],
             'nik' => 'required|string', //max 16??
+            'no_telp' => 'nullable|string|max:16',
         ],
         [
             'email.unique' => 'Email sudah terdaftar',
@@ -59,6 +79,7 @@ class SuperadminController extends Controller
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'nik' => $request->nik,
+                'no_telp' => $request->no_telp,
                 'status' => 1,
             ]);
 
@@ -109,20 +130,139 @@ class SuperadminController extends Controller
 
     }
 
-    public function getDosen() {
-        $dosen = Dosen::all();
+    public function getDosen(Request $request) {
+        $query = Dosen::query();
+
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                ->orWhere('email', 'like', "%{$searchTerm}%")
+                ->orWhere('nik', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortType = $request->input('sort_type', 'desc');
+
+        $sortableColumns = [
+            'id' => 'id',
+            'name' => 'name',
+            'email' => 'email',
+            'nik' => 'nik',
+            'created_at' => 'created_at',
+            'status' => 'status'
+        ];
+
+        if (array_key_exists($sortBy, $sortableColumns)) {
+            $sortColumn = $sortableColumns[$sortBy];
+        } else {
+            $sortColumn = 'created_at';
+        }
+
+        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
+
+        $query->orderBy($sortColumn, $sortDirection);
+        
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+        
+        $dosen = $query->get();
+
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+
+        $paginatedData = PaginationHelper::paginate($dosen, $perPage, $page, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Data Dosen',
-            'data' => $dosen
+            'data' => $paginatedData->items(),
+            'pagination' => [
+                'total' => $paginatedData->total(),
+                'per_page' => $paginatedData->perPage(),
+                'current_page' => $paginatedData->currentPage(),
+                'last_page' => $paginatedData->lastPage(),
+            ],
+            'sorting' => [
+                'sort_by' => $sortBy,
+                'sort_type' => $sortType,
+            ]
         ], 200);
+    }
+
+    public function getDosenById($id) {
+        $dosen = Dosen::find($id);
+        if ($dosen) {
+            return response()->json($dosen);
+        } else {
+            return response()->json(['message' => 'Dosen tidak ditemukan'], 404);
+        }
+    }
+
+    public function editDosen(Request $request, $id) {
+        $db_dosen = Dosen::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'email' => [
+            'required',
+            'email',
+            'unique:dosen,email,' . $id,
+            function ($attribute, $value, $fail) {
+                if (!preg_match('/staff.uns.ac.id$/', $value)) {
+                return $fail("Email yang didaftar harus menggunakan format email staff");
+                }
+            }
+            ],
+            'password' => [
+            'required',
+            'min:8',
+            'regex:/[a-z]/',
+            'regex:/[A-Z]/',
+            'regex:/[0-9]/',
+            ],
+            'nik' => 'required|string', //max 16??
+            'no_telp' => 'nullable|max:15|string', // Contoh regex untuk nomor telepon internasional
+        ],
+        [
+            'email.unique' => 'Email sudah terdaftar',
+            'password.min' => 'Password minimal harus 8 karakter',
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka',
+            'no_telp.regex' => 'Format nomor telepon tidak valid.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'nik' => $request->nik,
+            'no_telp' => $request->no_telp,
+        ];
+
+        $db_dosen->update($data);
+
+        return response()->json(['message' => 'Dosen berhasil diupdate'], 200);
     }
 
     public function setStatusDosen(Request $request) {
         $validator = Validator::make($request->all(), [
-            'id' => 'required|integer',
+            'id' => 'required|array',
+            'id.*' => 'integer|exists:dosen,id',
             'status' => 'required|boolean',
+        ], [
+            'id.required' => 'Pilih minimal satu dosen',
+            'id.array' => 'Format data dosen tidak valid',
+            'id.*.exists' => 'Salah satu dosen tidak ditemukan',
+            'status.required' => 'Status harus ditentukan',
+            'status.boolean' => 'Status harus berupa boolean (true/false)'
         ]);
 
         if ($validator->fails()) {
@@ -132,19 +272,59 @@ class SuperadminController extends Controller
             ], 422);
         }
 
-        $dosen = Dosen::find($request->id);
-        if (!$dosen) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Dosen tidak ditemukan'
-            ], 404);
-        }
-
-        $dosen->update(['status' => $request->status]);
+        $updateCount = Dosen::whereIn('id', $request->id)
+            ->update(['status' => $request->status]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Status Dosen berhasil diubah',
+            'message' => 'Status ' . $updateCount . ' dosen berhasil diubah',
+            'data' => [
+                'updated_count' => $updateCount,
+                'status' => $request->status ? 'aktif' : 'nonaktif'
+            ]
+        ], 200);
+    }
+
+    // public function setStatusDosen(Request $request) {
+    //     $validator = Validator::make($request->all(), [
+    //         'id' => 'required|integer',
+    //         'status' => 'required|boolean',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $dosen = Dosen::find($request->id);
+    //     if (!$dosen) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Dosen tidak ditemukan'
+    //         ], 404);
+    //     }
+
+    //     $dosen->update(['status' => $request->status]);
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Status Dosen berhasil diubah',
+    //     ], 200);
+    // }
+
+    public function getJabatan() {
+        $jabatans = Jabatan::all();
+        $jabatan_dosen = JabatanDosen::with('jabatan', 'dosen')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data Jabatan',
+            'data' => [
+                'jabatans' => $jabatans,
+                'jabatan_dosen' => $jabatan_dosen
+            ],
         ], 200);
     }
 
@@ -248,9 +428,42 @@ class SuperadminController extends Controller
     // }
     
     public function getMahasiswa(Request $request) {
-        $mahasiswa = User::where('status', 1)->get();
+        $query = User::query();
+               
 
-        // set default ke 10 /page dan page 1
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                ->orWhere('email', 'like', "%{$searchTerm}%")
+                ->orWhere('nim', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortType = $request->input('sort_type', 'desc');
+
+        $sortableColumns = [
+            'id' => 'id',
+            'name' => 'name',
+            'email' => 'email',
+            'nim' => 'nim',
+            'no_telp' => 'no_telp',
+            'status' => 'status'
+        ];
+
+        if (array_key_exists($sortBy, $sortableColumns)) {
+            $sortColumn = $sortableColumns[$sortBy];
+        } else {
+            $sortColumn = 'created_at';
+        }
+
+        $sortDirection = in_array(strtolower($sortType), ['asc', 'desc']) ? $sortType : 'desc';
+
+        $query->orderBy($sortColumn, $sortDirection);
+        
+        $mahasiswa = $query->get();
+
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
 
@@ -268,6 +481,10 @@ class SuperadminController extends Controller
                 'per_page' => $paginatedData->perPage(),
                 'current_page' => $paginatedData->currentPage(),
                 'last_page' => $paginatedData->lastPage(),
+            ],
+            'sorting' => [
+                'sort_by' => $sortBy,
+                'sort_type' => $sortType,
             ]
         ], 200);
     }
@@ -323,8 +540,15 @@ class SuperadminController extends Controller
 
     public function setStatusMahasiswa(Request $request) {
         $validator = Validator::make($request->all(), [
-            'id' => 'required|integer',
+            'id' => 'required|array',
+            'id.*' => 'integer|exists:mahasiswa,id',
             'status' => 'required|boolean',
+        ], [
+            'id.required' => 'Pilih minimal satu mahasiswa',
+            'id.array' => 'Format data mahasiswa tidak valid',
+            'id.*.exists' => 'Salah satu mahasiswa tidak ditemukan',
+            'status.required' => 'Status harus ditentukan',
+            'status.boolean' => 'Status harus berupa boolean (true/false)'
         ]);
 
         if ($validator->fails()) {
@@ -334,20 +558,56 @@ class SuperadminController extends Controller
             ], 422);
         }
 
-        $mahasiswa = User::find($request->id);
-        if (!$mahasiswa) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Mahasiswa tidak ditemukan'
-            ], 404);
-        }
-
-        $mahasiswa->update(['status' => $request->status]);
+        $updateCount = User::whereIn('id', $request->id)
+            ->update(['status' => $request->status]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Status Mahasiswa berhasil diubah',
+            'message' => 'Status ' . $updateCount . ' mahasiswa berhasil diubah',
+            'data' => [
+                'updated_count' => $updateCount,
+                'status' => $request->status ? 'aktif' : 'nonaktif'
+            ]
         ], 200);
     }
+
+    // public function setStatusMahasiswa(Request $request) {
+    //     $validator = Validator::make($request->all(), [
+    //         'id' => 'required|integer',
+    //         'status' => 'required|boolean',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $mahasiswa = User::find($request->id);
+    //     if (!$mahasiswa) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Mahasiswa tidak ditemukan'
+    //         ], 404);
+    //     }
+
+    //     $mahasiswa->update(['status' => $request->status]);
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Status Mahasiswa berhasil diubah',
+    //     ], 200);
+    // }
+
+    public function getMahasiswaById($id) {
+        $mahasiswa = User::find($id);
+        if ($mahasiswa) {
+            return response()->json($mahasiswa);
+        } else {
+            return response()->json(['message' => 'Mahasiswa tidak ditemukan'], 404);
+        }
+    }
+
 
 }

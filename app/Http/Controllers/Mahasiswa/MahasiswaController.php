@@ -406,8 +406,14 @@ class MahasiswaController extends Controller
         
         $validator = Validator::make($request->all(), [
             'name' => 'nullable',
-            'no_telp' => 'nullable',
-            'password' => 'nullable|min:8',
+            'no_telp' => 'nullable|max:16|string',
+            'password' => [
+            'nullable',
+            'min:8',
+            'regex:/[a-z]/',  
+            'regex:/[A-Z]/', 
+            'regex:/[0-9]/',     
+            ],
         ]);
         
         if ($validator->fails()) {

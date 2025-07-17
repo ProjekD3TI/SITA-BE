@@ -44,19 +44,38 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [UserController::class, 'logoutUser']);
 });
 
+Route::middleware('throttle:7,1')->group(function () {
+    Route::post('/login/mahasiswa', [AuthController::class, 'loginUser']);
+    Route::post('/register/mahasiswa', [AuthController::class, 'registerUser']);
+    
+    Route::post('/login/dosen', [AuthDosenController::class, 'loginDosen']);
+    Route::post('/login/admin', [AuthAdminController::class, 'loginAdmin']);
+});
+    
+    Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/mahasiswa/forgot-password', [UserController::class, 'sendResetLinkMahasiswa']);
+    Route::post('/mahasiswa/reset-password', [UserController::class, 'resetPasswordMahasiswa']);
+    
+    Route::post('/dosen/forgot-password', [UserController::class, 'sendResetLinkDosen']);
+    Route::post('/dosen/reset-password', [UserController::class, 'resetPasswordDosen']);
+    
+    Route::post('/admin/forgot-password', [UserController::class, 'sendResetLinkAdmin']);
+    Route::post('/admin/reset-password', [UserController::class, 'resetPasswordAdmin']);
+});
 
-Route::post('/register/mahasiswa', [AuthController::class, 'registerUser']);
-Route::post('/login/mahasiswa', [AuthController::class, 'loginUser']);
+
+// Route::post('/register/mahasiswa', [AuthController::class, 'registerUser']);
+// Route::post('/login/mahasiswa', [AuthController::class, 'loginUser']);
 
 
-Route::post('/mahasiswa/forgot-password', [UserController::class, 'sendResetLinkMahasiswa']);
-Route::post('/mahasiswa/reset-password', [UserController::class, 'resetPasswordMahasiswa']);
+// Route::post('/mahasiswa/forgot-password', [UserController::class, 'sendResetLinkMahasiswa']);
+// Route::post('/mahasiswa/reset-password', [UserController::class, 'resetPasswordMahasiswa']);
 
-Route::post('/dosen/forgot-password', [UserController::class, 'sendResetLinkDosen']);
-Route::post('/dosen/reset-password', [UserController::class, 'resetPasswordDosen']);
+// Route::post('/dosen/forgot-password', [UserController::class, 'sendResetLinkDosen']);
+// Route::post('/dosen/reset-password', [UserController::class, 'resetPasswordDosen']);
 
-Route::post('/admin/forgot-password', [UserController::class, 'sendResetLinkAdmin']);
-Route::post('/admin/reset-password', [UserController::class, 'resetPasswordAdmin']);
+// Route::post('/admin/forgot-password', [UserController::class, 'sendResetLinkAdmin']);
+// Route::post('/admin/reset-password', [UserController::class, 'resetPasswordAdmin']);
 
 // ---------- || Route Mahasiswa || ---------- \\
 
@@ -81,7 +100,7 @@ Route::middleware(['auth:sanctum', 'mahasiswa'])->group(function () {
 
 // ---------- || Route Dosen || ---------- \\
 
-Route::post('/login/dosen', [AuthDosenController::class, 'loginDosen']);
+// Route::post('/login/dosen', [AuthDosenController::class, 'loginDosen']);
 
 // Route Global Dosen
 Route::middleware(['auth:sanctum', 'dosen'])->group(function () {
@@ -127,37 +146,46 @@ Route::get('/admin_pengelola/peminjaman_inventaris/export', [PeminjamanInventari
 
 // ---------- || Route Admin || ---------- \\
 
-Route::post('/login/admin', [AuthAdminController::class, 'loginAdmin']);
+// Route::post('/login/admin', [AuthAdminController::class, 'loginAdmin']);
 
 
 // Route Global Middleware Admin 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 //  Route::get('/admin/peminjaman-inventaris/send-reminders',  [PeminjamanInventarisController::class, 'manualSendOverdueReminders']);
-    // Route::post('/logout', [AuthController::class, 'logoutUser']);
+// Route::post('/logout', [AuthController::class, 'logoutUser']);
 
+ Route::get('/admin/profile',  [AuthAdminController::class, 'getProfileAdmin']);
+ Route::put('/admin/profile/edit',  [AuthAdminController::class, 'updateProfileAdmin']);
     // Route Superadmin
-    Route::middleware(['auth:sanctum', 'admin.role:superadmin'])->group(function () {
+    Route::middleware(['auth:sanctum', 'admin', 'admin.role:superadmin'])->group(function () {
 
         // cuma superadmin yg boleh buat admin klo localan dipindah dlu ke public
-        Route::get('/superadmin/admin', [AuthAdminController::class, 'showAdmin']);
-        Route::post('/superadmin/create_admin', [AuthAdminController::class, 'registerAdmin']);
-        Route::get('/superadmin/{id}', [AuthAdminController::class, 'findAdmin']);
-        Route::put('/superadmin/edit/{id}', [AuthAdminController::class, 'editAdmin']);
-        Route::delete('/superadmin/{id}', [AuthAdminController::class, 'deleteAdmin']);
+        Route::get('/sa/admin', [AuthAdminController::class, 'showAdmin']);
+        Route::post('/sa/create_admin', [AuthAdminController::class, 'registerAdmin']);
+        Route::get('/sa/admin/{id}', [AuthAdminController::class, 'findAdmin']);
+        Route::put('/sa/admin/edit/{id}', [AuthAdminController::class, 'editAdmin']);
+        Route::delete('/sa/admin/{id}', [AuthAdminController::class, 'deleteAdmin']);
+        
 
 
 
-        //Superadmin -> dosen
+        //Superadmin -> dosenadmin
         Route::get('/superadmin/dashboard', [SuperadminController::class, 'dashboard']);
+
         Route::post('/superadmin/create_dosen', [SuperadminController::class, 'createDosen']);
         Route::get('/superadmin/dosen', [SuperadminController::class, 'getDosen']);
+        Route::get('/superadmin/dosen/{id}', [SuperadminController::class, 'getDosenById']);
+        Route::get('/superadmin/dosen/edit/{id}', [SuperadminController::class, 'editDosen']);
+
         Route::post('/superadmin/dosen/set_status', [SuperadminController::class, 'setStatusDosen']);
+        Route::get('/superadmin/jabatan', [SuperadminController::class, 'getJabatan']);
         Route::post('/superadmin/create_jabatan', [SuperadminController::class, 'createJabatan']);
         Route::post('/superadmin/insert_jabatan', [SuperadminController::class, 'insertJabatan']);
         Route::delete('/superadmin/delete_jabatan', [SuperadminController::class, 'deleteJabatan']);
 
 
         Route::get('/superadmin/mahasiswa', [SuperadminController::class, 'getMahasiswa']);
+        Route::get('/superadmin/mahasiswa/{id}', [SuperadminController::class, 'getMahasiswaById']);
         // Route::get('/superadmin/mahasiswa_konfirmasi', [SuperadminController::class, 'getKonfirmasiMahasiswa']);
         // Route::post('/superadmin/mahasiswa/konfirmasi_mahasiswa', [SuperadminController::class, 'konfirmasiMahasiswa']);
         Route::post('/superadmin/mahasiswa/set_status', [SuperadminController::class, 'setStatusMahasiswa']);

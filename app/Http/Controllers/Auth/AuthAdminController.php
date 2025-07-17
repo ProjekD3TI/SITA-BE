@@ -35,7 +35,7 @@ class AuthAdminController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => $validator->errors()
-            ], 401);
+            ], 400);
         }
 
         $admin = Admin::create([
@@ -123,7 +123,7 @@ class AuthAdminController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'email' => 'required|email|unique:admin,email,',
+            'email' => 'required|email|unique:admin,email,' . $id,
             'role' => 'required',
         ]);
 
@@ -171,7 +171,7 @@ class AuthAdminController extends Controller
         if (!$admin || !Hash::check($request->password, $admin->password)) {
             return response()->json([
                 'message' => 'Email atau password salah.'
-            ], 401);
+            ], 400);
         }
 
         $role = $admin->role;
@@ -190,6 +190,84 @@ class AuthAdminController extends Controller
             ]);
         }
 
+    public function getProfileAdmin(Request $request) {
+        $admin = Auth::guard('admin')->user();
+        
+        if (!$admin) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Admin tidak terautentikasi',
+            ], 401);
+        }
+        
+        return response()->json([
+            'status' => true,
+            'message' => 'Data profile admin',
+            'data' => $admin,
+        ]);
     }
+
+    public function updateProfileAdmin(Request $request) {
+        $admin = Auth::guard('admin')->user();
+        
+        if (!$admin) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Admin tidak terautentikasi',
+            ], 401);
+        }
+        
+        $validator = Validator::make($request->all(), [
+            'name' => 'nullable|string|max:255',
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('admin')->ignore($admin->id),
+            ],
+            'password' => [
+                'nullable',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+            ],
+            'password_confirmation' => 'nullable|same:password',
+        ], [
+            'email.unique' => 'Email sudah digunakan oleh admin lain',
+            'password.regex' => 'Password harus mengandung huruf kecil, huruf besar, dan angka',
+            'password_confirmation.same' => 'Konfirmasi password tidak cocok',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+        
+        if ($request->filled('name')) {
+            $admin->name = $request->name;
+        }
+        
+        if ($request->filled('email')) {
+            $admin->email = $request->email;
+        }
+        
+        if ($request->filled('password')) {
+            $admin->password = bcrypt($request->password);
+        }
+        
+        $admin->save();
+        
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile admin berhasil diperbarui',
+            'data' => $admin,
+        ]);
+    }
+
+}
     
 
