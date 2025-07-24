@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('no_telp');
             $table->string('kegunaan');
             $table->date('tanggal_pinjam');
+            $table->date('tanggal_pengembalian')->nullable();
             $table->date('tanggal_kembali')->nullable();
             $table->integer('jumlah_penggunaan');
             $table->enum('status_pengembalian', ['selesai', 'dipinjam', 'dikembalikan_sebagian'])->default('dipinjam');

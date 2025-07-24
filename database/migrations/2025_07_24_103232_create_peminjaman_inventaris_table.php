@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('ni_peminjam');
             $table->enum('tipe_peminjam', ['dosen', 'mahasiswa']);
             $table->date('tanggal_pinjam');
+            $table->date('tanggal_pengembalian')->nullable();
             $table->string('kegunaan');
             $table->string('referensi')->nullable();
             $table->string('qr_code_path')->nullable();
