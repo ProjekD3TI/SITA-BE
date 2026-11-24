@@ -24,7 +24,7 @@ class UserSeeder extends Seeder
                 'password' => bcrypt('123123123'),
                 'status' => 1,
                 'akses_ta' => 1,
-            ],
+            ],  
             [
                 'nim' => 'V3423072',
                 'name' => 'Raihan Kafi Hufayda',
