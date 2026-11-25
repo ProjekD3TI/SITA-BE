@@ -77,9 +77,12 @@ jobs:
           echo "Membuat symlink storage..."
           docker compose exec -T app php artisan storage:link || true
 
-          echo "Optimasi cache konfigurasi dan route Laravel..."
-          docker compose exec -T app php artisan optimize:clear
-          docker compose exec -T app php artisan optimize
+          echo "Mengoptimalkan cache konfigurasi Laravel..."
+          docker compose exec -T app php -d memory_limit=512M artisan optimize:clear
+          docker compose exec -T app php -d memory_limit=512M artisan config:cache
+
+          echo "Reload Octane worker..."
+          docker compose exec -T app php artisan octane:reload || true
 
           echo "Mengatur hak akses storage dan cache..."
           docker compose exec -T app chmod -R 775 storage bootstrap/cache || true

@@ -24,6 +24,7 @@ services:
     image: mysql:8.0
     container_name: portal_backend_db
     restart: unless-stopped
+    command: --innodb_buffer_pool_size=64M --max_connections=50
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
       MYSQL_DATABASE: ${DB_DATABASE:-si-ta}
