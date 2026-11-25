@@ -43,7 +43,7 @@ class UserController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $mahasiswa = User::where('email', $request->email)->first();
             if (!$mahasiswa) {
                 return response()->json([
@@ -53,7 +53,7 @@ class UserController extends Controller
             }
 
             $token = Str::random(60);
-            
+
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $request->email],
                 [
@@ -64,9 +64,9 @@ class UserController extends Controller
 
             $resetLink = env('FRONTEND_URL') . "/mahasiswa/reset-password/{$token}";
 
-            Mail::send('emails.mahasiswa.reset-password', ['resetLink' => $resetLink], function($message) use ($request) {
+            Mail::send('emails.mahasiswa.reset-password', ['resetLink' => $resetLink], function ($message) use ($request) {
                 $message->to($request->email)
-                       ->subject('Reset Password Mahasiswa');
+                    ->subject('Reset Password Mahasiswa');
             });
 
             DB::commit();
@@ -116,7 +116,7 @@ class UserController extends Controller
 
             $resetRecord = DB::table('password_reset_tokens')
                 ->get()
-                ->filter(function($record) use ($request) {
+                ->filter(function ($record) use ($request) {
                     return Hash::check($request->token, $record->token);
                 })
                 ->first();
@@ -145,9 +145,9 @@ class UserController extends Controller
 
             Mail::send('emails.mahasiswa.password', [
                 'password' => $request->password
-            ], function($message) use ($resetRecord) {
+            ], function ($message) use ($resetRecord) {
                 $message->to($resetRecord->email)
-                       ->subject('Password Berhasil Diubah');
+                    ->subject('Password Berhasil Diubah');
             });
 
             DB::commit();
@@ -183,7 +183,7 @@ class UserController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $dosen = Dosen::where('email', $request->email)->first();
             if (!$dosen) {
                 return response()->json([
@@ -193,7 +193,7 @@ class UserController extends Controller
             }
 
             $token = Str::random(60);
-            
+
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $request->email],
                 [
@@ -204,9 +204,9 @@ class UserController extends Controller
 
             $resetLink = env('FRONTEND_URL') . "/dosen/reset-password/{$token}";
 
-            Mail::send('emails.dosen.reset-password', ['resetLink' => $resetLink], function($message) use ($request) {
+            Mail::send('emails.dosen.reset-password', ['resetLink' => $resetLink], function ($message) use ($request) {
                 $message->to($request->email)
-                       ->subject('Reset Password Dosen');
+                    ->subject('Reset Password Dosen');
             });
 
             DB::commit();
@@ -256,7 +256,7 @@ class UserController extends Controller
 
             $resetRecord = DB::table('password_reset_tokens')
                 ->get()
-                ->filter(function($record) use ($request) {
+                ->filter(function ($record) use ($request) {
                     return Hash::check($request->token, $record->token);
                 })
                 ->first();
@@ -285,9 +285,9 @@ class UserController extends Controller
 
             Mail::send('emails.dosen.password', [
                 'password' => $request->password
-            ], function($message) use ($resetRecord) {
+            ], function ($message) use ($resetRecord) {
                 $message->to($resetRecord->email)
-                       ->subject('Password Berhasil Diubah');
+                    ->subject('Password Berhasil Diubah');
             });
 
             DB::commit();
@@ -323,7 +323,7 @@ class UserController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $admin = Admin::where('email', $request->email)->first();
             if (!$admin) {
                 return response()->json([
@@ -333,7 +333,7 @@ class UserController extends Controller
             }
 
             $token = Str::random(60);
-            
+
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $request->email],
                 [
@@ -344,9 +344,9 @@ class UserController extends Controller
 
             $resetLink = env('FRONTEND_URL') . "/admin/reset-password/{$token}";
 
-            Mail::send('emails.admin.reset-password', ['resetLink' => $resetLink], function($message) use ($request) {
+            Mail::send('emails.admin.reset-password', ['resetLink' => $resetLink], function ($message) use ($request) {
                 $message->to($request->email)
-                       ->subject('Reset Password Admin');
+                    ->subject('Reset Password Admin');
             });
 
             DB::commit();
@@ -396,7 +396,7 @@ class UserController extends Controller
 
             $resetRecord = DB::table('password_reset_tokens')
                 ->get()
-                ->filter(function($record) use ($request) {
+                ->filter(function ($record) use ($request) {
                     return Hash::check($request->token, $record->token);
                 })
                 ->first();
@@ -425,9 +425,9 @@ class UserController extends Controller
 
             Mail::send('emails.admin.password', [
                 'password' => $request->password
-            ], function($message) use ($resetRecord) {
+            ], function ($message) use ($resetRecord) {
                 $message->to($resetRecord->email)
-                       ->subject('Password Berhasil Diubah');
+                    ->subject('Password Berhasil Diubah');
             });
 
             DB::commit();

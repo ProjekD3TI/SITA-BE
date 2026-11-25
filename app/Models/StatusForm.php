@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class StatusForm extends Model
+{
+    use HasFactory;
+
+    protected $table = 'status_form';
+
+    protected $fillable = [
+        'nama_form',
+        'is_open',
+    ];
+
+}

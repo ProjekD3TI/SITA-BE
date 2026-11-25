@@ -16,6 +16,7 @@ return [
     |
     */
 
+
     'name' => env('APP_NAME', 'Portal D3TI UNS'),
 
     /*
@@ -70,7 +71,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Jakarta',
 
     /*
     |--------------------------------------------------------------------------
@@ -160,7 +161,8 @@ return [
          * Package Service Providers...
          */
 
-         Maatwebsite\Excel\ExcelServiceProvider::class,
+
+        Maatwebsite\Excel\ExcelServiceProvider::class,
 
 
         /*
@@ -185,6 +187,7 @@ return [
     */
 
     'aliases' => Facade::defaultAliases()->merge([
+
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),

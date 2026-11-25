@@ -10,6 +10,7 @@ class JabatanDosen extends Model
     use HasFactory;
     protected $table = 'jabatan_dosen';
     protected $primaryKey = 'id';
+    // protected $with = ['jabatan', 'dosen'];
     protected $fillable = [
         'dosen_id',
         'jabatan_id',

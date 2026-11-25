@@ -1,0 +1,25 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Semester;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class SemesterSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        Semester::create([
+            'nama_semester' => 'A',
+            'is_default' => 1,
+        ]);
+        Semester::create([
+            'nama_semester' => 'B',
+            'is_default' => 0,
+        ]);
+    }
+}

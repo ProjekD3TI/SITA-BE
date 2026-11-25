@@ -1,3 +1,8 @@
 *
-!public/
+# !private/
+# !private/**
+# !public/
 !.gitignore
+!template_berita_acara.pdf
+!template_lembar_revisi.pdf
+!template_lembar_revisi.docx

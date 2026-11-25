@@ -18,6 +18,7 @@ class JabatanSeeder extends Seeder
             ['name' => 'Kalab', 'description' => 'Kepala Laboratorium'],
             ['name' => 'Kaprodi', 'description' => 'Kepala Program Studi'],
             ['name' => 'Petugas', 'description' => 'Petugas Pelaporan'],
+            ['name' => 'Divisi TA', 'description' => 'Divisi Tugas Akhir'],
         ];
 
         foreach ($jabatans as $jabatan) {

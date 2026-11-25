@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -19,6 +18,7 @@ return new class extends Migration
             $table->string('no_telp');
             $table->string('password');
             $table->boolean('status')->default(1);
+            $table->boolean('akses_ta')->default(0);
             $table->timestamps();
         });
     }
